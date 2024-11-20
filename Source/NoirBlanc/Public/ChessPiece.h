@@ -23,6 +23,18 @@ protected:
 public:	
 	EPieceType GetPieceType();
 	EPieceColor GetPieceColor();
+	void SetPieceType(EPieceType Type);
+	void SetPieceColor(EPieceColor Color);
+
+protected:
+	void SetPieceMesh();
+	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompMesh")
+	class UStaticMeshComponent* CompMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PieceMesh")
+	TArray<UStaticMesh*> Meshes;
 private:
 	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
 	EPieceType PieceType;

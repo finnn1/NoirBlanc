@@ -23,8 +23,19 @@ protected:
 
 public:	
 	AChessPiece* GetPieceOnFloor();
+	void SetPieceOnFloor(AChessPiece* Piece);
+	int32 GetRow();
+	int32 GetCol();
+	void SetRow(int32 Row);
+	void SetCol(int32 Col);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "FloorInfo")
-	AChessPiece* PieceOnFloor;
+	AChessPiece* PieceOnFloor = nullptr;
+
+	UPROPERTY(VisibleAnywhere, Category = "FloorInfo")
+	int32 FloorRow;
+
+	UPROPERTY(VisibleAnywhere, Category = "FloorInfo")
+	int32 FloorCol;
 };
