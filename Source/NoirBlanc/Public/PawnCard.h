@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/TimelineComponent.h"
 #include "GameFramework/Actor.h"
 #include "PawnCard.generated.h"
 
@@ -39,37 +38,33 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Data")
 	CardState FrontBackState;
-	
-	UPROPERTY()
-	bool bIsMatched;
-
-	UPROPERTY()
-	bool bIsSelectable;
 
 private:
 	UPROPERTY()
 	APlayerState* OwnerPlayerState;
+	
+	UPROPERTY()
+	bool bIsSelectable;
 
 public:
-	//카드 뒤집는 함수
-	void TurnToFront();
-	void TurnToBack();
+	//카드 앞뒷면 상태 변화
+	void ChangeFrontBackState();
 
-	//매칭 성공했을 때 함수
-	void CompletedMatching();
+	//초기 상태로
+	void InitCard();
+
+	//선택 됐을 때
+	void Selected();
+
+	//선택 가능한지 체크
+	bool IsCardSelectable();
+
+	//매칭에 성공했을 때 Owner 등록
+	void SuccessMatching(APlayerController* OwnerPlayer);
+
+	//매칭에 성공했는지
+	bool GetOwnerPlayer();
 
 	//매칭 취소 함수
 	void CancelMatching();
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
-	class UTimelineComponent* Timeline;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
-	class UCurveFloat* MovingCurve;
-	
-	FOnTimelineFloat StartTurnFloat;
-
-	UFUNCTION()
-	void StartTurnLerp(float value);
 };

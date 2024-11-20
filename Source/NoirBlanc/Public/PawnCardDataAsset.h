@@ -9,11 +9,16 @@
 UENUM(BlueprintType)
 enum class PawnCardType : uint8
 {
-	Pawn,
-	Rook,
-	Knight,
-	Bishop,
-	Queen
+	PawnRed,
+	RookRed,
+	KnightRed,
+	BishopRed,
+	QueenRed,
+	PawnBlue,
+	RookBlue,
+	KnightBlue,
+	BishopBlue,
+	QueenBlue
 };
 /**
  * 
