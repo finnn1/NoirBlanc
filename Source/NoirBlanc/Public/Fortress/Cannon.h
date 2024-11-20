@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "Cannon.generated.h"
 
+class AProjectileEqBased;
 class UInputAction;
 struct FInputActionValue;
 class UStaticMeshComponent;
@@ -76,12 +77,16 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AProjectile> ProjectileFactory;		// class
+	// UPROPERTY(EditAnywhere)
+	// TSubclassOf<AProjectile> ProjectileFactory;		// class
+	//
+	// UPROPERTY(EditAnywhere)
+	// AProjectile* Projectile;	// object
 
 	UPROPERTY(EditAnywhere)
-	AProjectile* Projectile;	// object
+	TSubclassOf<AProjectileEqBased> ProjectileEqBasedFactory;		// class
 
-	
+	UPROPERTY(EditAnywhere)
+	AProjectileEqBased* ProjectileEqBased;	// object
 
 };

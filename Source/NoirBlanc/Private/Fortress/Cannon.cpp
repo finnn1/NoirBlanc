@@ -10,6 +10,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Fortress/Projectile.h"
+#include "Fortress/ProjectileEqBased.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
@@ -96,6 +97,18 @@ void ACannon::ProjectileDir(const FInputActionValue& Value)
 
 void ACannon::Fire(const FInputActionValue& Value)
 {
+	if (ProjectileEqBasedFactory)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		
+		ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
+			SpawnLocation->GetComponentLocation(), SpawnLocation->GetComponentRotation(), SpawnParams);
+	}
+}
+
+/*void ACannon::Fire(const FInputActionValue& Value)
+{
 	if (ProjectileFactory)
 	{
 		FRotator ProjectileRotation = Muzzle->GetComponentRotation();
@@ -106,19 +119,9 @@ void ACannon::Fire(const FInputActionValue& Value)
 		
 		Projectile = GetWorld()->SpawnActor<AProjectile>(ProjectileFactory,
 			SpawnLocation->GetComponentLocation(), SpawnLocation->GetComponentRotation(), SpawnParams);
-		
-		
-		//	UE_LOG(LogTemp, Warning, TEXT("%s"), *ProjectileRotation.ToString());
-		
-		//UE_LOG(LogTemp, Warning, TEXT("%s"), *Projectile->LaunchDirection.ToString());
-		// Projectile->Owner = this;
-		// UE_LOG(LogTemp, Warning, TEXT("%s"), *Projectile->GetOwner()->GetName());
-		// GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Black, FString::Printf(TEXT("%s"), *Muzzle->GetComponentLocation().ToString()));
-		// GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("%s"), *Projectile->GetActorLocation().ToString()));
-
 	}
 	// CreateDefaultSubobject is for generating component
-}
+}*/
 
 void ACannon::Force(const FInputActionValue& Value)
 {

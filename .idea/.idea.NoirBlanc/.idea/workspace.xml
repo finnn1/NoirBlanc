@@ -9,15 +9,9 @@
   <component name="ChangeListManager">
     <list default="true" id="70dd1107-ce6d-4ffb-bc27-d10c5b592b41" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.NoirBlanc/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.NoirBlanc/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEditor.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEditor.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Level/Lv_ChessBoard.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Level/Lv_ChessBoard.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NoirBlanc.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/NoirBlanc.uproject" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NoirBlanc.Target.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NoirBlanc.Target.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NoirBlanc/NoirBlanc.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NoirBlanc/NoirBlanc.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NoirBlanc/NoirBlanc.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NoirBlanc/NoirBlanc.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NoirBlanc/NoirBlanc.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NoirBlanc/NoirBlanc.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NoirBlancEditor.Target.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NoirBlancEditor.Target.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Content_Fortress/Blueprint/BP_Cannon.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Content_Fortress/Blueprint/BP_Cannon.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/NoirBlanc/Private/Fortress/Cannon.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NoirBlanc/Private/Fortress/Cannon.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/NoirBlanc/Public/Fortress/Cannon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NoirBlanc/Public/Fortress/Cannon.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,9 +44,11 @@
     <setting file="file://$PROJECT_DIR$/Source/NoirBlanc/Private/Fortress/CannonGameBase.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/NoirBlanc/Private/Fortress/FortressGameBase.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/NoirBlanc/Private/Fortress/Projectile.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/NoirBlanc/Private/Fortress/ProjectileEqBased.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/NoirBlanc/Public/Fortress/CannonGameBase.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/NoirBlanc/Public/Fortress/FortressGameBase.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/NoirBlanc/Public/Fortress/Projectile.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/NoirBlanc/Public/Fortress/ProjectileEqBased.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
@@ -545,6 +541,7 @@
       <workItem from="1731996786789" duration="5897000" />
       <workItem from="1732005474197" duration="7172000" />
       <workItem from="1732086067736" duration="15442000" />
+      <workItem from="1732107396623" duration="2432000" />
     </task>
     <servers />
   </component>
