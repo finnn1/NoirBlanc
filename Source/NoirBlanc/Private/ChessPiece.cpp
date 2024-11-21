@@ -8,6 +8,7 @@ AChessPiece::AChessPiece()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CompMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CompMesh"));
+	CompMesh->SetSimulatePhysics(true);
 	RootComponent = CompMesh;
 }
 // Called when the game starts or when spawned
@@ -16,7 +17,7 @@ void AChessPiece::BeginPlay()
 	Super::BeginPlay();
 	
 	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle,this, &AChessPiece::SetPieceMesh, 1.f, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle,this, &AChessPiece::SetPieceMesh, 0.2f, false);
 }
 
 EPieceType AChessPiece::GetPieceType()
@@ -77,7 +78,6 @@ void AChessPiece::SetPieceMesh()
 		if(PieceColor == EPieceColor::Black)
 		{
 			CompMesh->SetStaticMesh(Meshes[6]);
-			GEngine->AddOnScreenDebugMessage(1, 3, FColor::Red, "Check");
 		}
 		else
 		{

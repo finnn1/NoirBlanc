@@ -24,7 +24,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
+
+//////////////////////////////////////////
+/////Variable
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	UStaticMeshComponent* MeshComp;
@@ -34,6 +36,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TSubclassOf<AChessPiece> PieceClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	AChessPiece* SelectedPiece;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	ABoardFloor* TargetFloor;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
@@ -43,8 +51,24 @@ protected:
 	TArray<ABoardFloor*> BoardFloors;
 private:
 	const int32 Chess_Num  = 8;
+	bool bIsClickedOnce = false;
+	bool bIsClickedTwice = false;
 
+	UPROPERTY()
+	class AChessPlayerController* Controller;
+
+	UPROPERTY()
+	ABoardFloor* ClickedFloor_1 = nullptr;
+
+	UPROPERTY()
+	ABoardFloor* ClickedFloor_2 = nullptr;
+
+//////////////////////////////////////////
+/////FUNCTION
 public:
+	UFUNCTION()
+	void ClickFloor();
+	void MovePiece();
 	
 protected:
 	UFUNCTION()
@@ -55,4 +79,7 @@ protected:
 
 	UFUNCTION()
 	void InitPiece(int32 num, EPieceType type, EPieceColor color);
+
+private:
+	
 };
