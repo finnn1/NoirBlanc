@@ -120,7 +120,6 @@ void ABishopPawn::ServerRPC_UpdateText_Implementation(const FText& InputedText)
 	if (BishopGameMode == nullptr) return;
 
 	BishopGameMode->UpdateInputtedText(InputedText);
-	// MulticastRPC_SetUITextTo(InputedText, BishopGameMode->CurrentTextToType);
 }
 
 void ABishopPawn::CommitText(const FText& TypedText)

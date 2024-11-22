@@ -76,37 +76,6 @@ void ABishopGameMode::BeginPlay()
 
 	FText RandomText = PickRandomText();
 	CurrentTextToType = RandomText;
-
-	// TArray<AActor*> AllPlayerControllers;
-	// UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerController::StaticClass(), AllPlayerControllers);
-	// for (AActor* PlayerController : AllPlayerControllers)
-	// {
-	// 	ABishopGamePlayerController* _PlayerController = Cast<ABishopGamePlayerController>(PlayerController);
-	// 	if (_PlayerController == nullptr) continue;
-	// 	ANoirBlancPlayerState* NoirBlancPlayerState = Cast<ANoirBlancPlayerState>(_PlayerController->PlayerState);
-	// 	// If Bishop
-	// 	if (NoirBlancPlayerState->bIsAttaker == false)
-	// 	{
-	// 		// Spawn Bishop pawn
-	// 		FActorSpawnParameters SpawnParameters;
-	// 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	// 		APawn* NewBishopPawn = GetWorld()->SpawnActor<ABishopPawn>(BishopPawnClass,
-	// 		                                                           AllStartPoints[0]->GetActorLocation(),
-	// 		                                                           FRotator(0, 180, 0), SpawnParameters);
-	// 		// Possess controller to Bishop pawn
-	// 		_PlayerController->Possess(NewBishopPawn);
-	// 	}
-	// 	else
-	// 	{
-	// 		// Spawn Tagger character
-	// 		FActorSpawnParameters SpawnParameters;
-	// 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	// 		ACharacter* NewTaggerCharacter = GetWorld()->SpawnActor<ATP_ThirdPersonCharacter>(
-	// 			TaggerPlayerClass, AllStartPoints[1]->GetActorLocation(), FRotator(0, 0, 0), SpawnParameters);
-	// 		// Possess controller to Tagger character
-	// 		_PlayerController->Possess(NewTaggerCharacter);
-	// 	}
-	// }
 }
 
 bool ABishopGameMode::CheckCommittedText(const FText& TypedText)
@@ -178,7 +147,8 @@ void ABishopGameMode::CommitText(const FText& TypedText)
 					BishopGamePlayerController->GetPawn());
 				if (TaggerCharacter)
 				{
-					// // 무기 소환!
+					// 무기 소환!
+					// -> 근데 엔진에서 Replicated 체크 해줘가지고 걍 한쪽에서만 소환해줘도 자동 동기화 됨. 나이스
 					// if (!SpawnPoint.IsNearlyZero())
 					// {
 					// 	TaggerCharacter->MulticastRPC_SpawnWeapon(SpawnPoint, SpawnRotation, BishopWeaponClass);
