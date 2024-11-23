@@ -8,7 +8,7 @@ UTurnCardActorComp::UTurnCardActorComp()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 	StartTurnFloat.BindUFunction(this, FName("StartTurnLerp"));
@@ -35,31 +35,21 @@ void UTurnCardActorComp::BeginPlay()
 		Timeline->SetLooping(false);
 		Timeline->SetTimelineLength(0.3f);
 	}
-	
-}
-
-
-// Called every frame
-void UTurnCardActorComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 void UTurnCardActorComp::TurnSelectCard(APawnCard* TargetCard)
 {
+	if(Timeline->IsPlaying()) return;
+	
 	if(FirstSelectedCard.IsValid())
 	{
 		//이미 첫 번째 카드를 선택했으면 체크
 		SecondSelectedCard = TargetCard;
-		UE_LOG(LogTemp, Warning, TEXT("세컨드로"));
 	}
 	else
 	{
 		//아무 것도 선택 안 했으면 FirstSelectCard에 할당
 		FirstSelectedCard = TargetCard;
-		UE_LOG(LogTemp, Warning, TEXT("퍼스트로"));
 	}
 	
 	Timeline->PlayFromStart();
@@ -68,9 +58,6 @@ void UTurnCardActorComp::TurnSelectCard(APawnCard* TargetCard)
 
 void UTurnCardActorComp::RollbackCard(APawnCard* FirstSel, APawnCard* SecondSel)
 {
-	/*FirstSelectedCard = FirstSel;
-	SecondSelectedCard = SecondSel;
-	UE_LOG(LogTemp, Warning, TEXT("Fist is %s, %d\n second is %s, %d"), *FirstSel->GetName(), FirstSel->FrontBackState, *SecondSel->GetName(), SecondSel->FrontBackState);*/
 	CardsReturnToBack.Empty();
 	
 	FirstSelectedCard = nullptr;
@@ -80,9 +67,6 @@ void UTurnCardActorComp::RollbackCard(APawnCard* FirstSel, APawnCard* SecondSel)
 	CardsReturnToBack.Add(SecondSel);
 	
 	Timeline->PlayFromStart();
-
-	//FirstSel->ChangeFrontBackState();
-	//SecondSel->ChangeFrontBackState();
 }
 
 
@@ -126,7 +110,6 @@ void UTurnCardActorComp::EndTurnLerp()
 	if(SecondSelectedCard.IsValid())
 	{
 		SecondSelectedCard.Get()->ChangeFrontBackState();
-		//UE_LOG(LogTemp, Warning, TEXT("second is %s, %d"), *SecondSelectedCard->GetName(), SecondSelectedCard->FrontBackState);
 
 		if(FirstSelectedCard.IsValid() && FirstSelectedCard.Get()->FrontBackState == CardState::Front && SecondSelectedCard.Get()->FrontBackState == CardState::Front)
 		{
@@ -136,8 +119,18 @@ void UTurnCardActorComp::EndTurnLerp()
 	else if(FirstSelectedCard.IsValid())
 	{
 		FirstSelectedCard.Get()->ChangeFrontBackState();
-		//UE_LOG(LogTemp, Warning, TEXT("Fist is %s, %d"), *FirstSelectedCard->GetName(), FirstSelectedCard->FrontBackState);
 	}
-	
+
+	if(CardsReturnToBack.Num() > 0)
+	{
+		for(int i=0; i<CardsReturnToBack.Num(); i++)
+		{
+			if(CardsReturnToBack[i]->FrontBackState == CardState::Front)
+			{
+				CardsReturnToBack[i]->ChangeFrontBackState();
+				break;
+			}
+		}
+	}
 }
 
