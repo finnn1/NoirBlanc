@@ -20,19 +20,19 @@ class NOIRBLANC_API APawnCardGameMode : public AGameModeBase
 public:
 	virtual void BeginPlay() override;
 	
-	FOnTurnStart OnTurnStart;
-	FOnTurnEnd OnTurnEnd;
-	
 	UPROPERTY(EditDefaultsOnly)
 	APawnCardController* TurnPlayer;
 
 	UPROPERTY(VisibleAnywhere)
 	TArray<APawnCard*> PawnCards;
+
+	FOnTurnStart OnTurnStart;
+	FOnTurnEnd OnTurnEnd;
 	
 	void InitPawnCardGame();
 	
 	void TurnStart();
-	void TurnEnd();
+	void TurnEnd(APawnCardController* EndPlayer);
 	void ChangePlayerTurn();
 
 	void GameEnd();

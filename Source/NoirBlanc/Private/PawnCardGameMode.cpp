@@ -33,36 +33,31 @@ void APawnCardGameMode::InitPawnCardGame()
 	
 	if(TurnPlayer)
 	{
-		TurnPlayer->SetTurnOwner(true);
 		TurnStart();
 	}
 }
 
 void APawnCardGameMode::TurnStart()
 {
-	//TODO 위젯 처리
-	
+	TurnPlayer->SetTurnOwner(true);
 	OnTurnStart.Broadcast();
 }
 
-void APawnCardGameMode::TurnEnd()
+void APawnCardGameMode::TurnEnd(APawnCardController* EndPlayer)
 {
 	for(APawnCard* PawnCard : PawnCards)
 	{
 		if(PawnCard->FrontBackState == CardState::Front)
 		{
-			PawnCard->InitCard();
-			TurnPlayer->ReturnCardBack(PawnCard);
+			UE_LOG(LogTemp, Warning, TEXT("Front Card is %s"), *PawnCard->GetName());
 		}
 	}
-	
+	EndPlayer->SetTurnOwner(false);
 	OnTurnEnd.Broadcast();
 }
 
 void APawnCardGameMode::ChangePlayerTurn()
 {
-	//TurnPlayer->SetTurnOwner(false);
-	
 	//TODO 플레이어 교체
 	/*
 	 *TurnPlayer =

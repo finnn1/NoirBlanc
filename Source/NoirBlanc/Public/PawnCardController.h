@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "InputAction.h"
-#include "Components/TimelineComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "PawnCardController.generated.h"
 
@@ -15,6 +14,7 @@ class APawnCard;
 class APawnCardGameMode;
 class UInputMappingContext;
 class UInputAction;
+class UPlayerUI;
 UCLASS()
 class NOIRBLANC_API APawnCardController : public APlayerController
 {
@@ -29,15 +29,11 @@ protected:
 
 public:
 	//TWeakObjectPtr<APawnCard> FirstSelectedCard;
-	TWeakObjectPtr<APawnCard> FirstSelectedCard;
-	TWeakObjectPtr<APawnCard> SecondSelectedCard;
+	//TWeakObjectPtr<APawnCard> SecondSelectedCard;
 
 	UPROPERTY()
 	APawnCard* TargetCard;
 	
-	UPROPERTY()
-	APawnCard* TempCard;
-
 	//Input 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	UInputMappingContext* InputMapping;
@@ -47,6 +43,11 @@ public:
 
 	UPROPERTY()
 	APawnCardGameMode* GameMode;
+	
+	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UPlayerUI> TSubPlayerUI;
+	UPROPERTY()
+	UPlayerUI* PlayerUI; 
 
 	UPROPERTY()
 	int32 PlayerScore = 0;
@@ -57,15 +58,27 @@ public:
 	void InitPlayerSettings();
 
 	//턴 끝
-	void TurnEnd();
+	UFUNCTION()
+	void PlayerTurnEnd();
 
 	//카드 선택 함수
 	void SelectCard(const FInputActionValue& Value);
 	
 	//카드의 매칭 여부 확인 함수
-	bool IsCheckCardMatch();
+	UFUNCTION()
+	bool IsCheckCardMatch(APawnCard* FirstSelectedCard, APawnCard* SecondSelectedCard);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
+	void InitPlayerUI();
+
+	void SetTurnOwner(bool IsOwner);
+	bool GetTurnOwner();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTurnCardActorComp* TurnCardComp;
+	
+protected:
+
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
 	class UTimelineComponent* Timeline;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
@@ -78,12 +91,7 @@ public:
 	void StartTurnLerp(float value);
 
 	UFUNCTION()
-	void EndTurnLerp();
-
-	void SetTurnOwner(bool IsOwner);
-	bool GetTurnOwner();
-
-	void ReturnCardBack(APawnCard* PawnCard);
+	void EndTurnLerp();*/
 
 private:
 	bool IsTurnOwner = false;

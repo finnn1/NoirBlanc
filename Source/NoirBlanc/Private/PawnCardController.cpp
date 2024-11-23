@@ -9,12 +9,20 @@
 #include "EnhancedInputSubsystems.h"
 #include "PawnCard.h"
 #include "PawnCardDataAsset.h"
+#include "PlayerUI.h"
+#include "TurnCardActorComp.h"
 
 APawnCardController::APawnCardController()
 {
-	Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
+	/*Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 	StartTurnFloat.BindUFunction(this, FName("StartTurnLerp"));
-	EndTurnEvent.BindUFunction(this, FName("EndTurnLerp"));
+	EndTurnEvent.BindUFunction(this, FName("EndTurnLerp"));*/
+
+	TurnCardComp = CreateDefaultSubobject<UTurnCardActorComp>(TEXT("TurnCardActorComp"));
+	if(TurnCardComp)
+	{
+		TurnCardComp->OnFinishCardTurn.AddUFunction(this, FName("IsCheckCardMatch"));
+	}
 }
 
 void APawnCardController::BeginPlay()
@@ -28,7 +36,7 @@ void APawnCardController::BeginPlay()
 	if(GameMode)
 	{
 		GameMode->OnTurnStart.AddDynamic(this, &APawnCardController::InitPlayerSettings);
-		GameMode->OnTurnEnd.AddDynamic(this, &APawnCardController::InitPlayerSettings);
+		GameMode->OnTurnEnd.AddDynamic(this, &APawnCardController::PlayerTurnEnd);
 	}
 	
 	if(APlayerController* PlayerController = Cast<APlayerController>(this))
@@ -41,14 +49,16 @@ void APawnCardController::BeginPlay()
 		}
 	}
 
-	if (MovingCurve)
+	/*if (MovingCurve)
 	{
 		Timeline->AddInterpFloat(MovingCurve, StartTurnFloat);
 		Timeline->SetTimelineFinishedFunc(EndTurnEvent);
 		
 		Timeline->SetLooping(false);
 		Timeline->SetTimelineLength(0.3f);
-	}
+	}*/
+
+	InitPlayerUI();
 }
 
 void APawnCardController::SetupInputComponent()
@@ -66,13 +76,19 @@ void APawnCardController::InitPlayerSettings()
 	//마우스 커서 보이게 하기
 	bShowMouseCursor = true;
 
-	FirstSelectedCard = nullptr;
-	SecondSelectedCard = nullptr;
+	//FirstSelectedCard = nullptr;
+	//SecondSelectedCard = nullptr;
+
+	if(PlayerUI)
+	{
+		PlayerUI->ShowTurnStart();
+	}
 }
 
 void APawnCardController::SelectCard(const FInputActionValue& Value)
 {
-	if(Timeline->IsPlaying()) return;
+	//if(Timeline->IsPlaying()) return;
+	if(!GetTurnOwner()) return;
 	
 	FHitResult Hit;
 	GetHitResultUnderCursor(ECC_Visibility, false, Hit);
@@ -80,24 +96,25 @@ void APawnCardController::SelectCard(const FInputActionValue& Value)
 	if(Hit.bBlockingHit)
 	{
 		TargetCard = Cast<APawnCard>(Hit.GetActor());
-		if(TargetCard)
+		if(TargetCard && TurnCardComp)
 		{
-			if(FirstSelectedCard.IsValid())
+			UE_LOG(LogTemp, Warning, TEXT("Selected Card is %s"), *TargetCard->GetName());
+			TurnCardComp->TurnSelectCard(TargetCard);
+			
+			/*if(FirstSelectedCard.IsValid())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("FirstSelectedCard Is Valid"));
 				//이미 첫 번째 카드를 선택했으면 체크
 				SecondSelectedCard = TargetCard;
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("FirstSelectedCard Not Valid"));
 				//아무 것도 선택 안 했으면 FirstSelectCard에 할당
 				FirstSelectedCard = TargetCard;
 			}
 			
 			//앞면으로 오픈
 			Timeline->PlayFromStart();
-			TargetCard->Selected();
+			TargetCard->Selected();*/
 		}
 		else
 		{
@@ -110,41 +127,63 @@ void APawnCardController::SelectCard(const FInputActionValue& Value)
 	}
 }
 
-bool APawnCardController::IsCheckCardMatch()
+bool APawnCardController::IsCheckCardMatch(APawnCard* FirstSelectedCard, APawnCard* SecondSelectedCard)
 {
-	if(!FirstSelectedCard.IsValid() || !SecondSelectedCard.IsValid()) return false;
+	UE_LOG(LogTemp, Warning, TEXT("%s and %s"), *FirstSelectedCard->GetName(), *SecondSelectedCard->GetName());
+	if(!FirstSelectedCard || !SecondSelectedCard) return false;
 
 	bool bIsMatch = false;
 	
-	PawnCardType SelectedCardType = FirstSelectedCard.Get()->PawnCardData->PawnCardType;
-	PawnCardType TargetCardType = SecondSelectedCard.Get()->PawnCardData->PawnCardType;
-
-	UE_LOG(LogTemp, Warning, TEXT("Matching PawnCardType: basic is %d, target is %d")
-			, SelectedCardType, TargetCardType);
+	PawnCardType SelectedCardType = FirstSelectedCard->PawnCardData->PawnCardType;
+	PawnCardType TargetCardType = SecondSelectedCard->PawnCardData->PawnCardType;
 	
 	if(SelectedCardType == TargetCardType)
 	{
 		bIsMatch = true;
 		
-		FirstSelectedCard.Get()->SuccessMatching(this);
-		SecondSelectedCard.Get()->SuccessMatching(this);
+		FirstSelectedCard->SuccessMatching(this);
+		SecondSelectedCard->SuccessMatching(this);
 		
-		FirstSelectedCard.Get()->Destroy();
-		SecondSelectedCard.Get()->Destroy();
-		
-		UE_LOG(LogTemp, Warning, TEXT("Matching Success!!!!!"));
+		FirstSelectedCard->Destroy();
+		SecondSelectedCard->Destroy();
+
+		if(PlayerUI)
+		{
+			PlayerUI->IncreaseScore();
+		}
+	}
+	else
+	{
+		TurnCardComp->RollbackCard(FirstSelectedCard, SecondSelectedCard);
 	}
 	
 	return bIsMatch;
 }
 
-void APawnCardController::StartTurnLerp(float value)
+void APawnCardController::InitPlayerUI()
+{
+	PlayerUI = Cast<UPlayerUI>(CreateWidget(GetWorld(), TSubPlayerUI));
+
+	if(PlayerUI)
+	{
+		PlayerUI->AddToViewport();
+
+		PlayerUI->HideTurnStart();
+		PlayerUI->HideTurnEnd();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("InitPlayerUI is Failed"));
+	}
+}
+
+/*void APawnCardController::StartTurnLerp(float value)
 {
 	if(!TargetCard) return;
 	
 	FRotator FrontRotation = FRotator(0,180,0);
 	FRotator BackRotation = FRotator::ZeroRotator;
-	
+	UE_LOG(LogTemp, Warning, TEXT("FirstSelectedCard is : %s"), *(FirstSelectedCard.IsValid() ? FString("Valid") : FString("Not Valid")));
 	if(TargetCard->FrontBackState == CardState::Front)
 	{
 		//뒷면으로
@@ -166,7 +205,6 @@ void APawnCardController::StartTurnLerp(float value)
 void APawnCardController::EndTurnLerp()
 {
 	TargetCard->ChangeFrontBackState();
-
 	if(SecondSelectedCard.IsValid())
 	{
 		if(IsCheckCardMatch())
@@ -176,8 +214,8 @@ void APawnCardController::EndTurnLerp()
 		else
 		{
 			Timeline->PlayFromStart();
-			UE_LOG(LogTemp, Warning, TEXT("턴은 끝"));
-			//TurnEnd();
+
+			GameMode->TurnEnd(this);
 		}
 	}
 	else
@@ -187,28 +225,22 @@ void APawnCardController::EndTurnLerp()
 		{
 			if(FMath::IsNearlyEqual(FirstSelectedCard.Get()->GetActorRotation().Yaw, 0, 0.1))
 			{
+				FirstSelectedCard->ChangeFrontBackState();
 				FirstSelectedCard = nullptr;
 			}
 		}
 	}
-}
+}*/
 
-void APawnCardController::ReturnCardBack(APawnCard* PawnCard)
-{
-	if(PawnCard && !PawnCard->GetOwnerPlayer())
-	{
-		TargetCard = PawnCard;
-		Timeline->PlayFromStart();
-	}
-}
 
-void APawnCardController::TurnEnd()
+void APawnCardController::PlayerTurnEnd()
 {
-	if(GameMode)
+	if(PlayerUI)
 	{
-		bShowMouseCursor = false;
-		GameMode->TurnEnd();
+		PlayerUI->ShowTurnEnd();
 	}
+
+	bShowMouseCursor = false;
 }
 
 
