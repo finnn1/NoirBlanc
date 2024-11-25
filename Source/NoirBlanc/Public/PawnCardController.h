@@ -74,9 +74,6 @@ public:
 	void SetTurnOwner(bool IsOwner);
 	bool GetTurnOwner();
 
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTurnCardActorComp* TurnCardComp;*/
-
 	UFUNCTION(NetMulticast, reliable)
 	void MulticastRPC_IncreaseScore();
 

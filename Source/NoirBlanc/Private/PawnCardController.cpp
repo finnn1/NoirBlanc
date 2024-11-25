@@ -17,12 +17,6 @@ APawnCardController::APawnCardController()
 	Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 	StartTurnFloat.BindUFunction(this, FName("StartTurnLerp"));
 	EndTurnEvent.BindUFunction(this, FName("EndTurnLerp"));
-
-	/*TurnCardComp = CreateDefaultSubobject<UTurnCardActorComp>(TEXT("TurnCardActorComp"));
-	if(TurnCardComp)
-	{
-		TurnCardComp->OnFinishCardTurn.AddUFunction(this, FName("IsCheckCardMatch"));
-	}*/
 }
 
 void APawnCardController::BeginPlay()
@@ -100,6 +94,7 @@ void APawnCardController::InitPlayerSettings()
 
 void APawnCardController::SelectCard(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Selected"));
 	if(Timeline->IsPlaying()) return;
 	if(!GetTurnOwner()) return;
 	
@@ -109,10 +104,8 @@ void APawnCardController::SelectCard(const FInputActionValue& Value)
 	if(Hit.bBlockingHit)
 	{
 		TargetCard = Cast<APawnCard>(Hit.GetActor());
-		if(TargetCard /*&& TurnCardComp*/)
+		if(TargetCard)
 		{
-			//TurnCardComp->TurnSelectCard(TargetCard);
-			
 			if(FirstSelectedCard.IsValid())
 			{
 				//이미 첫 번째 카드를 선택했으면 체크
@@ -161,11 +154,7 @@ bool APawnCardController::IsCheckCardMatch(/*APawnCard* FirstSelectedCard, APawn
 
 		MulticastRPC_IncreaseScore();
 	}
-	/*else
-	{
-		TurnCardComp->RollbackCard(FirstSelectedCard, SecondSelectedCard);
-	}*/
-	
+
 	return bIsMatch;
 }
 
