@@ -12,5 +12,15 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+.idea
 
 .idea
+Content/ChiHeon
+Content/__ExternalActors__
+Content/__ExternalObjects__
+Content/Characters/Mannequins
+Content/Characters/Mannequin_UE4
+Content/LevelPrototyping
+Content/ThirdPerson
+.idea
+Content/woohui/
