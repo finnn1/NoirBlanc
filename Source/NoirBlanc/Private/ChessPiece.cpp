@@ -1,5 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "ChessPiece.h"
+#include "Components/BoxComponent.h"
+
+#include "HLSLTree/HLSLTreeTypes.h"
 
 // Sets default values
 AChessPiece::AChessPiece()
@@ -10,6 +13,10 @@ AChessPiece::AChessPiece()
 	CompMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CompMesh"));
 	CompMesh->SetSimulatePhysics(true);
 	RootComponent = CompMesh;
+
+	CompBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CompBox"));
+	CompBox->SetupAttachment(RootComponent);
+	CompBox->SetWorldScale3D(FVector(10.f, 10.f, 15.f));
 }
 // Called when the game starts or when spawned
 void AChessPiece::BeginPlay()
@@ -30,6 +37,11 @@ EPieceColor AChessPiece::GetPieceColor()
 	return PieceColor;
 }
 
+ABoardFloor* AChessPiece::GetFloorBeneathPiece()
+{
+	return FloorBeneathPiece;
+}
+
 void AChessPiece::SetPieceType(EPieceType Type)
 {
 	PieceType = Type;
@@ -38,6 +50,21 @@ void AChessPiece::SetPieceType(EPieceType Type)
 void AChessPiece::SetPieceColor(EPieceColor Color)
 {
 	PieceColor = Color;
+}
+
+void AChessPiece::SetFloorBeneathPiece(ABoardFloor* Floor)
+{
+	FloorBeneathPiece = Floor;
+}
+
+void AChessPiece::IncreaseMoveCount()
+{
+	MoveCount++;
+}
+
+int32 AChessPiece::GetMoveCount()
+{
+	return MoveCount;
 }
 
 void AChessPiece::SetPieceMesh()

@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "BoardFloor.generated.h"
 
+class UBoxComponent;
 class AChessPiece;
 UCLASS()
 class NOIRBLANC_API ABoardFloor : public AActor
@@ -28,7 +29,22 @@ public:
 	int32 GetCol();
 	void SetRow(int32 Row);
 	void SetCol(int32 Col);
+	
+	void ToggleGreen();
+	void ToggleRed();
+	void ToggleBlue();
+//////////Variables
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompCollision")
+	UBoxComponent* CompBox;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompGreen")
+	UStaticMeshComponent* CompGreen;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompBlue")
+	UStaticMeshComponent* CompBlue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompRed")
+	UStaticMeshComponent* CompRed;
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "FloorInfo")
 	AChessPiece* PieceOnFloor = nullptr;

@@ -38,17 +38,26 @@ public:
 	TSubclassOf<AChessPiece> PieceClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
-	AChessPiece* SelectedPiece;
+	AChessPiece* SelectedPiece = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
-	ABoardFloor* TargetFloor;
+	ABoardFloor* SelectedFloor = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	AChessPiece* TargetPiece = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	ABoardFloor* TargetFloor = nullptr;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
-	TArray<EPieceType> PiecesOnBoard;
+	TArray<ABoardFloor*> BoardFloors;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
-	TArray<ABoardFloor*> BoardFloors;
+	TArray<ABoardFloor*> MovableFloors;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	TArray<ABoardFloor*> AttackableFloors;
 private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickedOnce = false;
@@ -56,23 +65,23 @@ private:
 
 	UPROPERTY()
 	class AChessPlayerController* Controller;
-
-	UPROPERTY()
-	ABoardFloor* ClickedFloor_1 = nullptr;
-
-	UPROPERTY()
-	ABoardFloor* ClickedFloor_2 = nullptr;
-
+	
 //////////////////////////////////////////
 /////FUNCTION
 public:
 	UFUNCTION()
 	void ClickFloor();
+	
 	void MovePiece();
+
+	UFUNCTION()
+	void PieceEncounter(AChessPiece* Selected, AChessPiece* Target);
+
+	void MoveEnd();
 	
 protected:
 	UFUNCTION()
-	ABoardFloor* SpawnFloor(int32 col, int32 row);
+	ABoardFloor* SpawnFloor(int32 row, int32 col);
 
 	UFUNCTION()
 	void InitBoard();
@@ -80,6 +89,11 @@ protected:
 	UFUNCTION()
 	void InitPiece(int32 num, EPieceType type, EPieceColor color);
 
+	UFUNCTION()
+	void ShowMovableFloors(ABoardFloor* Point);
+
+	UFUNCTION()
+	void ShowPawnFloors(EPieceColor Color, int32 Row, int32 Col, int32 MoveCount);
 private:
 	
 };
