@@ -4,7 +4,7 @@
 #include "BishopPawn.h"
 #include "BishopGameMode.h"
 #include "TypingUIWidget.h"
-#include "Weapon.h"
+#include "BishopWeapon.h"
 #include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/ArrowComponent.h"
@@ -15,18 +15,13 @@
 #include "Components/TextRenderComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
-// Sets default values
 ABishopPawn::ABishopPawn()
 {
-	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
 	RootComponent = CapsuleComponent;
-
-	DebugText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("DebugText"));
-	DebugText->SetupAttachment(RootComponent);
-
+	
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	MeshComponent->SetupAttachment(RootComponent);
 
@@ -44,7 +39,6 @@ ABishopPawn::ABishopPawn()
 	CameraComponent->SetupAttachment(SpringArmComponent);
 }
 
-// Called when the game starts or when spawned
 void ABishopPawn::BeginPlay()
 {
 	Super::BeginPlay();
@@ -74,23 +68,6 @@ void ABishopPawn::BeginPlay()
 	}
 }
 
-// Called every frame
-void ABishopPawn::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	// DebugText->SetWorldScale3D(FVector(3.f));
-	// if (GetPlayerState<ANoirBlancPlayerState>())
-	// {
-	// 	DebugText->SetText(FText::FromString(GetPlayerState()->GetActorNameOrLabel()));
-	// }
-	// else
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("GetPlayerState<ANoirBlancPlayerState Is not exist"));
-	// }
-}
-
-// Called to bind functionality to input
 void ABishopPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -102,9 +79,7 @@ void ABishopPawn::ServerRPC_SetRandomText_Implementation()
 	ABishopGameMode* BishopGameMode = Cast<ABishopGameMode>(GetWorld()->GetAuthGameMode());
 	if (BishopGameMode)
 	{
-		FText RandomText = BishopGameMode->PickRandomText();
-		// 가져온 랜덤 텍스트로 UI에 세팅하기.
-		MulticastRPC_SetUITextTo(FText::FromString(""), RandomText);
+		BishopGameMode->PickRandomTextAndUpdateUI();
 	}
 }
 
@@ -139,17 +114,18 @@ void ABishopPawn::ServerRPC_CommitText_Implementation(const FText& TypedText)
 void ABishopPawn::MulticastRPC_SpawnWeapon_Implementation(FVector Location, FRotator Rotation, UClass* WeaponClass)
 {
 	// 공격하라고 Multicast
-	GetWorld()->SpawnActor<AWeapon>(WeaponClass, Location, Rotation);
+	GetWorld()->SpawnActor<ABishopWeapon>(WeaponClass, Location, Rotation);
 }
 
 void ABishopPawn::MulticastRPC_SetUITextTo_Implementation
 (
 	const FText& InputedText,
-	const FText& NewText
+	const FText& CurrentTextToType,
+	const TArray<bool>& StringCorrectArray
 )
 {
 	if (TypingUIWidget == nullptr) return;
+	TypingUIWidget->SetStyledTextToTypeUI(CurrentTextToType, StringCorrectArray);
 	TypingUIWidget->TypedTextUI->SetText(InputedText);
-	TypingUIWidget->TextToTypeUI->SetText(NewText);
 	TypingUIWidget->UserInput->SetText(InputedText);
 }

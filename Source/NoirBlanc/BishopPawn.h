@@ -3,30 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UIUpdatable.h"
 #include "GameFramework/Pawn.h"
 #include "BishopPawn.generated.h"
 
 UCLASS()
-class NOIRBLANC_API ABishopPawn : public APawn
+class NOIRBLANC_API ABishopPawn : public APawn, public IUIUpdatable
 {
 	GENERATED_BODY()
 
-	// bool bIsBishop = false;
-
+public:
+	ABishopPawn();
+	
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<class UTypingUIWidget> TypingUIWidgetClass;
-
-	// UPROPERTY(EditAnywhere)
-	// TSubclassOf<class AWeapon> BishopWeaponClass;
 	
 	class UTypingUIWidget* TypingUIWidget;
-	
-public:
-	// Sets default values for this pawn's properties
-	ABishopPawn();
-
-	UPROPERTY(EditAnywhere)
-	class UTextRenderComponent* DebugText;
 	
 	UPROPERTY(EditAnywhere)
 	class UCapsuleComponent* CapsuleComponent;
@@ -44,31 +36,26 @@ public:
 	class USpringArmComponent* SpringArmComponent;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_SetRandomText();
+	virtual void ServerRPC_SetRandomText() override;
 
-	void UpdateText(const FText& InputedText);
+	virtual void UpdateText(const FText& InputedText) override;
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_UpdateText(const FText& InputedText);
+	virtual void ServerRPC_UpdateText(const FText& InputedText) override;
 
 	void CommitText(const FText& TypedText);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_CommitText(const FText& TypedText);
 	
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_SpawnWeapon(FVector Location, FRotator Rotation, UClass* WeaponClass);
+	virtual void MulticastRPC_SpawnWeapon(FVector Location, FRotator Rotation, UClass* WeaponClass) override;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_SetUITextTo(const FText& InputedText, const FText& NewText);
+	virtual void MulticastRPC_SetUITextTo(const FText& InputedText, const FText& CurrentTextToType, const TArray<bool>& StringCorrectArray) override;
 
 };

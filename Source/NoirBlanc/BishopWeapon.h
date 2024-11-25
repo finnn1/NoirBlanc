@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Weapon.generated.h"
+#include "BishopWeapon.generated.h"
 
 UCLASS()
-class NOIRBLANC_API AWeapon : public AActor
+class NOIRBLANC_API ABishopWeapon : public AActor
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
-	AWeapon();
+	ABishopWeapon();
 
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* BoxComponent;
@@ -31,4 +31,15 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+private:
+	UFUNCTION()
+	void OnBoxComponentOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+	);
 };

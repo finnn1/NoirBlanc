@@ -17,10 +17,8 @@ class NOIRBLANC_API ABishopGameMode : public AGameModeBase
 public:
 	ABishopGameMode();
 
-	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
-	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;	
-
 	FText CurrentTextToType;
+	FString CurrentTypedText;
 
 	UPROPERTY(EditAnywhere)
 	TArray<AActor*> AllStartPoints;
@@ -33,14 +31,26 @@ public:
 	TSubclassOf<class ACharacter> TaggerPlayerClass;
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AWeapon> BishopWeaponClass;
-	
+	TSubclassOf<class ABishopWeapon> BishopWeaponClass;
+
+	// TODO: 접근 제한자 올바르게 할당
 	bool CheckCommittedText(const FText& TypedText);
 	void UpdateInputtedText(const FText& TypedText);
+	void PickRandomTextAndUpdateUI();
 	void CommitText(const FText& TypedText);
 	FText PickRandomText();
 
+	void GameOver(APawn* Winner, APawn* Loser);
+
+	bool CheckCheatting(const FText& TypedText);
+
+	void OnButtonPressed();
+	TArray<bool> CheckTypingCorrect(const FText& TypedText);
+	
 protected:
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
+	
 	virtual void BeginPlay() override;
 	
 

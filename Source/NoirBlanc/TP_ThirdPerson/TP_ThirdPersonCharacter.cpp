@@ -17,7 +17,7 @@
 #include "NoirBlanc/BishopGameMode.h"
 #include "NoirBlanc/NoirBlancPlayerState.h"
 #include "NoirBlanc/TypingUIWidget.h"
-#include "NoirBlanc/Weapon.h"
+#include "NoirBlanc/BishopWeapon.h"
 
 class ANoirBlancPlayerState;
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -112,7 +112,7 @@ void ATP_ThirdPersonCharacter::ServerRPC_UpdateText_Implementation(const FText& 
 void ATP_ThirdPersonCharacter::MulticastRPC_SpawnWeapon_Implementation(FVector Location, FRotator Rotation, UClass* WeaponClass)
 {
 	// 공격하라고 Multicast
-	GetWorld()->SpawnActor<AWeapon>(WeaponClass, Location, Rotation);
+	GetWorld()->SpawnActor<ABishopWeapon>(WeaponClass, Location, Rotation);
 }
 
 void ATP_ThirdPersonCharacter::MulticastRPC_SetUITextTo_Implementation

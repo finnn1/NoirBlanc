@@ -1,15 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "BishopGameMode.h"
-#include "BishopGamePlayerController.h"
 #include "BishopPawn.h"
 #include "NoirBlancPlayerState.h"
 #include "Components/ArrowComponent.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 #include "TP_ThirdPerson/TP_ThirdPersonCharacter.h"
-#include "Weapon.h"
+#include "BishopWeapon.h"
 
 ABishopGameMode::ABishopGameMode()
 {
@@ -86,26 +84,47 @@ bool ABishopGameMode::CheckCommittedText(const FText& TypedText)
 
 void ABishopGameMode::UpdateInputtedText(const FText& TypedText)
 {
-	TArray<AActor*> AllPlayerControllers;
-	UGameplayStatics::GetAllActorsOfClass(this, ABishopGamePlayerController::StaticClass(), AllPlayerControllers);
-	for (const AActor* PlayerController : AllPlayerControllers)
-	{
-		const ABishopGamePlayerController* BishopGamePlayerController = Cast<ABishopGamePlayerController>(
-			PlayerController);
-		if (BishopGamePlayerController)
-		{
-			ABishopPawn* BishopPawn = Cast<ABishopPawn>(BishopGamePlayerController->GetPawn());
-			if (BishopPawn)
-			{
-				BishopPawn->MulticastRPC_SetUITextTo(TypedText, CurrentTextToType);
-			}
+	TArray<bool> StringCorrectArray = CheckTypingCorrect(TypedText);
 
-			ATP_ThirdPersonCharacter* TaggerCharacter = Cast<ATP_ThirdPersonCharacter>(
-				BishopGamePlayerController->GetPawn());
-			if (TaggerCharacter)
+	TArray<AActor*> AllPawns;
+	UGameplayStatics::GetAllActorsOfClass(this, APawn::StaticClass(), AllPawns);
+	for (AActor* _Pawn : AllPawns)
+	{
+		// UIUpdatable 인터페이스 구현 여부 확인
+		if (_Pawn && _Pawn->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+		{
+			// 복붙 했는지 검사
+			bool bIsCheatting = CheckCheatting(TypedText);
+			if (bIsCheatting)
 			{
-				TaggerCharacter->MulticastRPC_SetUITextTo(TypedText, CurrentTextToType);
+				// 복붙했으면 입력한 내용 다 초기화 시켜버리기
+				UE_LOG(LogTemp, Warning, TEXT("Don't cheat!! GO AWAY!!!!"));
+				IUIUpdatable::Execute_MulticastRPC_SetUITextTo(_Pawn, FText::FromString(""), CurrentTextToType, TArray<bool>());
+				CurrentTypedText = TEXT("");
 			}
+			else
+			{
+				CurrentTypedText = TypedText.ToString();
+				// 메시지 호출
+				IUIUpdatable::Execute_MulticastRPC_SetUITextTo(_Pawn, TypedText, CurrentTextToType, StringCorrectArray);
+			}
+		}
+	}
+}
+
+void ABishopGameMode::PickRandomTextAndUpdateUI()
+{
+	FText RandomText = PickRandomText();
+
+	TArray<AActor*> AllPawns;
+	UGameplayStatics::GetAllActorsOfClass(this, APawn::StaticClass(), AllPawns);
+	for (AActor* _Pawn : AllPawns)
+	{
+		// UIUpdatable 인터페이스 구현 여부 확인
+		if (_Pawn && _Pawn->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+		{
+			// 메시지 호출
+			IUIUpdatable::Execute_MulticastRPC_SetUITextTo(_Pawn, FText::FromString(""), CurrentTextToType, TArray<bool>());
 		}
 	}
 }
@@ -119,44 +138,25 @@ void ABishopGameMode::CommitText(const FText& TypedText)
 	if (bIsCorrect)
 	{
 		FText _RandomText = PickRandomText(); // 새로운 문장 생성
-		
-		TArray<AActor*> AllPlayerControllers;
-		UGameplayStatics::GetAllActorsOfClass(this, ABishopGamePlayerController::StaticClass(), AllPlayerControllers);
-		
-		for (const AActor* PlayerController : AllPlayerControllers)
+
+		TArray<AActor*> AllPawns;
+		UGameplayStatics::GetAllActorsOfClass(this, APawn::StaticClass(), AllPawns);
+		for (AActor* _Pawn : AllPawns)
 		{
-			const ABishopGamePlayerController* BishopGamePlayerController = Cast<ABishopGamePlayerController>(
-				PlayerController);
-			if (BishopGamePlayerController)
+			ABishopPawn* BishopPawn = Cast<ABishopPawn>(_Pawn);
+			if (BishopPawn)
 			{
-				FVector SpawnPoint = FVector();
-				FRotator SpawnRotation = FRotator();
-				ABishopPawn* BishopPawn = Cast<ABishopPawn>(BishopGamePlayerController->GetPawn());
-				if (BishopPawn)
-				{
-					// 무기 소환!
-					SpawnPoint = BishopPawn->WeaponSpawnPoint->GetComponentLocation();
-					SpawnRotation = BishopPawn->WeaponSpawnPoint->GetComponentRotation();
-					BishopPawn->MulticastRPC_SpawnWeapon(SpawnPoint, SpawnRotation, BishopWeaponClass);
+				// 무기 소환!
+				FVector SpawnPoint = BishopPawn->WeaponSpawnPoint->GetComponentLocation();
+				FRotator SpawnRotation = BishopPawn->WeaponSpawnPoint->GetComponentRotation();
+				BishopPawn->MulticastRPC_SpawnWeapon(SpawnPoint, SpawnRotation, BishopWeaponClass);
+			}
 
-					// 비숍 플레이어에게 클리어 및 다음 문장 제시하기
-					BishopPawn->MulticastRPC_SetUITextTo(FText::FromString(""), _RandomText);
-				}
-
-				ATP_ThirdPersonCharacter* TaggerCharacter = Cast<ATP_ThirdPersonCharacter>(
-					BishopGamePlayerController->GetPawn());
-				if (TaggerCharacter)
-				{
-					// 무기 소환!
-					// -> 근데 엔진에서 Replicated 체크 해줘가지고 걍 한쪽에서만 소환해줘도 자동 동기화 됨. 나이스
-					// if (!SpawnPoint.IsNearlyZero())
-					// {
-					// 	TaggerCharacter->MulticastRPC_SpawnWeapon(SpawnPoint, SpawnRotation, BishopWeaponClass);
-					// }
-
-					// Tagger Player에게 다음 문장 업데이트
-					TaggerCharacter->MulticastRPC_SetUITextTo(FText::FromString(""), _RandomText);
-				}
+			// UIUpdatable 인터페이스 구현 여부 확인
+			if (_Pawn && _Pawn->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+			{
+				// 메시지 호출
+				IUIUpdatable::Execute_MulticastRPC_SetUITextTo(_Pawn, FText::FromString(""), _RandomText, TArray<bool>());
 			}
 		}
 	}
@@ -185,4 +185,58 @@ FText ABishopGameMode::PickRandomText()
 	CurrentTextToType = RandomText;
 
 	return RandomText;
+}
+
+void ABishopGameMode::GameOver(APawn* Winner, APawn* Loser)
+{
+}
+
+bool ABishopGameMode::CheckCheatting(const FText& TypedText)
+{
+	// 이미 입력된 것을 한번에 지우는 것은 제외
+	if (CurrentTypedText.Len() > TypedText.ToString().Len())
+	{
+		return false;
+	}
+
+	// 다른 곳에서 바로 복붙하는 것을 방지
+	// Commit된 텍스트가 방금 전 Update 된 Text보다 2 ~ 3글자 이상 차이 난다면?
+	// -> 복붙했을 가능성이 높음
+	int Difference = FMath::Abs(TypedText.ToString().Len() - CurrentTypedText.Len());
+	if (Difference >= 2)
+	{
+		return true; // Cheatting!!
+	}
+	return false; // not cheatting
+}
+
+void ABishopGameMode::OnButtonPressed()
+{
+	// Destory Bishop Pawn!
+	TArray<AActor*> AllBishopPawns;
+	UGameplayStatics::GetAllActorsOfClass(this, ABishopPawn::StaticClass(), AllBishopPawns);
+	for (AActor* _BishopPawn : AllBishopPawns)
+	{
+		_BishopPawn->Destroy();
+	}
+
+	// TODO: Game Over 처리 (Tagger 승리)
+}
+
+TArray<bool> ABishopGameMode::CheckTypingCorrect(const FText& TypedText)
+{
+	TArray<bool> StringCorrectArray;
+	for (int i = 0; i < TypedText.ToString().Len() && i < CurrentTextToType.ToString().Len(); i++)
+	{
+		if (TypedText.ToString()[i] == CurrentTextToType.ToString()[i])
+		{
+			StringCorrectArray.Add(true);
+		}
+		else
+		{
+			StringCorrectArray.Add(false);
+		}
+	}
+
+	return StringCorrectArray;
 }

@@ -2,8 +2,6 @@
 
 
 #include "TypingUIWidget.h"
-#include "BishopGameMode.h"
-#include "BishopGamePlayerController.h"
 #include "BishopPawn.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
@@ -15,6 +13,12 @@
 void UTypingUIWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	TextToTypeUI->SetAutoWrapText(true);
+	TextToTypeUI->SetJustification(ETextJustify::Type::Center);
+
+	TypedTextUI->SetAutoWrapText(true);
+	TypedTextUI->SetJustification(ETextJustify::Type::Center);
 
 	if (UserInput)
 	{
@@ -28,54 +32,63 @@ void UTypingUIWidget::NativeConstruct()
 
 void UTypingUIWidget::OnTextChanged(const FText& Text)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Text Changed!! : %s"), *TypedTextUI->GetText().ToString());
-	// TypedTextUI->SetText(Text);
-
 	// BishopGamePlayerController에게 텍스트가 변경되고 있다고 알림
 	ABishopPawn* BishopPawn = Cast<ABishopPawn>(GetOwningPlayerPawn());
 	if (BishopPawn == nullptr) return;
-	
+
 	BishopPawn->UpdateText(Text);
 }
 
 void UTypingUIWidget::OnTextCommitted(const FText& Text, ETextCommit::Type InCommitType)
 {
 	if (InCommitType != ETextCommit::Type::OnEnter) return;
-	
+
 	UE_LOG(LogTemp, Warning, TEXT("Text Committed"));
 
 	ABishopPawn* BishopPawn = Cast<ABishopPawn>(GetOwningPlayerPawn());
 	if (BishopPawn == nullptr) return;
-	
+
 	BishopPawn->CommitText(Text);
 }
 
-FText UTypingUIWidget::ToDefaultText(FText Text)
+void UTypingUIWidget::SetStyledTextToTypeUI(FText TextToType, TArray<bool> StringCorrectArray)
 {
-	FString ClearedText = ClearTextStyle(Text);
-	return FText::FromString(ClearedText);
+	// 맞고 틀린 배열로 클라이언트 쪽 위젯에서 업데이트 하도록 하기
+	FString FormattedString;
+
+	for (int i = 0; i < TextToType.ToString().Len(); i++)
+	{
+		if (i < StringCorrectArray.Num())
+		{
+			if (StringCorrectArray[i] == true)
+			{
+				FormattedString += ToCorrectText(TextToType.ToString()[i]);
+			}
+			else
+			{
+				FormattedString += ToWrongText(TextToType.ToString()[i]);
+			}
+		}
+		else
+		{
+			FormattedString += TextToType.ToString()[i];
+		}
+	}
+
+	TextToTypeUI->SetText(FText::FromString(FormattedString));
 }
 
-FText UTypingUIWidget::ToCorrectText(FText Text)
+
+FString UTypingUIWidget::ToCorrectText(TCHAR Character)
 {
-	FString ClearedText = ClearTextStyle(Text);
-	FString NewText = TEXT("<Correct>") + ClearedText + TEXT("</>");
-	return FText::FromString(NewText);
+	FString _String = FString(1, &Character);
+	FString NewText = TEXT("<Correct>") + _String + TEXT("</>");
+	return NewText;
 }
 
-FText UTypingUIWidget::ToWrongText(FText Text)
+FString UTypingUIWidget::ToWrongText(TCHAR Character)
 {
-	FString ClearedText = ClearTextStyle(Text);
-	FString NewText = TEXT("<Wrong>") + ClearedText + TEXT("</>");
-	return FText::FromString(NewText);
-}
-
-FString UTypingUIWidget::ClearTextStyle(FText Text)
-{
-	FString NewText = Text.ToString()
-	                      .Replace(TEXT("<Wrong>"), TEXT(""))
-	                      .Replace(TEXT("<Correct>"), TEXT(""))
-	                      .Replace(TEXT("</>"), TEXT(""));
-
+	FString _String = FString(1, &Character);
+	FString NewText = TEXT("<Wrong>") + _String + TEXT("</>");
 	return NewText;
 }

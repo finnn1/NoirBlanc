@@ -20,13 +20,13 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TypedTextUI;
-	
+
 	UPROPERTY(meta = (BindWidget))
 	class UEditableTextBox* UserInput;
 
 protected:
 	virtual void NativeConstruct() override;
-	
+
 	UFUNCTION()
 	void OnTextChanged(const FText& Text);
 
@@ -34,8 +34,11 @@ protected:
 	void OnTextCommitted(const FText& Text, ETextCommit::Type InCommitType);
 
 public:
-	FText ToDefaultText(FText Text);
-	FText ToCorrectText(FText Text);
-	FText ToWrongText(FText Text);
-	FString ClearTextStyle(FText Text);
+	void SetStyledTextToTypeUI(FText TextToType, TArray<bool> StringCorrectArray);
+	
+private:
+	bool bPasteDetected = false;
+	
+	FString ToCorrectText(TCHAR Character);
+	FString ToWrongText(TCHAR Character);
 };
