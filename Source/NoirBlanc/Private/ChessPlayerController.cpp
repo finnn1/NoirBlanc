@@ -55,7 +55,6 @@ AActor* AChessPlayerController::TraceForActor()
 		if (bHit && HitResult.GetActor())
 		{
 			AActor* HitActor = HitResult.GetActor();
-
 			// 원하는 동작 수행 (예: 액터 선택, 하이라이트 등)
 			return HitActor;
 		}

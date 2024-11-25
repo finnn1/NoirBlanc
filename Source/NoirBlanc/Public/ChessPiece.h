@@ -8,6 +8,8 @@
 
 #include "ChessPiece.generated.h"
 
+class ABoardFloor;
+class UBoxComponent;
 UCLASS()
 class NOIRBLANC_API AChessPiece : public AActor
 {
@@ -23,10 +25,36 @@ protected:
 public:	
 	EPieceType GetPieceType();
 	EPieceColor GetPieceColor();
+	ABoardFloor* GetFloorBeneathPiece();
+	void SetPieceType(EPieceType Type);
+	void SetPieceColor(EPieceColor Color);
+	void SetFloorBeneathPiece(ABoardFloor* Floor);
+	void IncreaseMoveCount();
+	int32 GetMoveCount();
+	
+protected:
+	void SetPieceMesh();
+	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompMesh")
+	class UStaticMeshComponent* CompMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompCollision")
+	UBoxComponent* CompBox;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PieceMesh")
+	TArray<UStaticMesh*> Meshes;
+
 private:
 	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
 	EPieceType PieceType;
 
 	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
 	EPieceColor PieceColor;
+
+	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	ABoardFloor* FloorBeneathPiece;
+
+	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	int32 MoveCount = 0;
 };

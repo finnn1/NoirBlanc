@@ -3,12 +3,26 @@
 
 #include "BoardFloor.h"
 
+#include "DiffUtils.h"
+#include "Components/BoxComponent.h"
 // Sets default values
 ABoardFloor::ABoardFloor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
+	CompGreen = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CompGreen"));
+	CompGreen->SetupAttachment(RootComponent);
+	RootComponent = CompGreen;
+	CompGreen->SetVisibility(false);
 
+	CompBlue = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CompBlue"));
+	CompBlue->SetupAttachment(RootComponent);
+	CompBlue->SetVisibility(false);
+
+	CompRed = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CompRed"));
+	CompRed->SetupAttachment(RootComponent);
+	CompRed->SetVisibility(false);
 }
 
 // Called when the game starts or when spawned
@@ -27,4 +41,47 @@ void ABoardFloor::Tick(float DeltaTime)
 AChessPiece* ABoardFloor::GetPieceOnFloor()
 {
 	return PieceOnFloor;
+}
+
+void ABoardFloor::SetPieceOnFloor(AChessPiece* Piece)
+{
+	PieceOnFloor = Piece;
+}
+
+int32 ABoardFloor::GetRow()
+{
+	return FloorRow;
+}
+
+int32 ABoardFloor::GetCol()
+{
+	return FloorCol;
+}
+
+void ABoardFloor::SetRow(int32 Row)
+{
+	FloorRow = Row;
+}
+
+void ABoardFloor::SetCol(int32 Col)
+{
+	FloorCol = Col;
+}
+
+void ABoardFloor::ToggleGreen()
+{
+	bool bCurrentVisibility = CompGreen->IsVisible();
+	CompGreen->SetVisibility(!bCurrentVisibility);
+}
+
+void ABoardFloor::ToggleRed()
+{
+	bool bCurrentVisibility = CompRed->IsVisible();
+	CompRed->SetVisibility(!bCurrentVisibility);
+}
+
+void ABoardFloor::ToggleBlue()
+{
+	bool bCurrentVisibility = CompBlue->IsVisible();
+	CompBlue->SetVisibility(!bCurrentVisibility);
 }
