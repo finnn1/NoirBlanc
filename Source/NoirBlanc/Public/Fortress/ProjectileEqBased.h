@@ -42,4 +42,26 @@ public:
 	float Force;
 	
 	void SetWindResistance(FVector WindDirection, float Resistance);
+
+	UFUNCTION()
+	void OnProjectileOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+		);
+
+	UFUNCTION()
+	void  OnProjectileHit(
+		UPrimitiveComponent* HitComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		FVector OtherNormal,
+		const FHitResult& Hit
+		);
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* BombEffect;
 };

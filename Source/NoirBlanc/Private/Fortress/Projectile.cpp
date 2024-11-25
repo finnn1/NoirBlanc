@@ -42,7 +42,7 @@ void AProjectile::BeginPlay()
 		LaunchDirection.Normalize();
 	}
 	
-	// should be called after beginplay bc ot the spawned actors
+	// should be called after beginplay bc of the spawned actors
 	ProjectileMovementComp->Velocity = LaunchDirection * LaunchSpeed;
 	
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *LaunchDirection.ToString());

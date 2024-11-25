@@ -36,6 +36,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USphereComponent* SpawnLocation;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UWidgetComponent* ProgressBar;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UFireBoostWidget* FireBoostWidget;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -53,6 +59,9 @@ protected:
 	UInputAction* FireAction;
 	
 	UPROPERTY(EditAnywhere)
+	UInputAction* FireBoostAction;
+
+	UPROPERTY(EditAnywhere)
 	UInputAction* ForceAction;
 
 	void Move(const FInputActionValue& Value);
@@ -60,6 +69,10 @@ protected:
 	void ProjectileDir(const FInputActionValue& Value);
 
 	void Fire(const FInputActionValue& Value);
+
+	void StartCharging(const FInputActionValue& Value);
+
+	void ContinueCharging();
 	
 	void Force(const FInputActionValue& Value);
 
@@ -69,6 +82,16 @@ protected:
 public:
 	float MoveSpeed;
 	float RotationSpeed;
+
+	FTimerHandle SpeedIncreaseTimerHandle;
+
+	UPROPERTY(EditAnywhere)
+	float ProjectileVelocity;
+	UPROPERTY(EditAnywhere)
+	float VelocityChange = 100.0f;;
+	
+	const float MaxSpeed = 1000.0f;
+	const float SpeedIncreaseRate = 50.0f;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -89,4 +112,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	AProjectileEqBased* ProjectileEqBased;	// object
 
+public:
+	UPROPERTY(EditAnywhere)
+	float Health;
+
+	//virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+	
+	
+	
 };

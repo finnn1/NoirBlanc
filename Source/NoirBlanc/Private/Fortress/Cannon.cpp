@@ -11,6 +11,9 @@
 #include "Components/SphereComponent.h"
 #include "Fortress/Projectile.h"
 #include "Fortress/ProjectileEqBased.h"
+#include "TimerManager.h"
+#include "Components/WidgetComponent.h"
+#include "Fortress/FireBoostWidget.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
@@ -40,13 +43,29 @@ ACannon::ACannon()
 	
 	MoveSpeed = 100.0f;
 	RotationSpeed = 50.0f;
+
+	ProgressBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("FireBoostWidget"));
+	ProgressBar->SetupAttachment(RootComponent);
+
+	Health = 100.0f;
  }
 
 // Called when the game starts or when spawned
 void ACannon::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (ProgressBar != nullptr)
+	{
+		UUserWidget* Widget = ProgressBar->GetWidget();		// WidgetComponent != Widget
+		if (Widget != nullptr)
+		{
+			ProjectileVelocity = 0.0f;
+			FireBoostWidget = Cast<UFireBoostWidget>(Widget);
+			if (FireBoostWidget != nullptr)
+				FireBoostWidget->Velocity = ProjectileVelocity;
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -68,6 +87,8 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(ProjectileDirAction, ETriggerEvent::Completed, this, &ACannon::ProjectileDir);
 		EnhancedInputComponent->BindAction(ForceAction, ETriggerEvent::Triggered, this, &ACannon::Force);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ACannon::Fire);
+		EnhancedInputComponent->BindAction(FireBoostAction, ETriggerEvent::Started, this, &ACannon::StartCharging);
+		EnhancedInputComponent->BindAction(FireBoostAction, ETriggerEvent::Completed, this, &ACannon::Fire);
 	}
 }
 
@@ -97,15 +118,44 @@ void ACannon::ProjectileDir(const FInputActionValue& Value)
 
 void ACannon::Fire(const FInputActionValue& Value)
 {
+	GetWorld()->GetTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
+
+	
 	if (ProjectileEqBasedFactory)
 	{
 		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
+		SpawnParams.Owner = this;		// 인스턴스 아닌 클래스로 되는거 같아서 확인해보기
 		
 		ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
 			SpawnLocation->GetComponentLocation(), SpawnLocation->GetComponentRotation(), SpawnParams);
 	}
+	if (FireBoostWidget != nullptr)
+	{
+		FireBoostWidget->Velocity = 0.0f;	// set velocity var in widget 0
+	}
 }
+
+void ACannon::StartCharging(const FInputActionValue& Value)
+{
+	ProjectileVelocity = 0.0f;
+	GetWorld()->GetTimerManager().SetTimer(SpeedIncreaseTimerHandle, this, &ACannon::ContinueCharging, 0.1f, true);
+	if (FireBoostWidget != nullptr)
+	{
+		FireBoostWidget->Velocity = ProjectileVelocity;
+	}
+}
+
+void ACannon::ContinueCharging()
+{
+	ProjectileVelocity += VelocityChange;
+
+	
+	if (FireBoostWidget != nullptr)
+	{
+    		FireBoostWidget->Velocity = ProjectileVelocity;
+	}
+}
+
 
 /*void ACannon::Fire(const FInputActionValue& Value)
 {
