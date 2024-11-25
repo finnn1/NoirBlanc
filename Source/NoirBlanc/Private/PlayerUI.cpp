@@ -44,3 +44,15 @@ void UPlayerUI::IncreaseScore()
 		MyPlayerScoreText->SetText(FText::AsNumber(IntVariable));
 	}
 }
+
+void UPlayerUI::IncreaseEnemyScore()
+{
+	if(EnemyPlayerScoreText)
+	{
+		FString ScoreStr = EnemyPlayerScoreText->GetText().ToString();
+		int32 IntVariable = FCString::Atoi(*ScoreStr);
+		
+		IntVariable++;
+		EnemyPlayerScoreText->SetText(FText::AsNumber(IntVariable));
+	}
+}

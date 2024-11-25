@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "InputAction.h"
 #include "GameFramework/PlayerController.h"
+#include "Components/TimelineComponent.h"
 #include "PawnCardController.generated.h"
 
 /**
@@ -28,8 +29,8 @@ protected:
 	virtual void SetupInputComponent() override;
 
 public:
-	//TWeakObjectPtr<APawnCard> FirstSelectedCard;
-	//TWeakObjectPtr<APawnCard> SecondSelectedCard;
+	TWeakObjectPtr<APawnCard> FirstSelectedCard;
+	TWeakObjectPtr<APawnCard> SecondSelectedCard;
 
 	UPROPERTY()
 	APawnCard* TargetCard;
@@ -66,19 +67,25 @@ public:
 	
 	//카드의 매칭 여부 확인 함수
 	UFUNCTION()
-	bool IsCheckCardMatch(APawnCard* FirstSelectedCard, APawnCard* SecondSelectedCard);
+	bool IsCheckCardMatch(/*APawnCard* FirstSelectedCard, APawnCard* SecondSelectedCard*/);
 
 	void InitPlayerUI();
 
 	void SetTurnOwner(bool IsOwner);
 	bool GetTurnOwner();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTurnCardActorComp* TurnCardComp;
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTurnCardActorComp* TurnCardComp;*/
+
+	UFUNCTION(NetMulticast, reliable)
+	void MulticastRPC_IncreaseScore();
+
+	UFUNCTION()
+	void IncreaseScore();
 	
 protected:
 
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
 	class UTimelineComponent* Timeline;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
@@ -86,12 +93,12 @@ protected:
 	
 	FOnTimelineFloat StartTurnFloat;
 	FOnTimelineEvent EndTurnEvent;
-
+	
 	UFUNCTION()
 	void StartTurnLerp(float value);
 
 	UFUNCTION()
-	void EndTurnLerp();*/
+	void EndTurnLerp();
 
 private:
 	bool IsTurnOwner = false;

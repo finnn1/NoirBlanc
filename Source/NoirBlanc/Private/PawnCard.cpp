@@ -25,11 +25,14 @@ void APawnCard::BeginPlay()
 
 	bIsSelectable = true;
 
-	if(PawnCardData && PawnCardData->CardMaterial)
+	if(PawnCardData && PawnCardData->CardMaterialIns)
 	{
 		if(StaticMeshComp)
 		{
-			StaticMeshComp->SetMaterial(4, PawnCardData->CardMaterial);
+			UMaterialInstanceDynamic* TestDynamic = UMaterialInstanceDynamic::Create(PawnCardData->CardMaterialIns, this);
+			StaticMeshComp->SetMaterial(4, TestDynamic);
+			FLinearColor NewUVOffsets(1.f,1.f, PawnCardData->U_Offset,PawnCardData->V_Offset);
+			TestDynamic->SetVectorParameterValue(TEXT("UV"), NewUVOffsets);
 		}
 	}
 }

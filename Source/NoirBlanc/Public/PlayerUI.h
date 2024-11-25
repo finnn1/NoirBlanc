@@ -44,4 +44,6 @@ public:
 
 	// 점수 증가
 	void IncreaseScore();
+
+	void IncreaseEnemyScore();
 };

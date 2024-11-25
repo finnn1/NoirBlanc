@@ -36,5 +36,11 @@ public:
 	int32 TotalNum;
 	
 	UPROPERTY(EditAnywhere)
-	UMaterial* CardMaterial;
+	UMaterialInstance* CardMaterialIns;
+
+	UPROPERTY(EditAnywhere)
+	float U_Offset = 0.f;
+	
+	UPROPERTY(EditAnywhere)
+	float V_Offset = 0.f;
 };
