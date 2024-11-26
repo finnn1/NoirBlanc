@@ -19,7 +19,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "TP_ThirdPerson/TP_ThirdPersonCharacter.h"
+#include "NoirBlanc/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 
 class ABishopGameMode;
 // Sets default values

@@ -6,7 +6,7 @@
 #include "Components/ArrowComponent.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
-#include "TP_ThirdPerson/TP_ThirdPersonCharacter.h"
+#include "NoirBlanc/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "BishopWeapon.h"
 
 ABishopGameMode::ABishopGameMode()
