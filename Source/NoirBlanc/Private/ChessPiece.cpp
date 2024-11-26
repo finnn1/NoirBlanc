@@ -62,9 +62,19 @@ void AChessPiece::IncreaseMoveCount()
 	MoveCount++;
 }
 
+void AChessPiece::IncreaseEncounterCount()
+{
+	EncounterCount++;
+}
+
 int32 AChessPiece::GetMoveCount()
 {
 	return MoveCount;
+}
+
+int32 AChessPiece::GetEncounterCount()
+{
+	return EncounterCount;
 }
 
 void AChessPiece::SetPieceMesh()

@@ -30,7 +30,9 @@ public:
 	void SetPieceColor(EPieceColor Color);
 	void SetFloorBeneathPiece(ABoardFloor* Floor);
 	void IncreaseMoveCount();
+	void IncreaseEncounterCount();
 	int32 GetMoveCount();
+	int32 GetEncounterCount();
 	
 protected:
 	void SetPieceMesh();
@@ -57,4 +59,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
 	int32 MoveCount = 0;
+	
+	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	int32 EncounterCount = 0;
 };
