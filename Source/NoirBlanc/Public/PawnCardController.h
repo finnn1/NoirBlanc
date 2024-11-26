@@ -3,19 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InputAction.h"
 #include "GameFramework/PlayerController.h"
-#include "Components/TimelineComponent.h"
 #include "PawnCardController.generated.h"
 
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCardClick, AActor*, HitActor);
 class APawnCard;
-class APawnCardGameMode;
-class UInputMappingContext;
-class UInputAction;
 class UPlayerUI;
+class ANetworkPawn;
 UCLASS()
 class NOIRBLANC_API APawnCardController : public APlayerController
 {
@@ -26,77 +23,16 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void SetupInputComponent() override;
 
 public:
-	TWeakObjectPtr<APawnCard> FirstSelectedCard;
-	TWeakObjectPtr<APawnCard> SecondSelectedCard;
-
-	UPROPERTY()
-	APawnCard* TargetCard;
+	ANetworkPawn* PlayerPawn;
 	
-	//Input 관련
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputMappingContext* InputMapping;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputAction* CardClickActioin;
-
-	UPROPERTY()
-	APawnCardGameMode* GameMode;
-	
-	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Widget")
-	TSubclassOf<UPlayerUI> TSubPlayerUI;
-	UPROPERTY()
-	UPlayerUI* PlayerUI; 
-
-	UPROPERTY()
-	int32 PlayerScore = 0;
-
-public:
-	//처음 시작
-	UFUNCTION()
-	void InitPlayerSettings();
-
-	//턴 끝
-	UFUNCTION()
-	void PlayerTurnEnd();
-
-	//카드 선택 함수
-	void SelectCard(const FInputActionValue& Value);
-	
-	//카드의 매칭 여부 확인 함수
-	UFUNCTION()
-	bool IsCheckCardMatch(/*APawnCard* FirstSelectedCard, APawnCard* SecondSelectedCard*/);
-
-	void InitPlayerUI();
-
+	//턴 제어 함수
 	void SetTurnOwner(bool IsOwner);
-	bool GetTurnOwner();
-
-	UFUNCTION(NetMulticast, reliable)
-	void MulticastRPC_IncreaseScore();
-
-	UFUNCTION()
-	void IncreaseScore();
+	bool GetTurnOwner() const;
 	
-protected:
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
-	class UTimelineComponent* Timeline;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
-	class UCurveFloat* MovingCurve;
-	
-	FOnTimelineFloat StartTurnFloat;
-	FOnTimelineEvent EndTurnEvent;
-	
-	UFUNCTION()
-	void StartTurnLerp(float value);
-
-	UFUNCTION()
-	void EndTurnLerp();
-
 private:
 	bool IsTurnOwner = false;
 };

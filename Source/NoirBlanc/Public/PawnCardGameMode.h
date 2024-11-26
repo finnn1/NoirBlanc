@@ -6,6 +6,7 @@
 #include "PawnCardGameMode.generated.h"
 
 class APawnCard;
+class ANetworkPawn;
 class APawnCardController;
 /**
  * 
@@ -22,13 +23,13 @@ public:
 	virtual void BeginPlay() override;
 	
 	UPROPERTY(EditDefaultsOnly)
-	APawnCardController* TurnPlayer;
+	APawnCardController* TurnPlayerContr;
 
 	UPROPERTY(VisibleAnywhere)
 	TArray<APawnCard*> PawnCards;
 
 	UPROPERTY(VisibleAnywhere)
-	TArray<APawnCardController*> Players;
+	TArray<ANetworkPawn*> Players;
 
 	int32 TurnPlayerIdx = 0;
 
@@ -38,7 +39,7 @@ public:
 	
 	void InitPawnCardGame();
 	
-	void AddPlayerController(APawnCardController* Player);
+	void AddPlayer(ANetworkPawn* Player);
 	
 	void TurnStart();
 	void TurnEnd(APawnCardController* EndPlayer);

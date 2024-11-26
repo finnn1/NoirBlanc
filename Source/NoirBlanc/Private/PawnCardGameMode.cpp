@@ -2,6 +2,7 @@
 
 
 #include "PawnCardGameMode.h"
+#include "NetworkPawn.h"
 #include "PawnCard.h"
 #include "PawnCardController.h"
 #include "Kismet/GameplayStatics.h"
@@ -14,30 +15,19 @@ void APawnCardGameMode::BeginPlay()
 }
 
 void APawnCardGameMode::InitPawnCardGame()
-{	
-	//World의 PawnCard를 배열에 추가
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APawnCard::StaticClass(), AllActors);
+{
+	//TODO : 게임 시작 UI
 	
-	/*for(AActor* CardActor : AllActors)
-	{
-		APawnCard* PawnCard = Cast<APawnCard>(CardActor);
-		if(PawnCard)
-		{
-			PawnCards.Add(PawnCard);
-		}
-	}*/
-
-	//턴 플레이어 시작 
-	TurnPlayer = Cast<APawnCardController>(GetWorld()->GetFirstPlayerController());
+	//턴 플레이어 시작
+	TurnPlayerContr = Cast<APawnCardController>(GetWorld()->GetFirstPlayerController());
 	
-	if(TurnPlayer)
+	if(TurnPlayerContr)
 	{
 		TurnStart();
 	}
 }
 
-void APawnCardGameMode::AddPlayerController(APawnCardController* Player)
+void APawnCardGameMode::AddPlayer(ANetworkPawn* Player)
 {
 	Players.Add(Player);
 }
@@ -45,19 +35,12 @@ void APawnCardGameMode::AddPlayerController(APawnCardController* Player)
 void APawnCardGameMode::TurnStart()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Start : Player num is %d"), Players.Num());
-	TurnPlayer->SetTurnOwner(true);
+	TurnPlayerContr->SetTurnOwner(true);
 	OnTurnStart.Broadcast();
 }
 
 void APawnCardGameMode::TurnEnd(APawnCardController* EndPlayer)
 {
-	/*for(APawnCard* PawnCard : PawnCards)
-	{
-		if(PawnCard->FrontBackState == CardState::Front)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Front Card is %s"), *PawnCard->GetName());
-		}
-	}*/
 	EndPlayer->SetTurnOwner(false);
 	OnTurnEnd.Broadcast();
 
@@ -71,11 +54,9 @@ void APawnCardGameMode::ChangeScore()
 
 void APawnCardGameMode::ChangePlayerTurn()
 {
-	TurnPlayerIdx = (TurnPlayerIdx + 1) % Players.Num();
+	/*TurnPlayerIdx = (TurnPlayerIdx + 1) % Players.Num();
 	TurnPlayer = Players[TurnPlayerIdx];
-	UE_LOG(LogTemp, Warning, TEXT("Player num is %d"), Players.Num());
-	UE_LOG(LogTemp, Warning, TEXT("Turn Start is %s"), *TurnPlayer->GetName());
-	TurnStart();
+	TurnStart();*/
 }
 
 void APawnCardGameMode::GameEnd()
