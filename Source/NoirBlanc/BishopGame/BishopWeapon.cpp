@@ -21,7 +21,10 @@ void ABishopWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetReplicates(true);
+	if (HasAuthority())
+	{
+		SetReplicates(true);
+	}
 
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ABishopWeapon::OnBoxComponentOverlap);
 }
