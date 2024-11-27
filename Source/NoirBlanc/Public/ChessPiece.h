@@ -31,6 +31,8 @@ public:
 	void SetFloorBeneathPiece(ABoardFloor* Floor);
 	void IncreaseMoveCount();
 	void IncreaseEncounterCount();
+	void SetMoveCount(int32 Count);
+	void SetEncounterCount(int32 Count);
 	int32 GetMoveCount();
 	int32 GetEncounterCount();
 	

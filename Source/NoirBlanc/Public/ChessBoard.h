@@ -62,12 +62,16 @@ private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickedOnce = false;
 	bool bIsClickedTwice = false;
-
+	
+	TArray<TArray<int32>> KnightArray;
+	TArray<TArray<int32>> KingArray;
+	
 	UPROPERTY()
 	class AChessPlayerController* Controller;
 
-	TArray<TArray<int32>> KnightArray;
-	TArray<TArray<int32>> KingArray;
+	UPROPERTY()
+	class UNoirBlancGameInstance* GameInstance;
+
 //////////////////////////////////////////
 /////FUNCTION
 public:
@@ -82,6 +86,9 @@ public:
 	void MoveEnd();
 	
 protected:
+	UFUNCTION()
+	void ChangeTurn();
+	
 	UFUNCTION()
 	ABoardFloor* SpawnFloor(int32 row, int32 col);
 
