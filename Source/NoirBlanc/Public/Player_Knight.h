@@ -55,6 +55,13 @@ public:
 	TSubclassOf<class UFinishUI> FinishUI;
 	class UFinishUI* Finish;
 	
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated)		
 	float Timer = 30.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float CurDistance = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float PreviousDistance = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float TotalDistance = 0;
 };
