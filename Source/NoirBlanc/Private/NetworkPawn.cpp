@@ -9,6 +9,7 @@
 #include "PawnCardDataAsset.h"
 #include "PawnCardController.h"
 #include "PlayerUI.h"
+#include "Net/UnrealNetwork.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 // Sets default values
@@ -20,6 +21,8 @@ ANetworkPawn::ANetworkPawn()
 	Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 	StartTurnFloat.BindUFunction(this, FName("StartTurnLerp"));
 	EndTurnEvent.BindUFunction(this, FName("EndTurnLerp"));
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -31,8 +34,9 @@ void ANetworkPawn::BeginPlay()
 	GameMode = Cast<APawnCardGameMode>(GetWorld()->GetAuthGameMode());
 	if(GameMode)
 	{
-		GameMode->OnTurnStart.AddDynamic(this, &ANetworkPawn::PlayerTurnStart);
-		GameMode->OnTurnEnd.AddDynamic(this, &ANetworkPawn::PlayerTurnEnd);
+		//GameMode->OnTurnStart.AddDynamic(this, &ANetworkPawn::PlayerTurnStart);
+		//GameMode->OnTurnEnd.AddDynamic(this, &ANetworkPawn::PlayerTurnEnd);
+		GameMode->OnChangePlayerTurn.BindUObject(this, &ANetworkPawn::ChangePlayerTurn);
 		GameMode->AddPlayer(this);
 	}
 
@@ -56,11 +60,12 @@ void ANetworkPawn::BeginPlay()
 	{
 		InitPlayerUI();
 
+		// BeginPlay에서 서버가 먼저 시작되므로 Init으로 강제 Start
 		if(HasAuthority())
 		{
+			SetIsTurnPlayer(true);
 			PlayerUI->ShowTurnStart();
-			
-			GameMode->InitPawnCardGame();
+			//GameMode->InitPawnCardGame();
 		}
 		else
 		{
@@ -74,7 +79,7 @@ void ANetworkPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	/*FString ThisName = this->GetName();
+	FString ThisName = this->GetName();
 	
 	//연결상태
 	FString ConnStr = (GetNetConnection() != nullptr ? TEXT("Valid Connection") : TEXT("Invalid Connection"));
@@ -93,7 +98,7 @@ void ANetworkPawn::Tick(float DeltaTime)
 
 	FString IsUI = (PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
 
-	FString IsTurn = (PawnCardContr->GetTurnOwner() ? TEXT("Turn") : TEXT("No Turn"));
+	FString IsTurn = (GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
 
 	FString LogStr = FString::Printf(TEXT("Connection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s"),
 		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn);
@@ -105,7 +110,7 @@ void ANetworkPawn::Tick(float DeltaTime)
 	}
 
 	//TextBaseActor를 this를 넣는지 여부는 상대좌표, 월드좌표?
-	DrawDebugString(GetWorld(), TestLoc, LogStr, nullptr, FColor::Red, 0, true, 1);*/
+	DrawDebugString(GetWorld(), TestLoc, LogStr, nullptr, FColor::Red, 0, true, 1);
 }
 
 // Called to bind functionality to input
@@ -127,24 +132,30 @@ void ANetworkPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 }
 
-void ANetworkPawn::PlayerTurnStart()
-{
-	FirstSelectedCard = nullptr;
-	SecondSelectedCard = nullptr;
-	
-	//MulticastRPC_TurnStart();
-	//ServerRPC_IncreaseEnemyScore(this);
-}
 
-void ANetworkPawn::PlayerTurnEnd()
+
+/*void ANetworkPawn::PlayerTurnStart()
 {
-	ServerRPC_TurnEnd();
-}
+	if(GetIsTurnPlayer())
+	{
+		FirstSelectedCard = nullptr;
+		SecondSelectedCard = nullptr;	
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("-------------PlayerTurnStart--------------"));
+}*/
+
+/*void ANetworkPawn::PlayerTurnEnd()
+{
+	/*UE_LOG(LogTemp, Warning, TEXT("---------------------------"));
+	CheckLog(this);#1#
+	MulticastRPC_TurnEnd();
+}*/
 
 
 void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 {
-	//if(!PawnCardContr->GetTurnOwner()) return;
+	if(!GetIsTurnPlayer()) return;
 	if(Timeline->IsPlaying()) return;
 
 	FHitResult Hit;
@@ -190,12 +201,7 @@ bool ANetworkPawn::IsCheckCardMatch()
 	{
 		bIsMatch = true;
 		
-		//FirstSelectedCard->SuccessMatching(this);
-		//SecondSelectedCard->SuccessMatching(this);
-		
-		FirstSelectedCard->Destroy();
-		SecondSelectedCard->Destroy();
-		
+		// 점수 증가
 		IncreaseScore();
 	}
 
@@ -242,44 +248,36 @@ void ANetworkPawn::IncreaseScore()
 	ServerRPC_IncreaseEnemyScore(this);
 }
 
-void ANetworkPawn::ServerRPC_TurnStart_Implementation()
+void ANetworkPawn::ServerRPC_DestroyPawnCard_Implementation(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard)
 {
+	if(!IsValid(FirstTargetCard) || !IsValid(SecondTargetCard)) return;
+
+	FirstTargetCard->Destroy();
+	SecondTargetCard->Destroy();
 }
 
-void ANetworkPawn::MulticastRPC_TurnStart_Implementation()
+
+void ANetworkPawn::ServerRPC_GameEnd_Implementation()
 {
-	ServerRPC_IncreaseEnemyScore(nullptr);
-	/*CheckLog(this);
-	
-	if(ANetworkPawn* FirstPawn= Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn()))
-	{
-		CheckLog(FirstPawn);
-	}*/
-	/*if(PlayerUI)
-	{
-		PlayerUI->ShowTurnStart();
-	}*/
+	MulticastRPC_GameEnd();
 }
 
-void ANetworkPawn::ServerRPC_TurnEnd_Implementation()
-{
-	MulticastRPC_TurnEnd();
-}
 
-void ANetworkPawn::MulticastRPC_TurnEnd_Implementation()
+void ANetworkPawn::MulticastRPC_GameEnd_Implementation()
 {
-	if(PlayerUI)
+	if(ANetworkPawn* ServerPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn()))
 	{
-		//TODO : 3인 이상일 때는 맞지 않는 로직
-		if(HasAuthority())
+		if(ServerPawn->PlayerUI)
 		{
-			PlayerUI->ShowTurnEnd();	
-		}
-		else
-		{
-			PlayerUI->ShowEnmTurnEnd();
+			ServerPawn->PlayerUI->ShowLosePlayer();
 		}
 	}
+}
+
+void ANetworkPawn::ServerRPC_ChangeTurn_Implementation(ANetworkPawn* EndPlayer)
+{
+	// 턴 교대
+	GameMode->ChangeTurn(EndPlayer);
 }
 
 void ANetworkPawn::StartTurnLerp(float value)
@@ -318,15 +316,16 @@ void ANetworkPawn::EndTurnLerp()
 	{
 		if(IsCheckCardMatch())
 		{
-			
+			// 매칭에 성공했으면 PawnCard 삭제
+			ServerRPC_DestroyPawnCard(FirstSelectedCard.Get(), SecondSelectedCard.Get());
 		}
 		else
 		{
+			// 실패했으면 선택한 카드 원래대로
 			Timeline->PlayFromStart();
-			if(GameMode)
-			{
-				GameMode->TurnEnd(PawnCardContr);
-			}
+
+			// 턴 교대 로직 시작
+			ServerRPC_ChangeTurn(this);
 		}
 	}
 	else
@@ -365,9 +364,50 @@ void ANetworkPawn::CheckLog(ANetworkPawn* TargetPawn)
 
 	FString IsUI = (TargetPawn->PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
 
-	FString IsTurn = (TargetPawn->PawnCardContr->GetTurnOwner() ? TEXT("Turn") : TEXT("No Turn"));
-	
+	FString IsTurn = (TargetPawn->GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
+
 	UE_LOG(LogTemp, Warning, TEXT("CheckLog -\nConnection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s"),
 		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn)
+}
+
+void ANetworkPawn::ChangePlayerTurn(ANetworkPawn* StartPlayer)
+{
+	//델리게이트이므로 StartPlayer는 무조건 HasAuthority
+	MulticastRPC_ChangePlayerTurn(StartPlayer);
+}
+
+void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* StartPlayer)
+{
+	// 다음 턴 플레이어가 로컬의 첫 번째 플레이어와 같으면 자신 턴
+	ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if(LocalNetPawn)
+	{
+		if(StartPlayer == LocalNetPawn)
+		{
+			LocalNetPawn->PlayerUI->ShowTurnStart();
+		}
+		else
+		{
+			LocalNetPawn->PlayerUI->ShowEnmTurnStart();
+		}
+	}
+}
+
+void ANetworkPawn::SetIsTurnPlayer(bool IsTurn)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("%d ,SetIsTurnPlayer : %d"), HasAuthority(), IsTurn);
+	IsTurnPlayer = IsTurn;
+}
+
+bool ANetworkPawn::GetIsTurnPlayer()
+{
+	return IsTurnPlayer;
+}
+
+void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ANetworkPawn, IsTurnPlayer);
 }
 

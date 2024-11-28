@@ -58,12 +58,12 @@ public:
 	APawnCardGameMode* GameMode;
 
 	//처음 시작
-	UFUNCTION()
+	/*UFUNCTION()
 	void PlayerTurnStart();
 
 	//턴 끝
 	UFUNCTION()
-	void PlayerTurnEnd();
+	void PlayerTurnEnd();*/
 
 	//카드 선택 함수
 	UFUNCTION()
@@ -78,9 +78,18 @@ public:
 	void IncreaseScore();
 	
 	//void SetScore(bool IsMine);
+	void SetIsTurnPlayer(bool IsTurn);
+	bool GetIsTurnPlayer();
 
+	void CheckLog(ANetworkPawn* TargetPawn);
+	
 protected:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	// 네트워크 통신
+	UFUNCTION(Server, reliable)
+	void ServerRPC_DestroyPawnCard(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard);
+	
 	UFUNCTION(Server, reliable)
 	void ServerRPC_IncreaseEnemyScore(ANetworkPawn* InstigatorPawn);
 	
@@ -88,16 +97,16 @@ protected:
 	void MulticastRPC_IncreaseEnemyScore(ANetworkPawn* InstigatorPawn);
 
 	UFUNCTION(Server, reliable)
-	void ServerRPC_TurnStart();
+	void ServerRPC_ChangeTurn(ANetworkPawn* EndPlayer);
 
 	UFUNCTION(NetMulticast, reliable)
-	void MulticastRPC_TurnStart();
+	void MulticastRPC_ChangePlayerTurn(ANetworkPawn* StartPlayer);
 
 	UFUNCTION(Server, reliable)
-	void ServerRPC_TurnEnd();
+	void ServerRPC_GameEnd();
 
 	UFUNCTION(NetMulticast, reliable)
-	void MulticastRPC_TurnEnd();
+	void MulticastRPC_GameEnd();
 	
 	
 	// 타임라인 이벤트
@@ -118,5 +127,11 @@ protected:
 
 	//TODO Controller에서 받은 턴 제어 변수
 
-	void CheckLog(ANetworkPawn* TargetPawn);
+	UFUNCTION()
+	void ChangePlayerTurn(ANetworkPawn* StartPlayer);
+	
+
+private:
+	UPROPERTY(Replicated)
+	bool IsTurnPlayer = false;
 };

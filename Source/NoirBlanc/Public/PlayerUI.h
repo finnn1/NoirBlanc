@@ -21,13 +21,7 @@ public:
 	UTextBlock* TurnStartText;
 
 	UPROPERTY(meta=(BindWidget))
-	UTextBlock* TurnEndText;
-
-	UPROPERTY(meta=(BindWidget))
 	UTextBlock* EnmTurnStartText;
-
-	UPROPERTY(meta=(BindWidget))
-	UTextBlock* EnmTurnEndText;
 
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* MyPlayerScoreText;
@@ -35,11 +29,14 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* EnemyPlayerScoreText;
 
-	FTimerHandle StartTimeHandler;
-	FTimerHandle EndTimeHandler;
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* WinText;
 
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* LoseText;
+
+	FTimerHandle StartTimeHandler;
 	FTimerHandle EnmStartTimeHandler;
-	FTimerHandle EnmEndTimeHandler;
 
 public:
 	virtual void NativeConstruct() override;
@@ -48,17 +45,9 @@ public:
 	void ShowTurnStart();
 	void HideTurnStart();
 
-	// 턴 끝 문구
-	void ShowTurnEnd();
-	void HideTurnEnd();
-
 	// 적 턴 시작 문구
 	void ShowEnmTurnStart();
 	void HideEnmTurnStart();
-	
-	// 적 턴 끝 문구
-	void ShowEnmTurnEnd();
-	void HideEnmTurnEnd();
 
 	// 점수 증가
 	void IncreaseScore();
@@ -66,4 +55,8 @@ public:
 
 	void SetMyScore(float score);
 	void SetEnemyScore(float score);
+
+	// 게임 끝
+	void ShowWinPlayer();
+	void ShowLosePlayer();
 };

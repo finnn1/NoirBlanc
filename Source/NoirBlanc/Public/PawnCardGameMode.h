@@ -7,13 +7,12 @@
 
 class APawnCard;
 class ANetworkPawn;
+class APawnCardSpawner;
 class APawnCardController;
 /**
  * 
  */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnStart);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnEnd);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnChangeScore);
+DECLARE_DELEGATE_OneParam(FOnChangePlayerTurn, ANetworkPawn*);
 UCLASS()
 class NOIRBLANC_API APawnCardGameMode : public AGameModeBase
 {
@@ -25,6 +24,12 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	APawnCardController* TurnPlayerContr;
 
+	UPROPERTY(EditDefaultsOnly)
+	ANetworkPawn* TurnNetPlayer;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<APawnCardSpawner> TSubCardSpawner;
+
 	UPROPERTY(VisibleAnywhere)
 	TArray<APawnCard*> PawnCards;
 
@@ -32,20 +37,15 @@ public:
 	TArray<ANetworkPawn*> Players;
 
 	int32 TurnPlayerIdx = 0;
-
-	FOnTurnStart OnTurnStart;
-	FOnTurnEnd OnTurnEnd;
-	FOnChangeScore OnChangeScore;
+	
+	FOnChangePlayerTurn OnChangePlayerTurn;
 	
 	void InitPawnCardGame();
 	
 	void AddPlayer(ANetworkPawn* Player);
-	
-	void TurnStart();
-	void TurnEnd(APawnCardController* EndPlayer);
 
-	void ChangeScore();
-	void ChangePlayerTurn();
-
+	bool CheckRemainCards();
 	void GameEnd();
+
+	void ChangeTurn(ANetworkPawn* EndPlayer);
 };

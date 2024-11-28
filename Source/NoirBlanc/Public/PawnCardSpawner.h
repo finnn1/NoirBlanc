@@ -48,7 +48,6 @@ public:
 	//카드 배치
 	void DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCards);
 	
-	
 public:
 	UPROPERTY()
 	UTimelineComponent* Timeline;
@@ -65,5 +64,8 @@ public:
 
 	UFUNCTION()
 	void EndMoveCard();
-	
+
+private:
+	UPROPERTY()
+	TArray<APawnCard*> CardsOnLevel;
 };

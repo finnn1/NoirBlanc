@@ -29,10 +29,10 @@ void APawnCard::BeginPlay()
 	{
 		if(StaticMeshComp)
 		{
-			UMaterialInstanceDynamic* TestDynamic = UMaterialInstanceDynamic::Create(PawnCardData->CardMaterialIns, this);
-			StaticMeshComp->SetMaterial(4, TestDynamic);
+			UMaterialInstanceDynamic* MatDynamic = UMaterialInstanceDynamic::Create(PawnCardData->CardMaterialIns, this);
+			StaticMeshComp->SetMaterial(4, MatDynamic);
 			FLinearColor NewUVOffsets(1.f,1.f, PawnCardData->U_Offset,PawnCardData->V_Offset);
-			TestDynamic->SetVectorParameterValue(TEXT("UV"), NewUVOffsets);
+			MatDynamic->SetVectorParameterValue(TEXT("UV"), NewUVOffsets);
 		}
 	}
 }

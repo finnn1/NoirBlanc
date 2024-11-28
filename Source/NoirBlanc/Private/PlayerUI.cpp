@@ -2,7 +2,6 @@
 
 
 #include "PlayerUI.h"
-
 #include "Components/TextBlock.h"
 
 void UPlayerUI::NativeConstruct()
@@ -10,9 +9,9 @@ void UPlayerUI::NativeConstruct()
 	Super::NativeConstruct();
 
 	TurnStartText->SetVisibility(ESlateVisibility::Hidden);
-	TurnEndText->SetVisibility(ESlateVisibility::Hidden);
 	EnmTurnStartText->SetVisibility(ESlateVisibility::Hidden);
-	EnmTurnEndText->SetVisibility(ESlateVisibility::Hidden);
+	WinText->SetVisibility(ESlateVisibility::Hidden);
+	LoseText->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UPlayerUI::ShowTurnStart()
@@ -27,18 +26,6 @@ void UPlayerUI::HideTurnStart()
 	GetWorld()->GetTimerManager().ClearTimer(StartTimeHandler);
 }
 
-void UPlayerUI::ShowTurnEnd()
-{
-	TurnEndText->SetVisibility(ESlateVisibility::Visible);
-	GetWorld()->GetTimerManager().SetTimer(EndTimeHandler, this, &UPlayerUI::HideTurnEnd, 1.f, false);
-}
-
-void UPlayerUI::HideTurnEnd()
-{
-	TurnEndText->SetVisibility(ESlateVisibility::Hidden);
-	GetWorld()->GetTimerManager().ClearTimer(EndTimeHandler);
-}
-
 void UPlayerUI::ShowEnmTurnStart()
 {
 	EnmTurnStartText->SetVisibility(ESlateVisibility::Visible);
@@ -51,17 +38,6 @@ void UPlayerUI::HideEnmTurnStart()
 	GetWorld()->GetTimerManager().ClearTimer(EnmStartTimeHandler);
 }
 
-void UPlayerUI::ShowEnmTurnEnd()
-{
-	EnmTurnEndText->SetVisibility(ESlateVisibility::Visible);
-	GetWorld()->GetTimerManager().SetTimer(EnmEndTimeHandler, this, &UPlayerUI::HideEnmTurnEnd, 1.f, false);
-}
-
-void UPlayerUI::HideEnmTurnEnd()
-{
-	EnmTurnEndText->SetVisibility(ESlateVisibility::Hidden);
-	GetWorld()->GetTimerManager().ClearTimer(EnmEndTimeHandler);
-}
 
 void UPlayerUI::IncreaseScore()
 {
@@ -102,4 +78,14 @@ void UPlayerUI::SetEnemyScore(float score)
 	{
 		EnemyPlayerScoreText->SetText(FText::AsNumber(score));
 	}
+}
+
+void UPlayerUI::ShowWinPlayer()
+{
+	WinText->SetVisibility(ESlateVisibility::Visible);	
+}
+
+void UPlayerUI::ShowLosePlayer()
+{
+	LoseText->SetVisibility(ESlateVisibility::Visible);
 }

@@ -29,8 +29,6 @@ void APawnCardSpawner::BeginPlay()
 		Timeline->SetLooping(false);
 		Timeline->SetTimelineLength(1.0f);
 	}
-	
-	ShuffleCards();
 }
 
 // Called every frame
@@ -42,6 +40,7 @@ void APawnCardSpawner::Tick(float DeltaTime)
 
 void APawnCardSpawner::ShuffleCards()
 {
+	//등록한 카드 종류x2를 배열에 넣는다 
 	TArray<TSubclassOf<APawnCard>> NewCards = Cards;
 	NewCards.Append(Cards);
 	
@@ -84,6 +83,8 @@ void APawnCardSpawner::DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCa
 			SpawnedCard->SetActorLocation(CardLocation);
 
 			CardLocation.X += CardMarginX;
+
+			CardsOnLevel.Add(SpawnedCard);
 		}
 	}
 }
