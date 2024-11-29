@@ -39,16 +39,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TSubclassOf<AChessPiece> PieceClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	AChessPiece* SelectedPiece = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	ABoardFloor* SelectedFloor = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	AChessPiece* TargetPiece = nullptr;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	ABoardFloor* TargetFloor = nullptr;
 	
 protected:
@@ -74,6 +74,7 @@ private:
 	UPROPERTY()
 	class UNoirBlancGameInstance* GameInstance;
 
+	bool bIsTargetPointEmpty = false; 
 //////////////////////////////////////////
 /////FUNCTION
 public:
@@ -86,6 +87,10 @@ public:
 	void MulticastRPC_MovePiece();
 	void MovePiece();
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PieceEncounter();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_PieceEncounter();
 	UFUNCTION()
 	void PieceEncounter(AChessPiece* Selected, AChessPiece* Target);
 

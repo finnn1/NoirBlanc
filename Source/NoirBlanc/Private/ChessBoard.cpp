@@ -52,6 +52,12 @@ void AChessBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AChessBoard, BoardFloors);
+	DOREPLIFETIME(AChessBoard, MovableFloors);
+	DOREPLIFETIME(AChessBoard, AttackableFloors);
+	DOREPLIFETIME(AChessBoard, SelectedPiece);
+	DOREPLIFETIME(AChessBoard, SelectedFloor);
+	DOREPLIFETIME(AChessBoard, TargetPiece);
+	DOREPLIFETIME(AChessBoard, TargetFloor);
 }
 
 void AChessBoard::ClickFloor()
@@ -81,30 +87,37 @@ void AChessBoard::ClickFloor()
 		if(TargetPiece)
 		{
 			bIsClickedTwice = true;
+			bIsTargetPointEmpty = false;
 			TargetFloor = TargetPiece->GetFloorBeneathPiece();
-			MovePiece();
+			ServerRPC_MovePiece();
 		}
 		//If Target is Floor
 		else if(TargetFloor)
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Check1"));
 			bIsClickedTwice = true;
-			MovePiece();
+			SetOwner(GetWorld()->GetFirstPlayerController()->GetPawn());
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *this->GetOwner()->GetName());
+			ServerRPC_MovePiece();
 		}
 	}
 }
 
 void AChessBoard::ServerRPC_MovePiece_Implementation()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Check1"));
 	MulticastRPC_MovePiece();
 }
 
 void AChessBoard::MulticastRPC_MovePiece_Implementation()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Check2"));
 	MovePiece();
 }
 
 void AChessBoard::MovePiece()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Check"));
 	//if piece is present at target floor
 	if(TargetPiece)
 	{
@@ -118,6 +131,7 @@ void AChessBoard::MovePiece()
 			//if target floor is movable
 			if(MovableFloors[i] == TargetFloor)
 			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Check"));
 				SelectedFloor->SetPieceOnFloor(nullptr);
 				SelectedPiece->SetFloorBeneathPiece(TargetFloor);
 				TargetFloor->SetPieceOnFloor(SelectedPiece);
@@ -127,6 +141,14 @@ void AChessBoard::MovePiece()
 			}
 		}
 	}
+}
+
+void AChessBoard::ServerRPC_PieceEncounter_Implementation()
+{
+}
+
+void AChessBoard::MulticastRPC_PieceEncounter_Implementation()
+{
 }
 
 void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)

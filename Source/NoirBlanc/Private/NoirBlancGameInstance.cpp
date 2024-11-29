@@ -22,4 +22,14 @@ void UNoirBlancGameInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UNoirBlancGameInstance, DeffenderColor);
+	DOREPLIFETIME(UNoirBlancGameInstance, DeffenderType);
+	DOREPLIFETIME(UNoirBlancGameInstance, AttackerColor);
+	DOREPLIFETIME(UNoirBlancGameInstance, AttackerType);
+	DOREPLIFETIME(UNoirBlancGameInstance, WinnerColor);
+	DOREPLIFETIME(UNoirBlancGameInstance, BoardTypeData);
+	DOREPLIFETIME(UNoirBlancGameInstance, BoardColorData);
+	DOREPLIFETIME(UNoirBlancGameInstance, EncounterCountData);
+	DOREPLIFETIME(UNoirBlancGameInstance, MoveCountData);
+	DOREPLIFETIME(UNoirBlancGameInstance, Turn);
+	
 }
