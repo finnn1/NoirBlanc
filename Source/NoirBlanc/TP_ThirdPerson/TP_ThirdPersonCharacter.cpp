@@ -14,10 +14,10 @@
 #include "Components/EditableTextBox.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
-#include "NoirBlanc/BishopGameMode.h"
-#include "NoirBlanc/NoirBlancPlayerState.h"
-#include "NoirBlanc/TypingUIWidget.h"
-#include "NoirBlanc/BishopWeapon.h"
+#include "NoirBlanc/BishopGame/BishopGameMode.h"
+#include "NoirBlanc/BishopGame/NoirBlancPlayerState.h"
+#include "NoirBlanc/BishopGame/TypingUIWidget.h"
+#include "NoirBlanc/BishopGame/BishopWeapon.h"
 
 class ANoirBlancPlayerState;
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
