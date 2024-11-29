@@ -20,8 +20,22 @@ ARoad::ARoad()
 void ARoad::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if(HasAuthority())
+	{
+		FTimerHandle handle;
+		GetWorldTimerManager().SetTimer(handle, this, &ARoad::FindPlayers, 2, false);
+	}
+}
 
-	Player = Cast<APlayer_Knight>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+void ARoad::FindPlayers()
+{
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayer_Knight::StaticClass(), actors);
+	for (AActor* Actor : actors)
+	{
+		AllPlayers.Push(Cast<APlayer_Knight>(Actor));
+	}
 }
 
 // Called every frame
@@ -29,8 +43,16 @@ void ARoad::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	Player->CurDistance = SplineComp->FindInputKeyClosestToWorldLocation(Player->GetActorLocation());
-	Player->TotalDistance += Player->CurDistance - Player->PreviousDistance;
-	Player->PreviousDistance = Player->CurDistance;
+	if(HasAuthority())
+	{
+		for(APlayer_Knight* player : AllPlayers)
+		{
+			player->CurDistance = SplineComp->FindInputKeyClosestToWorldLocation(player->GetActorLocation());
+			player->TotalDistance += player->CurDistance - player->PreviousDistance;
+			player->PreviousDistance = player->CurDistance;
+		}
+	}
 }
+
+
 

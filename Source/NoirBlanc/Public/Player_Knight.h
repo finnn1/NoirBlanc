@@ -24,16 +24,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// --------------------------------------------------------------------------------
+	//
+	// Input
+	//
+
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	void Move(const FInputActionValue& Value);
-
-	void Jump();
-	
-	APlayerController* PlayerController;
 
 	UPROPERTY(EditAnywhere)
 	UInputMappingContext* IMC_Player;
@@ -42,26 +39,67 @@ public:
 	UPROPERTY(EditAnywhere)
 	UInputAction* IA_Jump;
 	
+	// --------------------------------------------------------------------------------
+	//
+	// Network
+	//
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool Ended = false;
+	APlayer_Knight* OtherPlayer;
+	void FindOtherPlayer();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_UpdateDistanceUI(float serverDistance, float clientDistance);
+	// --------------------------------------------------------------------------------
+	//
+	// Movement
+	//
+	void Move(const FInputActionValue& Value);
 
-	bool Finished = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UMainUI> MainUI;
-    class UMainUI* Main;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UFinishUI> FinishUI;
-	class UFinishUI* Finish;
-	
-	UPROPERTY(Replicated)		
-	float Timer = 30.f;
+	void Jump();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CurDistance = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PreviousDistance = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	float TotalDistance = 0;
+	
+	// --------------------------------------------------------------------------------
+	//
+	// UI
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UFinishUI> FinishUI;
+	class UFinishUI* Finish;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UUserWidget> StartUI;
+	class UUserWidget* Start;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UMainUI> MainUI;
+	class UMainUI* Main;
+	
+	// --------------------------------------------------------------------------------
+	//
+	// Logic
+	//	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool Started = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool Ended = false;
+
+	bool Finished = false;
+	
+	// --------------------------------------------------------------------------------
+	//
+	// Player Data
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Piece;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Team;
 };

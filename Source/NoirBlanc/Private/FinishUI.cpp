@@ -3,3 +3,13 @@
 
 #include "FinishUI.h"
 
+void UFinishUI::NativeConstruct()
+{
+	Super::NativeConstruct();
+	Txt_Winner =  Cast<UTextBlock>(GetWidgetFromName(TEXT("Txt_Winner")));
+}
+
+void UFinishUI::UpdateWinnerText(FText winner)
+{
+	Txt_Winner->SetText(winner);
+}

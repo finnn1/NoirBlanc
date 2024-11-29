@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "MainUI.generated.h"
 
+class APlayer_Knight;
 /**
  * 
  */
@@ -14,11 +15,16 @@ class NOIRBLANC_API UMainUI : public UUserWidget
 {
 	GENERATED_BODY()
 	void NativeConstruct() override;
+	void NativePreConstruct() override;
 	void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
 public:
-	void UpdateTimerText(float time);
-
 	class UTextBlock* Text_Timer;
-	float Timer = 10.f;
+	void UpdateTimerText(float time);
+	
+	class UTextBlock* Text_MyDistance;
+	void UpdateMyDistance(float distance);
+	
+	class UTextBlock* Text_EnemyDistance;
+	void UpdateEnemyDistance(float distance);
 };

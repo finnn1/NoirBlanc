@@ -30,5 +30,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float X_Length = 0;
 	
-	class APlayer_Knight* Player;
+	TArray<class APlayer_Knight*> AllPlayers;
+
+	void FindPlayers();
 };	
