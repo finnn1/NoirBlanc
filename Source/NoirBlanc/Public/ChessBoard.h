@@ -25,6 +25,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 //////////////////////////////////////////
 /////Variable
 public:
@@ -50,13 +52,13 @@ public:
 	ABoardFloor* TargetFloor = nullptr;
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TArray<ABoardFloor*> BoardFloors;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TArray<ABoardFloor*> MovableFloors;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TArray<ABoardFloor*> AttackableFloors;
 private:
 	const int32 Chess_Num  = 8;
@@ -78,6 +80,10 @@ public:
 	UFUNCTION()
 	void ClickFloor();
 	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_MovePiece();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_MovePiece();
 	void MovePiece();
 
 	UFUNCTION()

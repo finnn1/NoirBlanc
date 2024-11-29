@@ -5,6 +5,7 @@
 #include "ChessPlayerController.h"
 #include "NoirBlancGameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -46,6 +47,13 @@ void AChessBoard::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void AChessBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AChessBoard, BoardFloors);
+}
+
 void AChessBoard::ClickFloor()
 {
 	AActor* HitActor = Controller->TraceForActor();
@@ -83,6 +91,16 @@ void AChessBoard::ClickFloor()
 			MovePiece();
 		}
 	}
+}
+
+void AChessBoard::ServerRPC_MovePiece_Implementation()
+{
+	MulticastRPC_MovePiece();
+}
+
+void AChessBoard::MulticastRPC_MovePiece_Implementation()
+{
+	MovePiece();
 }
 
 void AChessBoard::MovePiece()

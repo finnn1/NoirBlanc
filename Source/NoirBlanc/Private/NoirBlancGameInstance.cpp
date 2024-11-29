@@ -2,6 +2,7 @@
 
 
 #include "NoirBlancGameInstance.h"
+#include "Net/UnrealNetwork.h"
 
 void UNoirBlancGameInstance::Init()
 {
@@ -15,4 +16,10 @@ void UNoirBlancGameInstance::Init()
 		EncounterCountData.Add(0);
 		MoveCountData.Add(0);
 	}
+}
+
+void UNoirBlancGameInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UNoirBlancGameInstance, DeffenderColor);
 }
