@@ -57,14 +57,6 @@ public:
 	UPROPERTY()
 	APawnCardGameMode* GameMode;
 
-	//처음 시작
-	/*UFUNCTION()
-	void PlayerTurnStart();
-
-	//턴 끝
-	UFUNCTION()
-	void PlayerTurnEnd();*/
-
 	//카드 선택 함수
 	UFUNCTION()
 	void SelectCard(const FInputActionValue& Value);
@@ -75,7 +67,7 @@ public:
 
 	void InitPlayerUI();
 
-	void IncreaseScore();
+	void IncreaseScore(bool IsNoLuck);
 	
 	//void SetScore(bool IsMine);
 	void SetIsTurnPlayer(bool IsTurn);
@@ -87,27 +79,28 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	// 네트워크 통신
+
+	// 매칭 된 카드 파괴
 	UFUNCTION(Server, reliable)
 	void ServerRPC_DestroyPawnCard(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard);
-	
-	UFUNCTION(Server, reliable)
-	void ServerRPC_IncreaseEnemyScore(ANetworkPawn* InstigatorPawn);
-	
-	UFUNCTION(NetMulticast, reliable)
-	void MulticastRPC_IncreaseEnemyScore(ANetworkPawn* InstigatorPawn);
 
+	// 점수 반영
+	UFUNCTION(Server, reliable)
+	void ServerRPC_IncreaseScore(ANetworkPawn* ScorePlayer, bool IsNoLuck);
+
+	UFUNCTION(NetMulticast, reliable)
+	void MulticastRPC_IncreaseScore(ANetworkPawn* ScorePlayer, int32 Score);
+
+	// 턴 교대
 	UFUNCTION(Server, reliable)
 	void ServerRPC_ChangeTurn(ANetworkPawn* EndPlayer);
 
 	UFUNCTION(NetMulticast, reliable)
 	void MulticastRPC_ChangePlayerTurn(ANetworkPawn* StartPlayer);
 
-	UFUNCTION(Server, reliable)
-	void ServerRPC_GameEnd();
-
+	// 게임 끝
 	UFUNCTION(NetMulticast, reliable)
-	void MulticastRPC_GameEnd();
-	
+	void MulticastRPC_GameEnd(ANetworkPawn* WinnerPlayer);
 	
 	// 타임라인 이벤트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
@@ -125,11 +118,8 @@ protected:
 	UFUNCTION()
 	void EndTurnLerp();
 
-	//TODO Controller에서 받은 턴 제어 변수
-
 	UFUNCTION()
 	void ChangePlayerTurn(ANetworkPawn* StartPlayer);
-	
 
 private:
 	UPROPERTY(Replicated)

@@ -13,6 +13,7 @@ class APawnCardController;
  * 
  */
 DECLARE_DELEGATE_OneParam(FOnChangePlayerTurn, ANetworkPawn*);
+DECLARE_DELEGATE_OneParam(FOnGameSet, ANetworkPawn*)
 UCLASS()
 class NOIRBLANC_API APawnCardGameMode : public AGameModeBase
 {
@@ -20,9 +21,6 @@ class NOIRBLANC_API APawnCardGameMode : public AGameModeBase
 
 public:
 	virtual void BeginPlay() override;
-	
-	UPROPERTY(EditDefaultsOnly)
-	APawnCardController* TurnPlayerContr;
 
 	UPROPERTY(EditDefaultsOnly)
 	ANetworkPawn* TurnNetPlayer;
@@ -39,13 +37,14 @@ public:
 	int32 TurnPlayerIdx = 0;
 	
 	FOnChangePlayerTurn OnChangePlayerTurn;
+	FOnGameSet OnGameSet;
 	
 	void InitPawnCardGame();
 	
 	void AddPlayer(ANetworkPawn* Player);
 
 	bool CheckRemainCards();
-	void GameEnd();
+	void GameSet();
 
 	void ChangeTurn(ANetworkPawn* EndPlayer);
 };

@@ -65,7 +65,6 @@ void UPlayerUI::IncreaseEnemyScore()
 
 void UPlayerUI::SetMyScore(float score)
 {
-	UE_LOG(LogTemp, Warning, TEXT("UI score is %f"), score);
 	if(MyPlayerScoreText)
 	{
 		MyPlayerScoreText->SetText(FText::AsNumber(score));

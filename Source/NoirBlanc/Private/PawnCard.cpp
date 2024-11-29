@@ -16,6 +16,8 @@ APawnCard::APawnCard()
 	bIsSelectable = false;
 
 	FrontBackState = CardState::Back;
+	
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned

@@ -6,6 +6,7 @@
 #include "PawnCardSpawner.h"
 #include "PawnCard.h"
 #include "PawnCardController.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
 void APawnCardGameMode::BeginPlay()
@@ -37,12 +38,12 @@ void APawnCardGameMode::InitPawnCardGame()
 	//TODO : 게임 시작 UI
 	
 	//턴 플레이어 시작
-	APawn* TurnPlayerPawn = Cast<APawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	/*APawn* TurnPlayerPawn = Cast<APawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	
 	if(TurnPlayerPawn)
 	{
 		TurnNetPlayer = Cast<ANetworkPawn>(TurnPlayerPawn);
-	}
+	}*/
 }
 
 void APawnCardGameMode::AddPlayer(ANetworkPawn* Player)
@@ -56,12 +57,30 @@ bool APawnCardGameMode::CheckRemainCards()
 	{
 		return !IsValid(Card);
 	});
+
+	if(PawnCards.Num() == 0)
+	{
+		GameSet();
+	}
 	
 	return (PawnCards.Num() == 0);
 }
 
-void APawnCardGameMode::GameEnd()
+void APawnCardGameMode::GameSet()
 {
+	ANetworkPawn* WinnerPlayer = nullptr;
+	int32 HighestScore = 0;
+	
+	for(ANetworkPawn* Player : Players)
+	{
+		if(HighestScore < Player->GetPlayerState()->GetScore())
+		{
+			WinnerPlayer = Player;
+			HighestScore = Player->GetPlayerState()->GetScore();
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Result is %d, %s"), HighestScore, *WinnerPlayer->GetName());
+	OnGameSet.ExecuteIfBound(WinnerPlayer);
 }
 
 void APawnCardGameMode::ChangeTurn(ANetworkPawn* EndPlayer)
