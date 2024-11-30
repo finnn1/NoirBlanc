@@ -14,6 +14,7 @@
 #include "TimerManager.h"
 #include "Components/WidgetComponent.h"
 #include "Fortress/FireBoostWidget.h"
+#include "Fortress/FortressUI.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
@@ -44,10 +45,13 @@ ACannon::ACannon()
 	MoveSpeed = 100.0f;
 	RotationSpeed = 50.0f;
 
-	ProgressBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("FireBoostWidget"));
-	ProgressBar->SetupAttachment(RootComponent);
+	VelocityBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("FireBoostWidget"));
+	VelocityBar->SetupAttachment(RootComponent);
 
-	Health = 100.0f;
+	MaxHealth = 100.0f;
+	Health =  MaxHealth;
+	Damage = 10.0f;
+	
  }
 
 // Called when the game starts or when spawned
@@ -55,9 +59,9 @@ void ACannon::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ProgressBar != nullptr)
+	if (VelocityBar != nullptr)
 	{
-		UUserWidget* Widget = ProgressBar->GetWidget();		// WidgetComponent != Widget
+		UUserWidget* Widget = VelocityBar->GetWidget();		// WidgetComponent != Widget
 		if (Widget != nullptr)
 		{
 			ProjectileVelocity = 0.0f;
@@ -66,6 +70,9 @@ void ACannon::BeginPlay()
 				FireBoostWidget->Velocity = ProjectileVelocity;
 		}
 	}
+	FortressUI = CreateWidget<UFortressUI>(GetWorld(), FortressUIFactory);
+	if (FortressUI != nullptr)
+		FortressUI->AddToViewport();
 }
 
 // Called to bind functionality to input

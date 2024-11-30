@@ -37,7 +37,7 @@ public:
 	class USphereComponent* SpawnLocation;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UWidgetComponent* ProgressBar;
+	class UWidgetComponent* VelocityBar;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UFireBoostWidget* FireBoostWidget;
@@ -113,10 +113,19 @@ public:
 	AProjectileEqBased* ProjectileEqBased;	// object
 
 public:
+	// Health and Damage
 	UPROPERTY(EditAnywhere)
+	float MaxHealth;
 	float Health;
 
-	//virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+	UPROPERTY(EditAnywhere)
+	float Damage;
+
+public:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> FortressUIFactory;
+	class UFortressUI* FortressUI;
+	
 	
 	
 	

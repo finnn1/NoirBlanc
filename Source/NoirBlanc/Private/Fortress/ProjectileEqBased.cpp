@@ -2,12 +2,12 @@
 
 
 #include "Fortress/ProjectileEqBased.h"
-
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Fortress/Cannon.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "Fortress/FortressUI.h"
+	
 // Sets default values
 AProjectileEqBased::AProjectileEqBased()
 {
@@ -115,13 +115,16 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		if (Opponent == this->Owner) return;
 		if(Opponent)
 		{
-			Opponent->Health -= 10.0f;
+			Opponent->Health -= Opponent->Damage;
+			ACannon* OwnCannon = Cast<ACannon>(this->Owner);
+			OwnCannon->FortressUI->ChangeHPBar(Opponent);
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, FString::Printf(TEXT("Health: %f"), Opponent->Health));
 
 			if (BombEffect)
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BombEffect, Hit.ImpactPoint, FRotator(0, 0, 0));
 		}
 		Destroy();
+		
 	}
 }
 
