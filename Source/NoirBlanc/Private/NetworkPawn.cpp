@@ -142,39 +142,49 @@ void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 {
 	if(!GetIsTurnPlayer()) return;
-	if(Timeline->IsPlaying()) return;
 
 	FHitResult Hit;
 	PawnCardContr->GetHitResultUnderCursor(ECC_Visibility, false, Hit);
 
 	if(Hit.bBlockingHit)
 	{
-		TargetCard = Cast<APawnCard>(Hit.GetActor());
+		APawnCard* SelectedCard = Cast<APawnCard>(Hit.GetActor());
 		
-		if(TargetCard)
+		if(SelectedCard)
 		{
-			if(FirstSelectedCard.IsValid())
-			{
-				//이미 첫 번째 카드를 선택했으면 체크
-				SecondSelectedCard = TargetCard;
-			}
-			else
-			{
-				//아무 것도 선택 안 했으면 FirstSelectCard에 할당
-				FirstSelectedCard = TargetCard;
-			}
-		
-			//앞면으로 오픈
-			Timeline->PlayFromStart();
-			TargetCard->Selected();
+			ServerRPC_SelectCard(SelectedCard);
 		}
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("No Selected Card"));
 		}
 	}
-
 }
+
+void ANetworkPawn::ServerRPC_SelectCard_Implementation(APawnCard* SelectedCard)
+{
+	MulticastRPC_SelectCard(SelectedCard);
+}
+
+void ANetworkPawn::MulticastRPC_SelectCard_Implementation(APawnCard* SelectedCard)
+{
+	TargetCard = SelectedCard;
+	if(FirstSelectedCard.IsValid())
+	{
+		//이미 첫 번째 카드를 선택했으면 체크
+		SecondSelectedCard = TargetCard;
+	}
+	else
+	{
+		//아무 것도 선택 안 했으면 FirstSelectCard에 할당
+		FirstSelectedCard = TargetCard;
+	}
+		
+	//앞면으로 오픈
+	Timeline->PlayFromStart();
+	TargetCard->Selected();
+}
+
 
 bool ANetworkPawn::IsCheckCardMatch()
 {

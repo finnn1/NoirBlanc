@@ -18,6 +18,11 @@ void APawnCardGameMode::BeginPlay()
 		APawnCardSpawner* CardSpawner = GetWorld()->SpawnActor<APawnCardSpawner>(TSubCardSpawner, FVector(0), FRotator(0));
 		CardSpawner->ShuffleCards();
 
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([CardSpawner]() {
+			CardSpawner->ReShuffleCard();
+		}), 2.0f, true, 2.f);
+
 		//World의 PawnCard를 배열에 추가
 		TArray<AActor*> AllActors;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APawnCard::StaticClass(), AllActors);
@@ -79,7 +84,6 @@ void APawnCardGameMode::GameSet()
 			HighestScore = Player->GetPlayerState()->GetScore();
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Result is %d, %s"), HighestScore, *WinnerPlayer->GetName());
 	OnGameSet.ExecuteIfBound(WinnerPlayer);
 }
 

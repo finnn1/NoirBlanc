@@ -74,6 +74,12 @@ public:
 	bool GetIsTurnPlayer();
 
 	void CheckLog(ANetworkPawn* TargetPawn);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SelectCard(APawnCard* SelectedCard);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SelectCard(APawnCard* SelectedCard);
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;

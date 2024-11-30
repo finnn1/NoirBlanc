@@ -8,6 +8,28 @@
 #include "PawnCardSpawner.generated.h"
 
 class APawnCard;
+
+USTRUCT(BlueprintType)
+struct FMyStruct
+{
+	//: public FTableRowBase
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	FTimerHandle TimerHandle;
+
+	UPROPERTY()
+	FVector DestLocation;
+	
+	UPROPERTY()
+	float ElapsedTime = 0;
+
+	UPROPERTY()
+	float Duration = 10;
+	
+	UPROPERTY()
+	float Alpha = 0;
+};
 UCLASS()
 class NOIRBLANC_API APawnCardSpawner : public AActor
 {
@@ -30,9 +52,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TSubclassOf<APawnCard>> Cards;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TMap<APawnCard*, FVector> CardLocationMap;
-
 	UPROPERTY()
 	int32 CardMarginX = 100;
 
@@ -49,21 +68,20 @@ public:
 	void DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCards);
 	
 public:
-	UPROPERTY()
-	UTimelineComponent* Timeline;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCurveFloat* MovingLinearCurve;
-
-	FOnTimelineFloat StartMoveFloat;
-	FOnTimelineEvent EndMoveEvent;
-	
-
-	UFUNCTION()
-	void StartMoveCard(float value);
-
 	UFUNCTION()
 	void EndMoveCard();
+
+	// Test
+	UPROPERTY()
+	TMap<APawnCard*, FMyStruct> MapUseStr;
+
+	float Duration = 3.f;
+	float InRate = 0.01;
+
+	void MoveTest(APawnCard* Card);
+	void UpdateLerp(APawnCard* Card);
+
+	void ReShuffleCard();
 
 private:
 	UPROPERTY()

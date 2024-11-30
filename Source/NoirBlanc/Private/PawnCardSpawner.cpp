@@ -10,25 +10,13 @@ APawnCardSpawner::APawnCardSpawner()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
-	StartMoveFloat.BindUFunction(this, FName("StartMoveCard"));
-	EndMoveEvent.BindUFunction(this, FName("EndMoveCard")); 
+	
 }
 
 // Called when the game starts or when spawned
 void APawnCardSpawner::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (MovingLinearCurve)
-	{
-		Timeline->AddInterpFloat(MovingLinearCurve, StartMoveFloat);
-		Timeline->SetTimelineFinishedFunc(EndMoveEvent);
-		
-		Timeline->SetLooping(false);
-		Timeline->SetTimelineLength(1.0f);
-	}
 }
 
 // Called every frame
@@ -78,28 +66,84 @@ void APawnCardSpawner::DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCa
 				CardLocation.Z += CardMarginZ;
 				CardLocation.X = 0;
 			}
-
-			CardLocationMap.Add(SpawnedCard, CardLocation);
+			
 			SpawnedCard->SetActorLocation(CardLocation);
+
+			//구조체
+			FMyStruct TempStruct;
+			TempStruct.DestLocation = CardLocation;
+			TempStruct.ElapsedTime = 0.0f;
+			TempStruct.Duration = Duration;
+			MapUseStr.Add(SpawnedCard, TempStruct);
 
 			CardLocation.X += CardMarginX;
 
 			CardsOnLevel.Add(SpawnedCard);
+			
+			//MoveTest(SpawnedCard);
 		}
 	}
 }
 
-void APawnCardSpawner::StartMoveCard(float value)
+void APawnCardSpawner::MoveTest(APawnCard* Card)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Lerp"));
-	if(SpawnedCard)
+	if(!Card) return;
+
+	// Actor별 타이머 시작
+	FTimerHandle NewTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(
+		NewTimerHandle,
+		FTimerDelegate::CreateUObject(this, &APawnCardSpawner::UpdateLerp, Card),
+		InRate,
+		true
+	);
+
+	MapUseStr[Card].TimerHandle = NewTimerHandle; // 핸들 저장
+}
+
+void APawnCardSpawner::UpdateLerp(APawnCard* Card)
+{
+	if (!Card) return;
+
+	MapUseStr[Card].ElapsedTime += InRate;
+	float Alpha = FMath::Clamp(MapUseStr[Card].ElapsedTime / MapUseStr[Card].Duration, 0.0f, 1.0f);
+
+	// 위치 보간
+	FVector NewLocation = FMath::Lerp(Card->GetActorLocation(), MapUseStr[Card].DestLocation, Alpha);
+	Card->SetActorLocation(NewLocation);
+
+	// Lerp 종료 확인
+	if (Alpha >= 1.0f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SpawnedCard is %s"), *SpawnedCard->GetName());
-		SpawnedCard->SetActorLocation(FMath::Lerp(SpawnedCard->GetActorLocation(), CardLocationMap[SpawnedCard], value));
+		GetWorld()->GetTimerManager().ClearTimer(MapUseStr[Card].TimerHandle);
 	}
+}
+
+void APawnCardSpawner::ReShuffleCard()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Start ReShuffle!!!!!!"));
+	
+	int32 RandomIndex1 = FMath::RandRange(0, CardsOnLevel.Num() - 1);
+	int32 RandomIndex2 = FMath::RandRange(0, CardsOnLevel.Num() - 1);
+	
+	if(RandomIndex1 != 0 && RandomIndex1 == RandomIndex2)
+	{
+		RandomIndex2--;
+	}
+
+	APawnCard* RandomCard1 = CardsOnLevel[RandomIndex1];
+	APawnCard* RandomCard2 = CardsOnLevel[RandomIndex2];
+
+	FVector TempLoc = MapUseStr[RandomCard1].DestLocation;
+	
+	MapUseStr[RandomCard1].DestLocation = MapUseStr[RandomCard2].DestLocation; 
+	MapUseStr[RandomCard2].DestLocation = TempLoc;
+
+	MoveTest(RandomCard1);
+	MoveTest(RandomCard2);
 }
 
 void APawnCardSpawner::EndMoveCard()
 {
+	
 }
-
