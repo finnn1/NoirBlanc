@@ -12,6 +12,7 @@ class APawnCardController;
 /**
  * 
  */
+DECLARE_MULTICAST_DELEGATE(FOnGameStart);
 DECLARE_DELEGATE_OneParam(FOnChangePlayerTurn, ANetworkPawn*);
 DECLARE_DELEGATE_OneParam(FOnGameSet, ANetworkPawn*)
 UCLASS()
@@ -21,7 +22,7 @@ class NOIRBLANC_API APawnCardGameMode : public AGameModeBase
 
 public:
 	virtual void BeginPlay() override;
-
+	FTimerHandle TimerHandle;
 	UPROPERTY(EditDefaultsOnly)
 	ANetworkPawn* TurnNetPlayer;
 
@@ -34,10 +35,23 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<ANetworkPawn*> Players;
 
-	int32 TurnPlayerIdx = 0;
+	UPROPERTY(VisibleAnywhere)
+	APawnCardSpawner* CardSpawner;
 	
+	UPROPERTY()
+	int32 TurnPlayerIdx = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InitGameSettings")
+	int32 PlayerNum = 2;
+
+	UPROPERTY()
+	int32 CurrentPlayerNum = 0;
+
+	FOnGameStart OnGameStart;
 	FOnChangePlayerTurn OnChangePlayerTurn;
 	FOnGameSet OnGameSet;
+
+	void SetInitCardSetting(APawnCardSpawner* Spawner);
 	
 	void InitPawnCardGame();
 	
@@ -47,4 +61,6 @@ public:
 	void GameSet();
 
 	void ChangeTurn(ANetworkPawn* EndPlayer);
+
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 };

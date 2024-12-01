@@ -4,6 +4,7 @@
 #include "PawnCardSpawner.h"
 
 #include "PawnCard.h"
+#include "PawnCardDataAsset.h"
 
 // Sets default values
 APawnCardSpawner::APawnCardSpawner()
@@ -26,11 +27,23 @@ void APawnCardSpawner::Tick(float DeltaTime)
 
 }
 
-void APawnCardSpawner::ShuffleCards()
+void APawnCardSpawner::InitCardsArray()
 {
 	//등록한 카드 종류x2를 배열에 넣는다 
-	TArray<TSubclassOf<APawnCard>> NewCards = Cards;
-	NewCards.Append(Cards);
+	TArray<TSubclassOf<APawnCard>> NewCards;
+
+	for(int i = 0; i < Cards.Num(); i++)
+	{
+		APawnCard* DefaultObject = Cards[i]->GetDefaultObject<APawnCard>();
+		if(DefaultObject)
+		{
+			int32 LoopNum = DefaultObject->PawnCardData->TotalNum;
+			for(int j = 0; j < LoopNum; j++)
+			{
+				NewCards.Add(Cards[i]);
+			}
+		}
+	}
 	
 	for(int i = 0; i < NewCards.Num(); i++)
 	{
@@ -79,29 +92,59 @@ void APawnCardSpawner::DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCa
 			CardLocation.X += CardMarginX;
 
 			CardsOnLevel.Add(SpawnedCard);
-			
-			//MoveTest(SpawnedCard);
 		}
 	}
 }
 
-void APawnCardSpawner::MoveTest(APawnCard* Card)
+// 카드 2개 이동
+void APawnCardSpawner::ShuffleCard()
+{
+	for(int i = 0; i < 2; i++)
+	{
+		int32 RandomIndex1 = FMath::RandRange(0, CardsOnLevel.Num() - 1);
+		int32 RandomIndex2 = FMath::RandRange(0, CardsOnLevel.Num() - 1);
+
+		// 랜덤 카드 2장이 같으면 이전 Index의 카드
+		if(RandomIndex1 != 0 && RandomIndex1 == RandomIndex2)
+		{
+			RandomIndex2--;
+		}
+
+		// 배열에서 카드 가져오기
+		APawnCard* RandomCard1 = CardsOnLevel[RandomIndex1];
+		APawnCard* RandomCard2 = CardsOnLevel[RandomIndex2];
+
+		// 도착 Vector Swap
+		FVector TempLoc = MapUseStr[RandomCard1].DestLocation;
+		MapUseStr[RandomCard1].DestLocation = MapUseStr[RandomCard2].DestLocation; 
+		MapUseStr[RandomCard2].DestLocation = TempLoc;
+
+		SetMoveTimer(RandomCard1);
+		SetMoveTimer(RandomCard2);
+	}
+	
+}
+
+void APawnCardSpawner::SetMoveTimer(APawnCard* Card)
 {
 	if(!Card) return;
 
 	// Actor별 타이머 시작
 	FTimerHandle NewTimerHandle;
+	
+	// 핸들 저장
+	MapUseStr[Card].TimerHandle = NewTimerHandle;
+
+	// 이동
 	GetWorld()->GetTimerManager().SetTimer(
-		NewTimerHandle,
-		FTimerDelegate::CreateUObject(this, &APawnCardSpawner::UpdateLerp, Card),
+		MapUseStr[Card].TimerHandle,
+		FTimerDelegate::CreateUObject(this, &APawnCardSpawner::UpdateLocationLerp, Card),
 		InRate,
 		true
 	);
-
-	MapUseStr[Card].TimerHandle = NewTimerHandle; // 핸들 저장
 }
 
-void APawnCardSpawner::UpdateLerp(APawnCard* Card)
+void APawnCardSpawner::UpdateLocationLerp(APawnCard* Card)
 {
 	if (!Card) return;
 
@@ -111,39 +154,12 @@ void APawnCardSpawner::UpdateLerp(APawnCard* Card)
 	// 위치 보간
 	FVector NewLocation = FMath::Lerp(Card->GetActorLocation(), MapUseStr[Card].DestLocation, Alpha);
 	Card->SetActorLocation(NewLocation);
-
-	// Lerp 종료 확인
-	if (Alpha >= 1.0f)
+	
+	// 근사값이면 Timer 종료 및 초기화
+	if(Card->GetActorLocation().Equals(MapUseStr[Card].DestLocation, 5) )
 	{
+		Card->SetActorLocation(MapUseStr[Card].DestLocation);
+		MapUseStr[Card].ElapsedTime = 0;
 		GetWorld()->GetTimerManager().ClearTimer(MapUseStr[Card].TimerHandle);
 	}
-}
-
-void APawnCardSpawner::ReShuffleCard()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Start ReShuffle!!!!!!"));
-	
-	int32 RandomIndex1 = FMath::RandRange(0, CardsOnLevel.Num() - 1);
-	int32 RandomIndex2 = FMath::RandRange(0, CardsOnLevel.Num() - 1);
-	
-	if(RandomIndex1 != 0 && RandomIndex1 == RandomIndex2)
-	{
-		RandomIndex2--;
-	}
-
-	APawnCard* RandomCard1 = CardsOnLevel[RandomIndex1];
-	APawnCard* RandomCard2 = CardsOnLevel[RandomIndex2];
-
-	FVector TempLoc = MapUseStr[RandomCard1].DestLocation;
-	
-	MapUseStr[RandomCard1].DestLocation = MapUseStr[RandomCard2].DestLocation; 
-	MapUseStr[RandomCard2].DestLocation = TempLoc;
-
-	MoveTest(RandomCard1);
-	MoveTest(RandomCard2);
-}
-
-void APawnCardSpawner::EndMoveCard()
-{
-	
 }

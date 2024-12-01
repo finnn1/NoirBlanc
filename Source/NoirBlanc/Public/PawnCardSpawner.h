@@ -26,10 +26,8 @@ struct FMyStruct
 
 	UPROPERTY()
 	float Duration = 10;
-	
-	UPROPERTY()
-	float Alpha = 0;
 };
+
 UCLASS()
 class NOIRBLANC_API APawnCardSpawner : public AActor
 {
@@ -61,27 +59,23 @@ public:
 	UPROPERTY()
 	APawnCard* SpawnedCard;
 
-	//카드 셔플
-	void ShuffleCards();
+	//배열 초기화
+	void InitCardsArray();
 	
 	//카드 배치
 	void DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCards);
 	
 public:
-	UFUNCTION()
-	void EndMoveCard();
-
-	// Test
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TMap<APawnCard*, FMyStruct> MapUseStr;
 
-	float Duration = 3.f;
-	float InRate = 0.01;
+	float Duration = 1.f;
+	float InRate = 0.03;
 
-	void MoveTest(APawnCard* Card);
-	void UpdateLerp(APawnCard* Card);
+	void SetMoveTimer(APawnCard* Card);
+	void UpdateLocationLerp(APawnCard* Card);
 
-	void ReShuffleCard();
+	void ShuffleCard();
 
 private:
 	UPROPERTY()

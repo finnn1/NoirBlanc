@@ -6,13 +6,11 @@
 #include "GameFramework/PlayerController.h"
 #include "PawnCardController.generated.h"
 
+class UControllerUI;
 /**
  * 
  */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCardClick, AActor*, HitActor);
-class APawnCard;
 class UPlayerUI;
-class ANetworkPawn;
 UCLASS()
 class NOIRBLANC_API APawnCardController : public APlayerController
 {
@@ -23,16 +21,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaTime) override;
 	virtual void SetupInputComponent() override;
 
 public:
-	ANetworkPawn* PlayerPawn;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UControllerUI> CntrUIFactory;
 	
-	//턴 제어 함수
-	void SetTurnOwner(bool IsOwner);
-	bool GetTurnOwner() const;
+	UPROPERTY()
+	UControllerUI* CntrUI;
 	
-private:
-	bool IsTurnOwner = false;
 };

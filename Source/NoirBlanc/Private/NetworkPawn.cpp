@@ -2,6 +2,8 @@
 
 
 #include "NetworkPawn.h"
+
+#include "ControllerUI.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "PawnCardGameMode.h"
@@ -22,19 +24,22 @@ ANetworkPawn::ANetworkPawn()
 	Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 	StartTurnFloat.BindUFunction(this, FName("StartTurnLerp"));
 	EndTurnEvent.BindUFunction(this, FName("EndTurnLerp"));
+	
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
 void ANetworkPawn::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	//턴 시작
 	GameMode = Cast<APawnCardGameMode>(GetWorld()->GetAuthGameMode());
 	if(GameMode)
 	{
-		GameMode->OnChangePlayerTurn.BindUObject(this, &ANetworkPawn::ChangePlayerTurn);
+		GameMode->OnGameStart.AddUObject(this, &ANetworkPawn::MulticastRPC_GameStart);
 		GameMode->OnGameSet.BindUObject(this, &ANetworkPawn::MulticastRPC_GameEnd);
+		GameMode->OnChangePlayerTurn.BindUObject(this, &ANetworkPawn::ChangePlayerTurn);
 		GameMode->AddPlayer(this);
 	}
 
@@ -49,7 +54,8 @@ void ANetworkPawn::BeginPlay()
 	}
 
 	//컨트롤러 캐싱
-	if(APawnCardController* PcController = Cast<APawnCardController>(GetWorld()->GetFirstPlayerController()))
+	APawnCardController* PcController = Cast<APawnCardController>(GetWorld()->GetFirstPlayerController());
+	if(PcController)
 	{
 		PawnCardContr = PcController;
 	}
@@ -57,17 +63,6 @@ void ANetworkPawn::BeginPlay()
 	if(IsLocallyControlled())
 	{
 		InitPlayerUI();
-
-		// BeginPlay에서 서버가 먼저 시작되므로 Init으로 강제 Start
-		if(HasAuthority())
-		{
-			SetIsTurnPlayer(true);
-			PlayerUI->ShowTurnStart();
-		}
-		else
-		{
-			PlayerUI->ShowEnmTurnStart();
-		}
 	}
 }
 
@@ -131,11 +126,31 @@ void ANetworkPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 }
 
+void ANetworkPawn::SetPawnOwner(APawnCardController* Cntr, ANetworkPawn* NewPawn)
+{
+	if(Cntr && NewPawn)
+	{
+		NewPawn->SetOwner(Cntr);
+	}
+}
+
 void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ANetworkPawn, IsTurnPlayer);
+}
+
+void ANetworkPawn::MulticastRPC_GameStart_Implementation()
+{
+	if(GetOwner())
+	{
+		APawnCardController* Cntr = Cast<APawnCardController>(GetOwner());
+		if(Cntr && Cntr->CntrUI)
+		{
+			Cntr->CntrUI->HideShuffleText();	
+		}
+	}
 }
 
 
@@ -294,9 +309,13 @@ void ANetworkPawn::EndTurnLerp()
 		{
 			// 실패했으면 선택한 카드 원래대로
 			Timeline->PlayFromStart();
+			//Timeline->Reverse();
 
 			// 턴 교대 로직 시작
-			ServerRPC_ChangeTurn(this);
+			if(HasAuthority())
+			{
+				ServerRPC_ChangeTurn(this);
+			}
 		}
 	}
 	else
@@ -374,18 +393,16 @@ bool ANetworkPawn::GetIsTurnPlayer()
 // SetScore를 통해 점수 증가
 void ANetworkPawn::ServerRPC_IncreaseScore_Implementation(ANetworkPawn* ScorePlayer, bool IsNoLuck)
 {
-	int32 CurrentScore = ScorePlayer->GetPlayerState()->GetScore();
-
-	// 꽝 카드를 매칭시켰으면 점수 마이너스
+	// 꽝 카드를 매칭시켰으면 턴 체인
 	if(IsNoLuck)
 	{
-		CurrentScore--;
+		//CurrentScore--;
 		ServerRPC_ChangeTurn(this);
+		return;
 	}
-	else
-	{
-		CurrentScore++;
-	}
+	
+	int32 CurrentScore = ScorePlayer->GetPlayerState()->GetScore();
+	CurrentScore++;
 	
 	ScorePlayer->GetPlayerState()->SetScore(CurrentScore);
 

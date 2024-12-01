@@ -15,11 +15,13 @@ enum class PawnCardType : uint8
 	KnightRed,
 	BishopRed,
 	QueenRed,
+	KingRed,
 	PawnBlue,
 	RookBlue,
 	KnightBlue,
 	BishopBlue,
-	QueenBlue
+	QueenBlue,
+	KingBlue
 };
 /**
  * 

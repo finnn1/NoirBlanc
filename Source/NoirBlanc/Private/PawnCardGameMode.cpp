@@ -6,49 +6,68 @@
 #include "PawnCardSpawner.h"
 #include "PawnCard.h"
 #include "PawnCardController.h"
+#include "PawnCardDataAsset.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
 void APawnCardGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if(TSubCardSpawner)
 	{
-		APawnCardSpawner* CardSpawner = GetWorld()->SpawnActor<APawnCardSpawner>(TSubCardSpawner, FVector(0), FRotator(0));
-		CardSpawner->ShuffleCards();
-
-		FTimerHandle TimerHandle;
-		GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([CardSpawner]() {
-			CardSpawner->ReShuffleCard();
-		}), 2.0f, true, 2.f);
-
-		//World의 PawnCard를 배열에 추가
-		TArray<AActor*> AllActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APawnCard::StaticClass(), AllActors);
-	
-		for(AActor* CardActor : AllActors)
+		CardSpawner = GetWorld()->SpawnActor<APawnCardSpawner>(TSubCardSpawner, FVector(0), FRotator(0));
+		if(CardSpawner)
 		{
-			APawnCard* PawnCard = Cast<APawnCard>(CardActor);
-			if(PawnCard)
+			CardSpawner->InitCardsArray();
+
+			//World의 PawnCard를 배열에 추가
+			TArray<AActor*> AllActors;
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), APawnCard::StaticClass(), AllActors);
+	
+			for(AActor* CardActor : AllActors)
 			{
-				PawnCards.Add(PawnCard);
+				APawnCard* PawnCard = Cast<APawnCard>(CardActor);
+				if(PawnCard)
+				{
+					PawnCards.Add(PawnCard);
+				}
 			}
 		}
 	}
 }
 
+void APawnCardGameMode::SetInitCardSetting(APawnCardSpawner* Spawner)
+{
+	// 시작하고 텀
+	GetWorldTimerManager().SetTimer(TimerHandle, [this, Spawner]() 
+	{
+		CardSpawner->ShuffleCard();
+			
+		static float ElapsedTime = 0.0f;
+		ElapsedTime += 1.f;
+			
+		if(ElapsedTime >= 8.5f)
+		{
+			InitPawnCardGame();
+			ElapsedTime = 0.0f;
+		}
+	}, 1.f, true);
+}
+
 void APawnCardGameMode::InitPawnCardGame()
 {
-	//TODO : 게임 시작 UI
-	
-	//턴 플레이어 시작
-	/*APawn* TurnPlayerPawn = Cast<APawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	
-	if(TurnPlayerPawn)
+	/*for(int32 i=0; i < PawnCards.Num(); i++)
 	{
-		TurnNetPlayer = Cast<ANetworkPawn>(TurnPlayerPawn);
+		PawnCards[i]->SetActorRotation(FRotator(0,180,0));
+		PawnCards[i]->ChangeFrontBackState();
 	}*/
+	GetWorldTimerManager().ClearTimer(TimerHandle);
+
+	OnGameStart.Broadcast();
+	
+	Players[0]->SetIsTurnPlayer(true);
+	OnChangePlayerTurn.Execute(Players[0]);
 }
 
 void APawnCardGameMode::AddPlayer(ANetworkPawn* Player)
@@ -58,12 +77,23 @@ void APawnCardGameMode::AddPlayer(ANetworkPawn* Player)
 
 bool APawnCardGameMode::CheckRemainCards()
 {
-	PawnCards.RemoveAll([](APawnCard* Card)
+	int32 NoLuckCardNum = 0;
+	PawnCards.RemoveAll([&NoLuckCardNum](APawnCard* Card)
 	{
+		if(IsValid(Card) && Card->PawnCardData->PawnCardType == PawnCardType::NoLuck)
+		{
+			NoLuckCardNum++;
+		}
+
 		return !IsValid(Card);
 	});
 
-	if(PawnCards.Num() == 0)
+	int32 RemainCardNum = PawnCards.Num();
+	if(RemainCardNum <= 1)
+	{
+		GameSet();
+	}
+	else if(RemainCardNum <= 4 && NoLuckCardNum >= 2)
 	{
 		GameSet();
 	}
@@ -98,4 +128,16 @@ void APawnCardGameMode::ChangeTurn(ANetworkPawn* EndPlayer)
 
 	// Turn Start UI 표시 Delegate
 	OnChangePlayerTurn.Execute(Players[TurnPlayerIdx]);
+}
+
+void APawnCardGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	CurrentPlayerNum++;
+
+	if(PlayerNum >= CurrentPlayerNum)
+	{
+		SetInitCardSetting(CardSpawner);
+	}
 }

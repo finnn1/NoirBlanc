@@ -2,7 +2,10 @@
 
 
 #include "PawnCardController.h"
+
+#include "ControllerUI.h"
 #include "NetworkPawn.h"
+#include "Blueprint/UserWidget.h"
 
 APawnCardController::APawnCardController()
 {
@@ -13,34 +16,18 @@ void APawnCardController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ANetworkPawn* GetPlayerPawn = Cast<ANetworkPawn>(GetPawn());
-	if(PlayerPawn)
+	if(CntrUIFactory)
 	{
-		PlayerPawn = GetPlayerPawn;
+		CntrUI = Cast<UControllerUI>(CreateWidget(GetWorld(), CntrUIFactory));
+		CntrUI->AddToViewport();
 	}
 	
 	//마우스 커서 보이게 하기
 	bShowMouseCursor = true;
 }
 
-void APawnCardController::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	
-}
-
 void APawnCardController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 	
-}
-
-void APawnCardController::SetTurnOwner(bool IsOwner)
-{
-	IsTurnOwner = IsOwner;
-}
-
-bool APawnCardController::GetTurnOwner() const
-{
-	return IsTurnOwner;
 }

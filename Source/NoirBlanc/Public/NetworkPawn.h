@@ -80,11 +80,16 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_SelectCard(APawnCard* SelectedCard);
+
+	//UFUNCTION(Server, Reliable)
+	void SetPawnOwner(APawnCardController* Cntr, ANetworkPawn* NewPawn);
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	// 네트워크 통신
+	UFUNCTION(NetMulticast, reliable)
+	void MulticastRPC_GameStart();
 
 	// 매칭 된 카드 파괴
 	UFUNCTION(Server, reliable)
