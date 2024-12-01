@@ -2,8 +2,9 @@
 
 
 #include "Fortress/FortressGameMode.h"
-
+#include "Components/WidgetComponent.h"
 #include "Fortress/Cannon.h"
+#include "Fortress/FortressUI.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -58,5 +59,6 @@ void AFortressGameMode::PostLogin(APlayerController* NewPlayer)
 			
 		}
 	}
+	
 }
 

@@ -5,9 +5,13 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Fortress/Cannon.h"
+#include "Fortress/FortressGameMode.h"
+#include "Fortress/FortressPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Fortress/FortressUI.h"
-	
+#include "GameFramework/GameMode.h"
+#include "Net/UnrealNetwork.h"
+
 // Sets default values
 AProjectileEqBased::AProjectileEqBased()
 {
@@ -22,6 +26,10 @@ AProjectileEqBased::AProjectileEqBased()
 	WindResistance = 0.1f;
 	Force = 1.0f;
 	InitSpeed = 0.0f;
+
+	bReplicates = true;
+	// SetReplicates(true);
+	// SetReplicateMovement(true);
 }
 
 // Called when the game starts or when spawned
@@ -53,8 +61,15 @@ void AProjectileEqBased::BeginPlay()
 		Mesh->OnComponentHit.AddDynamic(this, &AProjectileEqBased::OnProjectileHit);
 		
 	}
-	
 }
+
+// void AProjectileEqBased::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime)
+// {
+// 	Super::GetLifetimeReplicatedProps(OutLifetime);
+// 	DOREPLIFETIME()
+// }
+
+
 
 // Called every frame
 void AProjectileEqBased::Tick(float DeltaTime)
@@ -83,26 +98,26 @@ void AProjectileEqBased::SetWindResistance(FVector WindDirection, float Resistan
 {
 }
 
-void AProjectileEqBased::OnProjectileOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor && OtherActor != this)
-	{
-		ACannon*  Opponent = Cast<ACannon>(OtherActor);
-		if (Opponent == this->Owner)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Owner"));
-			return;
-		}
-		if(Opponent!=nullptr)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Cannon"));
-			Opponent->Health -= 10.0f;
-			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Health: %f"), Opponent->Health);		// error
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, FString::Printf(TEXT("Health: %f"), Opponent->Health));
-		}
-	}
-}
+// void AProjectileEqBased::OnProjectileOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+// 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+// {
+// 	if (OtherActor && OtherActor != this)
+// 	{
+// 		ACannon*  Opponent = Cast<ACannon>(OtherActor);
+// 		if (Opponent == this->Owner)
+// 		{
+// 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Owner"));
+// 			return;
+// 		}
+// 		if(Opponent!=nullptr)
+// 		{
+// 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Cannon"));
+// 			Opponent->Health -= 10.0f;
+// 			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Health: %f"), Opponent->Health);		// error
+// 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, FString::Printf(TEXT("Health: %f"), Opponent->Health));
+// 		}
+// 	}
+// }
 
 
 
@@ -112,19 +127,76 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 	if (OtherActor && OtherActor != this)
 	{
 		ACannon*  Opponent = Cast<ACannon>(OtherActor);
-		if (Opponent == this->Owner) return;
+		if (Opponent == this->Owner) return;	// if the projectile hit myself, return
 		if(Opponent)
 		{
 			Opponent->Health -= Opponent->Damage;
+			
 			ACannon* OwnCannon = Cast<ACannon>(this->Owner);
-			OwnCannon->FortressUI->ChangeHPBar(Opponent);
+			OwnCannon->FortressUI->ApplyDamageHPBar(Opponent);
+			if (HasAuthority())
+			{
+				ClientRPC_ClientTakeDamage(Opponent);
+			}
+			else
+			{
+				ServerRPC_TakeDamage(Opponent);
+			}
+			
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, FString::Printf(TEXT("Health: %f"), Opponent->Health));
-
+			
 			if (BombEffect)
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BombEffect, Hit.ImpactPoint, FRotator(0, 0, 0));
+			{
+					PlayBombEffect(Hit);
+			}
 		}
 		Destroy();
-		
 	}
+}
+
+void AProjectileEqBased::ServerRPC_TakeDamage_Implementation(ACannon* Cannon)
+{
+	Cannon->FortressUI->TakeDamageHPBar(Cannon);
+}
+
+void AProjectileEqBased::ServerRPC_ClientTakeDamage_Implementation(ACannon* Cannon)
+{
+	ClientRPC_ClientTakeDamage(Cannon);
+}
+
+void AProjectileEqBased::ClientRPC_ClientTakeDamage_Implementation(ACannon* Cannon)
+{
+	Cannon->FortressUI->TakeDamageHPBar(Cannon);
+}
+
+void AProjectileEqBased::PlayBombEffect(const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Normal BombEffect"))
+	ServerRPC_PlayBombEffect(Hit);
+}
+
+bool AProjectileEqBased::ServerRPC_PlayBombEffect_Validate(const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Server Validate"))
+	return true;
+}
+
+void AProjectileEqBased::MulticastRPC_PlayBombEffect_Implementation(const FHitResult& Hit)
+{
+	if (BombEffect)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BombEffect Exists"))
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BombEffect, Hit.ImpactPoint, FRotator(0, 0, 0));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No BombEffect"))
+	}
+}
+
+void AProjectileEqBased::ServerRPC_PlayBombEffect_Implementation(const FHitResult& Hit)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Server BombEffect"))
+	MulticastRPC_PlayBombEffect(Hit);	
 }
 

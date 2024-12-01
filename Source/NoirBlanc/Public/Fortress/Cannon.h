@@ -68,8 +68,13 @@ protected:
 
 	void ProjectileDir(const FInputActionValue& Value);
 
-	void Fire(const FInputActionValue& Value);
+	void Fire();
+	// UFUNCTION(Server, Reliable)
+	// void ServerRPC_Fire(bool bHit, FHitResult hitInfo);
+	// UFUNCTION(NetMulticast, Reliable)
+	// void MulticastRPC_Fire(bool bHit, FHitResult hitInfo);
 
+	
 	void StartCharging(const FInputActionValue& Value);
 
 	void ContinueCharging();
@@ -99,6 +104,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void PossessedBy(AController* NewController) override;
+
 public:
 	// UPROPERTY(EditAnywhere)
 	// TSubclassOf<AProjectile> ProjectileFactory;		// class
@@ -126,7 +133,12 @@ public:
 	TSubclassOf<UUserWidget> FortressUIFactory;
 	class UFortressUI* FortressUI;
 	
-	
+
+	void InitMainUIWiget();
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_Init();
 	
 	
 };
+
+

@@ -29,11 +29,23 @@ public:
 	ACannon* Player1;
 	// Cannon* Player2;
 
+	UPROPERTY(BlueprintReadOnly)
+	float Player1Percentage;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float Player2Percentage;
+
 	virtual void NativeConstruct() override;
+
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 	// when the cannon's health change, change the progress bar
 	UFUNCTION(BlueprintCallable)
 	void ChangeHPBar(ACannon* Cannon);
 
-	
+	UFUNCTION(BlueprintCallable)
+	void ApplyDamageHPBar(ACannon* Cannon);
+
+	UFUNCTION(BlueprintCallable)
+	void TakeDamageHPBar(ACannon* Cannon);
 };

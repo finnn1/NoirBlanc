@@ -51,7 +51,10 @@ ACannon::ACannon()
 	MaxHealth = 100.0f;
 	Health =  MaxHealth;
 	Damage = 10.0f;
-	
+
+	this->NetUpdateFrequency = 100.0f;
+
+	Muzzle->SetUsingAbsoluteLocation(true);
  }
 
 // Called when the game starts or when spawned
@@ -70,9 +73,7 @@ void ACannon::BeginPlay()
 				FireBoostWidget->Velocity = ProjectileVelocity;
 		}
 	}
-	FortressUI = CreateWidget<UFortressUI>(GetWorld(), FortressUIFactory);
-	if (FortressUI != nullptr)
-		FortressUI->AddToViewport();
+	
 }
 
 // Called to bind functionality to input
@@ -99,6 +100,14 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	}
 }
 
+void ACannon::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	UE_LOG(LogTemp, Warning, TEXT("Possessed by: %s"), *GetActorNameOrLabel());
+
+	ClientRPC_Init();
+}
+
 // Called every frame
 void ACannon::Tick(float DeltaTime)
 {
@@ -109,7 +118,10 @@ void ACannon::Tick(float DeltaTime)
 
 	// TODO: should set the limit of the rotation angle
 	FRotator NewRotation= Muzzle->GetComponentRotation() + RotationInput*RotationSpeed*DeltaTime;
-	Muzzle->SetRelativeRotation(NewRotation);
+	// UE_LOG(LogTemp, Warning, TEXT("New Rotation: Pitch %f, Yaw %f, Roll %f, "),
+	// 	NewRotation.Pitch, NewRotation.Yaw, NewRotation.Roll);
+	//Muzzle->SetRelativeRotation(NewRotation);
+	Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
 }
 
 void ACannon::Move(const FInputActionValue& Value)
@@ -120,13 +132,14 @@ void ACannon::Move(const FInputActionValue& Value)
 
 void ACannon::ProjectileDir(const FInputActionValue& Value)
 {
+	RotationInput.Yaw = 0.0f;
+	RotationInput.Pitch = 0.0f;
 	RotationInput.Roll = Value.Get<float>();
 }
 
-void ACannon::Fire(const FInputActionValue& Value)
+void ACannon::Fire()
 {
 	GetWorld()->GetTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
-
 	
 	if (ProjectileEqBasedFactory)
 	{
@@ -182,4 +195,19 @@ void ACannon::ContinueCharging()
 
 void ACannon::Force(const FInputActionValue& Value)
 {
+}
+
+
+void ACannon::InitMainUIWiget()
+{
+	if (IsLocallyControlled()==false) return;
+
+	FortressUI = CreateWidget<UFortressUI>(GetWorld(), FortressUIFactory);
+	if (FortressUI != nullptr)
+		FortressUI->AddToViewport();
+}
+
+void ACannon::ClientRPC_Init_Implementation()
+{
+	InitMainUIWiget();
 }
