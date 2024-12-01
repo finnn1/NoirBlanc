@@ -77,11 +77,8 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_TakeDamage(ACannon* Cannon);
-
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_ClientTakeDamage(ACannon* Cannon);
-	UFUNCTION(Client, Reliable)
-	void ClientRPC_ClientTakeDamage(ACannon* Cannon);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_ClientTakeDamage(ACannon* Cannon);
 
 	
 };

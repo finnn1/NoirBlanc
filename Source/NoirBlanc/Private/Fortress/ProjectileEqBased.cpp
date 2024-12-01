@@ -136,7 +136,7 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 			OwnCannon->FortressUI->ApplyDamageHPBar(Opponent);
 			if (HasAuthority())
 			{
-				ClientRPC_ClientTakeDamage(Opponent);
+				MulticastRPC_ClientTakeDamage(Opponent);
 			}
 			else
 			{
@@ -156,18 +156,17 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 
 void AProjectileEqBased::ServerRPC_TakeDamage_Implementation(ACannon* Cannon)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Server Take Damage"))
 	Cannon->FortressUI->TakeDamageHPBar(Cannon);
 }
 
-void AProjectileEqBased::ServerRPC_ClientTakeDamage_Implementation(ACannon* Cannon)
+void AProjectileEqBased::MulticastRPC_ClientTakeDamage_Implementation(ACannon* Cannon)
 {
-	ClientRPC_ClientTakeDamage(Cannon);
-}
-
-void AProjectileEqBased::ClientRPC_ClientTakeDamage_Implementation(ACannon* Cannon)
-{
+	if (HasAuthority()) return;
+	UE_LOG(LogTemp, Warning, TEXT("Client Take Damage"))
 	Cannon->FortressUI->TakeDamageHPBar(Cannon);
 }
+
 
 void AProjectileEqBased::PlayBombEffect(const FHitResult& Hit)
 {
