@@ -5,6 +5,14 @@
 
 #include "NoirBlanc/Knight/GameStateBase_Knight.h"
 
+void AGameModeBase_Knight::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	GetGameState<AGameStateBase_Knight>()->StartCountDown();
+}
+
+/*
 void AGameModeBase_Knight::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -15,3 +23,4 @@ void AGameModeBase_Knight::PostLogin(APlayerController* NewPlayer)
 		GetGameState<AGameStateBase_Knight>()->StartCountDown();
 	}
 }
+*/
