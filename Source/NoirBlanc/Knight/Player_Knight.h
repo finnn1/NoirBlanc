@@ -26,6 +26,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	FTimerHandle Handle;
+
 	// --------------------------------------------------------------------------------
 	//
 	// Input
@@ -46,16 +48,13 @@ public:
 	// Network
 	//
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	APlayer_Knight* OtherPlayer;
 	void FindOtherPlayer();
-	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_UpdateDistanceUI(float serverDistance, float clientDistance);
-
+	
 	UPROPERTY(Replicated)
 	int32 ConnectedPlayers;
 	UFUNCTION(Server, Reliable)
@@ -94,6 +93,10 @@ public:
 	TSubclassOf<class UMainUI> MainUI;
 	class UMainUI* Main;
 
+	// --------------------------------------------------------------------------------
+	//
+	// CountDown
+	//
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UCountDownUI> CountDownFactory;
 	UCountDownUI* CountDownUI;
@@ -101,8 +104,18 @@ public:
 	void OnRep_CountDownLeft();
 	UPROPERTY(ReplicatedUsing=OnRep_CountDownLeft)
 	int32 CountDownLeft = 3;
-	FTimerHandle Handle;
 	void CountDown();
+
+	// --------------------------------------------------------------------------------
+	//
+	// Timer
+	//
+	UPROPERTY(Replicated, EditAnywhere)
+	int32 TimeLeft = 30;
+	void StartTimer();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_UpdateTimerUI();
+	
 	
 	// --------------------------------------------------------------------------------
 	//

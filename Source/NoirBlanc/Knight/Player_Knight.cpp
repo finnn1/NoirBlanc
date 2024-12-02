@@ -24,29 +24,20 @@ APlayer_Knight::APlayer_Knight()
 void APlayer_Knight::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	/* Find Other Player */
+	if (HasAuthority())
+	{
+		FTimerHandle handle;
+		GetWorldTimerManager().SetTimer(handle, this, &APlayer_Knight::FindOtherPlayer, 2, false);
+	}	
 
+	/* Count Connected Players */
 	ConnectedPlayers += 1;
 	if(ConnectedPlayers == 2)
 	{
 		ServerRPC_StartGame();
 	}
-	
-	if (IsLocallyControlled())
-	{
-		Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
-		Main->AddToViewport();
-
-		//Start = Cast<UStartUI>(CreateWidget(GetWorld(), StartUI));
-		//Start->AddToViewport();
-	}
-
-	if (HasAuthority())
-	{
-		FTimerHandle handle;
-		GetWorldTimerManager().SetTimer(handle, this, &APlayer_Knight::FindOtherPlayer, 2, false);
-	}
-
-	
 }
 
 // Called every frame
@@ -121,6 +112,7 @@ void APlayer_Knight::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayer_Knight, ConnectedPlayers);
 	DOREPLIFETIME(APlayer_Knight, CountDownLeft);
+	DOREPLIFETIME(APlayer_Knight, TimeLeft);
 }
 
 void APlayer_Knight::ServerRPC_StartGame_Implementation()
@@ -128,9 +120,11 @@ void APlayer_Knight::ServerRPC_StartGame_Implementation()
 	MulticastRPC_CreateCountDown();
 }
 
-
 void APlayer_Knight::MulticastRPC_CreateCountDown_Implementation()
 {
+	Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
+	Main->AddToViewport();
+	
 	CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
 	CountDownUI->AddToViewport();
 	CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
@@ -150,9 +144,7 @@ void APlayer_Knight::CountDown()
 		
 		CountDownUI->RemoveFromParent();
 		GetWorldTimerManager().ClearTimer(Handle);
-
-
-		//GetWorldTimerManager().SetTimer(Handle, this, &AGameStateBase_Knight::StartTimer, 1, true);
+		GetWorldTimerManager().SetTimer(Handle, this, &APlayer_Knight::StartTimer, 1, true);
 	}
 	else
 	{
@@ -165,8 +157,22 @@ void APlayer_Knight::CountDown()
 			CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 		}
 	}
-	
+}
 
+void APlayer_Knight::StartTimer()
+{
+	TimeLeft -= 1;
+	if(TimeLeft == 0)
+	{
+		GetWorldTimerManager().ClearTimer(Handle);
+	}
+	
+	MulticastRPC_UpdateTimerUI();
+}
+
+void APlayer_Knight::MulticastRPC_UpdateTimerUI_Implementation()
+{
+	Main->UpdateTimerText(TimeLeft);
 }
 
 void APlayer_Knight::OnRep_CountDownLeft()
@@ -199,8 +205,6 @@ void APlayer_Knight::Jump()
 	Super::Jump();
 }
 
-
-
 void APlayer_Knight::FindOtherPlayer()
 {
 	TArray<AActor*> actors;
@@ -222,7 +226,7 @@ void APlayer_Knight::MulticastRPC_UpdateDistanceUI_Implementation(float serverDi
 {
 	if (IsLocallyControlled())
 	{
-		Main->UpdateMyDistance(serverDistance);
-		Main->UpdateEnemyDistance(clientDistance);
+		//Main->UpdateMyDistance(serverDistance);
+		//Main->UpdateEnemyDistance(clientDistance);
 	}
 }

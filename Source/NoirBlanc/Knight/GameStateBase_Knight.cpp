@@ -84,7 +84,6 @@ void AGameStateBase_Knight::StartTimer()
 	if(GameTimeLeft == 0)
 	{
 		GetWorldTimerManager().ClearTimer(Handle);
-	
 	}
 }
 
