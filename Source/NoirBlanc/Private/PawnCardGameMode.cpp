@@ -146,6 +146,7 @@ void APawnCardGameMode::DeleteCardFromMap(APawnCard* SelectedCard)
 {
 	if(CardSpawner)
 	{
+		GetWorldTimerManager().ClearTimer(CardSpawner->MapUseStr[SelectedCard].TimerHandle);
 		CardSpawner->MapUseStr.Remove(SelectedCard);
 	}
 }

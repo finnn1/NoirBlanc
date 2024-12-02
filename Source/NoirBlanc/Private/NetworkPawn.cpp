@@ -188,10 +188,6 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 		{
 			ServerRPC_SelectCard(SelectedCard);
 		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("No Selected Card"));
-		}
 	}
 }
 
@@ -329,15 +325,20 @@ void ANetworkPawn::EndTurnLerp()
 		}
 		else
 		{
-			// 실패했으면 선택한 카드 원래대로
-			Timeline->PlayFromStart();
-			//Timeline->Reverse();
-
-			// 턴 교대 로직 시작
-			if(HasAuthority())
+			// 1초 동안 확인
+			FTimerHandle TermTimerHandle;
+			GetWorldTimerManager().SetTimer(TermTimerHandle, [this]()
 			{
-				ServerRPC_ChangeTurn(this);
-			}
+				// 실패했으면 선택한 카드 원래대로
+				this->Timeline->PlayFromStart();
+				//Timeline->Reverse();
+
+				// 턴 교대 로직 시작
+				if(this->HasAuthority())
+				{
+					this->ServerRPC_ChangeTurn(this);
+				}
+			}, 0.5f, false);
 		}
 	}
 	else
