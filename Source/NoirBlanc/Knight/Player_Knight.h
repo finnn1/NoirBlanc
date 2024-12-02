@@ -7,6 +7,8 @@
 #include "GameFramework/Character.h"
 #include "Player_Knight.generated.h"
 
+class UCountDownUI;
+
 UCLASS()
 class NOIRBLANC_API APlayer_Knight : public ACharacter
 {
@@ -44,6 +46,8 @@ public:
 	// Network
 	//
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	APlayer_Knight* OtherPlayer;
@@ -51,6 +55,14 @@ public:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_UpdateDistanceUI(float serverDistance, float clientDistance);
+
+	UPROPERTY(Replicated)
+	int32 ConnectedPlayers;
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StartGame();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_CreateCountDown();
+	
 	// --------------------------------------------------------------------------------
 	//
 	// Movement
@@ -70,10 +82,6 @@ public:
 	//
 	// UI
 	//
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//TSubclassOf<class UFinishUI> FinishUI;
-	//class UFinishUI* Finish;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UFinishUI> FinishUIFactory;
 	UFinishUI* FinishUI;
@@ -85,6 +93,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UMainUI> MainUI;
 	class UMainUI* Main;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UCountDownUI> CountDownFactory;
+	UCountDownUI* CountDownUI;
+	UFUNCTION()
+	void OnRep_CountDownLeft();
+	UPROPERTY(ReplicatedUsing=OnRep_CountDownLeft)
+	int32 CountDownLeft = 3;
+	FTimerHandle Handle;
+	void CountDown();
 	
 	// --------------------------------------------------------------------------------
 	//

@@ -14,7 +14,9 @@ UCLASS()
 class NOIRBLANC_API AGameStateBase_Knight : public AGameStateBase
 {
 	GENERATED_BODY()
+	
 	AGameStateBase_Knight();
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
