@@ -128,14 +128,6 @@ void ANetworkPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 }
 
-void ANetworkPawn::SetPawnOwner(APawnCardController* Cntr, ANetworkPawn* NewPawn)
-{
-	if(Cntr && NewPawn)
-	{
-		NewPawn->SetOwner(Cntr);
-	}
-}
-
 void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -270,6 +262,9 @@ void ANetworkPawn::IncreaseScore(bool IsNoLuck)
 void ANetworkPawn::ServerRPC_DestroyPawnCard_Implementation(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard)
 {
 	if(!IsValid(FirstTargetCard) || !IsValid(SecondTargetCard)) return;
+	
+	GameMode->DeleteCardFromMap(FirstTargetCard);
+	GameMode->DeleteCardFromMap(SecondTargetCard);
 
 	FirstTargetCard->Destroy();
 	SecondTargetCard->Destroy();

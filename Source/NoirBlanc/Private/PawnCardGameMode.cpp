@@ -141,6 +141,15 @@ void APawnCardGameMode::StartPost()
 	GetWorldTimerManager().SetTimer(ShuffleHandle, this, &APawnCardGameMode::SetInitCardSetting, 2.f, false);
 }
 
+// TODO Spawner의 변수를 바로 Remove 안 하게 수정
+void APawnCardGameMode::DeleteCardFromMap(APawnCard* SelectedCard)
+{
+	if(CardSpawner)
+	{
+		CardSpawner->MapUseStr.Remove(SelectedCard);
+	}
+}
+
 void APawnCardGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
