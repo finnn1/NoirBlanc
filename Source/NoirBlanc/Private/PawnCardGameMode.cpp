@@ -150,7 +150,7 @@ void APawnCardGameMode::PostLogin(APlayerController* NewPlayer)
 	{
 		CurrentPlayerNum++;
 
-		if(PlayerNum >= CurrentPlayerNum)
+		if(PlayerNum <= CurrentPlayerNum)
 		{
 			FTimerHandle StartHandle;
 			GetWorldTimerManager().SetTimer(StartHandle, this, &APawnCardGameMode::StartPost, 2.0f, false);
