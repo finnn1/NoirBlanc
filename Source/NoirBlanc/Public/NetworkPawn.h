@@ -80,9 +80,6 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_SelectCard(APawnCard* SelectedCard);
-
-	//UFUNCTION(Server, Reliable)
-	void SetPawnOwner(APawnCardController* Cntr, ANetworkPawn* NewPawn);
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
