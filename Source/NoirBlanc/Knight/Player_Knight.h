@@ -49,12 +49,6 @@ public:
 	//
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	APlayer_Knight* OtherPlayer;
-	void FindOtherPlayer();
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_UpdateDistanceUI(float serverDistance, float clientDistance);
-	
 	UPROPERTY(Replicated)
 	int32 ConnectedPlayers;
 	UFUNCTION(Server, Reliable)
@@ -92,6 +86,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UMainUI> MainUI;
 	class UMainUI* Main;
+
+	// --------------------------------------------------------------------------------
+	//
+	// Calculate Distance
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	APlayer_Knight* OtherPlayer;
+	void FindOtherPlayer();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_UpdateDistanceUI(float serverDistance, float clientDistance);
 
 	// --------------------------------------------------------------------------------
 	//

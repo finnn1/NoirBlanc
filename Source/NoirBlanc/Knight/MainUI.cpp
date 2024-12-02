@@ -23,8 +23,6 @@ void UMainUI::NativePreConstruct()
 void UMainUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
-	
-	//UpdateTimerText(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->GameTimeLeft);
 }
 
 void UMainUI::UpdateTimerText(int32 time)

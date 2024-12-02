@@ -25,13 +25,6 @@ void APlayer_Knight::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	/* Find Other Player */
-	if (HasAuthority())
-	{
-		FTimerHandle handle;
-		GetWorldTimerManager().SetTimer(handle, this, &APlayer_Knight::FindOtherPlayer, 2, false);
-	}	
-
 	/* Count Connected Players */
 	ConnectedPlayers += 1;
 	if(ConnectedPlayers == 2)
@@ -117,6 +110,9 @@ void APlayer_Knight::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 void APlayer_Knight::ServerRPC_StartGame_Implementation()
 {
+
+	FTimerHandle timer;
+	GetWorldTimerManager().SetTimer(timer, this, &APlayer_Knight::FindOtherPlayer, 3, false);
 	MulticastRPC_CreateCountDown();
 }
 
@@ -224,9 +220,6 @@ void APlayer_Knight::FindOtherPlayer()
 
 void APlayer_Knight::MulticastRPC_UpdateDistanceUI_Implementation(float serverDistance, float clientDistance)
 {
-	if (IsLocallyControlled())
-	{
-		//Main->UpdateMyDistance(serverDistance);
-		//Main->UpdateEnemyDistance(clientDistance);
-	}
+	Main->UpdateMyDistance(serverDistance);
+	Main->UpdateEnemyDistance(clientDistance);
 }
