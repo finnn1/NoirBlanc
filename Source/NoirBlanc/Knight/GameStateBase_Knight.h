@@ -44,7 +44,7 @@ public:
 
 	void StartTimer();
 	UPROPERTY(Replicated)
-	int32 GameTimeLeft = 10;
+	int32 GameTimeLeft = 60;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_CreateFinishUI();

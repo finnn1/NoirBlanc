@@ -25,10 +25,13 @@ void AGameStateBase_Knight::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 void AGameStateBase_Knight::StartCountDown()
 {
-	FTimerHandle handle;
-	GetWorldTimerManager().SetTimer(handle, this, &AGameStateBase_Knight::MulticastRPC_CreateCountDownUI, 1, false);
+	if(HasAuthority())
+	{
+		FTimerHandle handle;
+		GetWorldTimerManager().SetTimer(handle, this, &AGameStateBase_Knight::MulticastRPC_CreateCountDownUI, 1, false);
 	
-	//MulticastRPC_CreateCountDownUI();
+		//MulticastRPC_CreateCountDownUI();
+	}
 }
 
 void AGameStateBase_Knight::MulticastRPC_CreateCountDownUI_Implementation()
@@ -82,9 +85,6 @@ void AGameStateBase_Knight::StartTimer()
 	{
 		GetWorldTimerManager().ClearTimer(Handle);
 		Finished = true;
-		
-		
-		//MulticastRPC_CreateFinishUI();
 	}
 }
 
@@ -97,6 +97,7 @@ void AGameStateBase_Knight::MulticastRPC_CreateFinishUI_Implementation()
 
 void AGameStateBase_Knight::OnRep_CountDownLeft()
 {
+	/*
 	if(CountDownLeft == 0)
 	{
 		CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
@@ -109,5 +110,6 @@ void AGameStateBase_Knight::OnRep_CountDownLeft()
 	{
 		CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 	}
+	*/
 }
 
