@@ -389,20 +389,19 @@ void ANetworkPawn::CheckLog(ANetworkPawn* TargetPawn)
 
 void ANetworkPawn::ChangePlayerTurn(ANetworkPawn* StartPlayer)
 {
-	//델리게이트이므로 StartPlayer는 무조건 HasAuthority
 	MulticastRPC_ChangePlayerTurn(StartPlayer);
 }
 
 void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* StartPlayer)
 {
 	// 다음 턴 플레이어가 로컬의 첫 번째 플레이어와 같으면 자신 턴
-	ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	if(StartPlayer->IsLocallyControlled())
 	{
-		LocalNetPawn->PlayerUI->ShowTurnStart();
+		StartPlayer->PlayerUI->ShowTurnStart();
 	}
 	else
 	{
+		ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
 	}
 }
