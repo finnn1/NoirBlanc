@@ -62,10 +62,16 @@ private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickedOnce = false;
 	bool bIsClickedTwice = false;
-
+	
+	TArray<TArray<int32>> KnightArray;
+	TArray<TArray<int32>> KingArray;
+	
 	UPROPERTY()
 	class AChessPlayerController* Controller;
-	
+
+	UPROPERTY()
+	class UNoirBlancGameInstance* GameInstance;
+
 //////////////////////////////////////////
 /////FUNCTION
 public:
@@ -81,6 +87,9 @@ public:
 	
 protected:
 	UFUNCTION()
+	void ChangeTurn();
+	
+	UFUNCTION()
 	ABoardFloor* SpawnFloor(int32 row, int32 col);
 
 	UFUNCTION()
@@ -94,6 +103,21 @@ protected:
 
 	UFUNCTION()
 	void ShowPawnFloors(EPieceColor Color, int32 Row, int32 Col, int32 MoveCount);
+
+	UFUNCTION()
+	void ShowRookFloors(EPieceColor Color, int32 Row, int32 Col);
+
+	UFUNCTION()
+	void ShowKnightFloors(EPieceColor Color, int32 Row, int32 Col);
+
+	UFUNCTION()
+	void ShowBishopFloors(EPieceColor Color, int32 Row, int32 Col);
+
+	UFUNCTION()
+	void ShowQueenFloors(EPieceColor Color, int32 Row, int32 Col);
+
+	UFUNCTION()
+	void ShowKingFloors(EPieceColor Color, int32 Row, int32 Col);
 private:
 	
 };

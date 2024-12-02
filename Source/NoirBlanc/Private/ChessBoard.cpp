@@ -3,8 +3,8 @@
 #include "BoardFloor.h"
 #include "ChessPiece.h"
 #include "ChessPlayerController.h"
-#include "SkeletalDebugRendering.h"
-#include "PhysicsEngine/PhysicsAsset.h"
+#include "NoirBlancGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -15,6 +15,10 @@ AChessBoard::AChessBoard()
 	RootComponent = MeshComp;
 	
 	BoardFloors.SetNum(Chess_Num * Chess_Num);
+	
+	KnightArray = KnightValue;
+	
+	KingArray = KingValue;
 }
 
 // Called when the game starts or when spawned
@@ -31,6 +35,7 @@ void AChessBoard::BeginPlay()
 			BoardFloors[i*Chess_Num + j] = TempFloor;
 		}
 	}
+	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());
 	InitBoard();
 }
@@ -49,10 +54,13 @@ void AChessBoard::ClickFloor()
 		SelectedPiece = Cast<AChessPiece>(HitActor);
 		if(SelectedPiece)
 		{
-			bIsClickedOnce = true;
-			SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
-			SelectedFloor->ToggleGreen();
-			ShowMovableFloors(SelectedFloor);
+			if(SelectedPiece->GetPieceColor() == GameInstance->Turn)
+			{
+				bIsClickedOnce = true;
+				SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
+				SelectedFloor->ToggleGreen();
+				ShowMovableFloors(SelectedFloor);
+			}
 		}
 	}
 	else
@@ -87,30 +95,95 @@ void AChessBoard::MovePiece()
 	//if target floor is empty
 	else
 	{
-		SelectedFloor->SetPieceOnFloor(nullptr);
-		SelectedPiece->SetFloorBeneathPiece(TargetFloor);
-		TargetFloor->SetPieceOnFloor(SelectedPiece);
-		SelectedPiece->SetActorLocation(TargetFloor->GetActorLocation() + FVector(0.f, 0.f, 170.f));
-		MoveEnd();
+		for(int32 i = 0 ; i < MovableFloors.Num(); i++)
+		{
+			//if target floor is movable
+			if(MovableFloors[i] == TargetFloor)
+			{
+				SelectedFloor->SetPieceOnFloor(nullptr);
+				SelectedPiece->SetFloorBeneathPiece(TargetFloor);
+				TargetFloor->SetPieceOnFloor(SelectedPiece);
+				SelectedPiece->SetActorLocation(TargetFloor->GetActorLocation() + FVector(0.f, 0.f, 200.f));
+				SelectedPiece->IncreaseMoveCount();
+				MoveEnd();
+			}
+		}
 	}
 }
 
 void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 {
-	//Event when two pieces meet
-	if(Selected)
+	//Event when Selected and Target are Equal
+	if(Selected == Target)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,  FString::Printf(TEXT("Pawn Game Start!")));
+		MoveEnd();
+		ChangeTurn();
+		return;
 	}
-	MoveEnd();
+	//Event when two pieces meet
+	for(auto Floor : AttackableFloors)
+	{
+		if(Floor->GetPieceOnFloor() == Target)
+		{
+			FName LevelName;
+			EPieceType Game = Selected->GetPieceType();
+			GameInstance->DeffenderColor = Target->GetPieceColor();
+			GameInstance->DeffenderType = Target->GetPieceType();
+			GameInstance->AttackerColor = Selected->GetPieceColor();
+			GameInstance->AttackerType = Target->GetPieceType();
+			for(int i = 0 ; i < BoardFloors.Num(); i++)
+			{
+				//search through the board and save data
+				if(BoardFloors[i]->GetPieceOnFloor())
+				{
+					GameInstance->BoardTypeData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceType();
+					GameInstance->BoardColorData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceColor();
+					GameInstance->EncounterCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetEncounterCount();
+					GameInstance->MoveCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetMoveCount();
+				}
+				else
+				{
+					GameInstance->BoardTypeData[i] = EPieceType::Blank;
+					GameInstance->BoardColorData[i] = EPieceColor::Blank;
+				}
+			}
+			switch(Game)
+			{
+			case EPieceType::Pawn:
+				LevelName = "Lv_PawnCard";
+				break;
+			case EPieceType::Knight:
+				LevelName = "Lv_Knight";
+				break;
+			case EPieceType::Bishop:
+				LevelName = "Lv_Bishop";
+				break;
+			case EPieceType::Rook:
+				LevelName = "Lv_Fortress";
+				break;
+			case EPieceType::Queen:
+				break;
+			case EPieceType::King:
+				break;
+			}
+			Selected->IncreaseEncounterCount();
+			Target->IncreaseEncounterCount();
+			MoveEnd();
+			UGameplayStatics::OpenLevel(this, LevelName);
+		}
+	}
 }
 
 void AChessBoard::MoveEnd()
 {
+	ChangeTurn();
 	SelectedFloor->ToggleGreen();
 	for(auto Floor : MovableFloors)
 	{
-		Floor->ToggleBlue();
+		if(Floor->GetPieceOnFloor() == nullptr || Floor->GetPieceOnFloor() == SelectedPiece)
+		{
+			Floor->ToggleBlue();
+		}
 	}
 	for(auto Floor : AttackableFloors)
 	{
@@ -118,13 +191,24 @@ void AChessBoard::MoveEnd()
 	}
 	MovableFloors.Empty();
 	AttackableFloors.Empty();
-	SelectedPiece->IncreaseMoveCount();
 	SelectedFloor = nullptr;
 	TargetFloor = nullptr;
 	SelectedPiece = nullptr;
 	TargetPiece = nullptr;
 	bIsClickedOnce = false;
 	bIsClickedTwice = false;
+}
+
+void AChessBoard::ChangeTurn()
+{
+	if(GameInstance->Turn == EPieceColor::Black)
+	{
+		GameInstance->Turn = EPieceColor::White;
+	}
+	else
+	{
+		GameInstance->Turn = EPieceColor::Black;
+	}
 }
 
 ABoardFloor* AChessBoard::SpawnFloor(int32 row, int32 col)
@@ -153,47 +237,26 @@ ABoardFloor* AChessBoard::SpawnFloor(int32 row, int32 col)
 
 void AChessBoard::InitBoard()
 {
-	//Black Side
-	//Rook
-	InitPiece(0, EPieceType::Rook, EPieceColor::Black);
-	//Knight
-	InitPiece(1, EPieceType::Knight, EPieceColor::Black);
-	//Bishop
-	InitPiece(2, EPieceType::Bishop, EPieceColor::Black);
-	//Queen
-	InitPiece(3, EPieceType::Queen, EPieceColor::Black);
-	//King
-	InitPiece(4, EPieceType::King, EPieceColor::Black);
-	//Bishop
-	InitPiece(5, EPieceType::Bishop, EPieceColor::Black);
-	//Kinght
-	InitPiece(6, EPieceType::Knight, EPieceColor::Black);
-	//Rook
-	InitPiece(7, EPieceType::Rook, EPieceColor::Black);
-	//Pawn
-	for(int i = 8; i < 8 + Chess_Num; i++)
+	EPieceType Type;
+	EPieceColor Color;
+	for(int i = 0 ; i < Chess_Num; i++)
 	{
-		InitPiece(i, EPieceType::Pawn, EPieceColor::Black);
-	}
+		for(int j = 0 ; j < Chess_Num; j++)
+		{
+			Type = GameInstance->BoardTypeData[i*Chess_Num+j];
+			Color = GameInstance->BoardColorData[i*Chess_Num+j];
 
-	//White Side
-	for(int i =48; i < 48 + Chess_Num; i++)
-	{
-		InitPiece(i, EPieceType::Pawn, EPieceColor::White);
+			if(Type!= EPieceType::Blank)
+			{
+				InitPiece(i*Chess_Num + j, Type, Color);
+			}
+		}
 	}
-	InitPiece(56, EPieceType::Rook, EPieceColor::White);
-	InitPiece(57, EPieceType::Knight, EPieceColor::White);
-	InitPiece(58, EPieceType::Bishop, EPieceColor::White);
-	InitPiece(59, EPieceType::Queen, EPieceColor::White);
-	InitPiece(60, EPieceType::King, EPieceColor::White);
-	InitPiece(61, EPieceType::Bishop, EPieceColor::White);
-	InitPiece(62, EPieceType::Knight, EPieceColor::White);
-	InitPiece(63, EPieceType::Rook, EPieceColor::White);
 }
 
 void AChessBoard::InitPiece(int32 num, EPieceType type, EPieceColor color)
 {
-	FVector SpawnLocation = BoardFloors[num]->GetActorLocation() + FVector(0.f, 0.f, 190.f);
+	FVector SpawnLocation = BoardFloors[num]->GetActorLocation() + FVector(0.f, 0.f, 250.f);
 	FRotator SpawnRotation;
 	if(color == EPieceColor::Black)
 	{
@@ -215,6 +278,8 @@ void AChessBoard::InitPiece(int32 num, EPieceType type, EPieceColor color)
 	SpawnedPiece->SetPieceColor(color);
 	SpawnedPiece->SetPieceType(type);
 	SpawnedPiece->SetFloorBeneathPiece(BoardFloors[num]);
+	SpawnedPiece->SetMoveCount(GameInstance->MoveCountData[num]);
+	SpawnedPiece->SetEncounterCount(GameInstance->EncounterCountData[num]);
 	if (USceneComponent* RootComp = SpawnedPiece->GetRootComponent())
 	{
 		RootComp->SetWorldScale3D(FVector(100.f, 100.f, 100.f));
@@ -237,27 +302,50 @@ void AChessBoard::ShowMovableFloors(ABoardFloor* Point)
 			ShowPawnFloors(Color, Row, Col, MoveCount);
 			break;
 		case EPieceType::Rook :
+			ShowRookFloors(Color, Row, Col);
 			break;
 		case EPieceType::Knight :
+			ShowKnightFloors(Color, Row, Col);
 			break;
 		case EPieceType::Bishop :
+			ShowBishopFloors(Color, Row, Col);
 			break;
 		case EPieceType::Queen :
+			ShowQueenFloors(Color, Row, Col);
 			break;
 		case EPieceType::King :
+			ShowKingFloors(Color, Row, Col);
 			break;
+	}
+	for(auto Floor : MovableFloors)
+	{
+		if(Floor->GetPieceOnFloor() == nullptr)
+		{
+			Floor->ToggleBlue();
+		}
+	}
+	for(auto Floor : AttackableFloors)
+	{
+		Floor->ToggleRed();
 	}
 }
 
 void AChessBoard::ShowPawnFloors(EPieceColor Color, int32 Row, int32 Col, int32 MoveCount)
 {
-	
 	if(Color == EPieceColor::Black)
 	{
-		MovableFloors.Add(BoardFloors[(Row+1)*Chess_Num + Col]);
-		if(MoveCount == 0)
+		int32 index = (Row+1)*Chess_Num + Col;
+		if(BoardFloors[index]->GetPieceOnFloor() == nullptr)
 		{
-			MovableFloors.Add(BoardFloors[(Row+2)*Chess_Num + Col]);
+			MovableFloors.Add(BoardFloors[index]);
+			if(MoveCount == 0)
+			{
+				index = (Row+2)*Chess_Num + Col;
+				if(BoardFloors[index]->GetPieceOnFloor() == nullptr)
+				{
+					MovableFloors.Add(BoardFloors[index]);
+				}
+			}
 		}
 		if(Col-1 >= 0)
 		{
@@ -284,10 +372,18 @@ void AChessBoard::ShowPawnFloors(EPieceColor Color, int32 Row, int32 Col, int32 
 	}
 	else
 	{
-		MovableFloors.Add(BoardFloors[(Row-1)*Chess_Num + Col]);
-		if(MoveCount == 0)
+		int32 index = (Row-1)*Chess_Num + Col;
+		if(BoardFloors[index]->GetPieceOnFloor() == nullptr)
 		{
-			MovableFloors.Add(BoardFloors[(Row-2)*Chess_Num + Col]);
+			MovableFloors.Add(BoardFloors[index]);
+			if(MoveCount == 0)
+			{
+				index = (Row-2)*Chess_Num + Col;
+				if(BoardFloors[index]->GetPieceOnFloor() == nullptr)
+				{
+					MovableFloors.Add(BoardFloors[index]);
+				}
+			}
 		}
 		if(Col-1 >= 0)
 		{
@@ -312,12 +408,304 @@ void AChessBoard::ShowPawnFloors(EPieceColor Color, int32 Row, int32 Col, int32 
 			}
 		}
 	}
-	for(auto Floor : MovableFloors)
+}
+
+void AChessBoard::ShowRookFloors(EPieceColor Color, int32 Row, int32 Col)
+{
+	int32 index;
+	int32 counter = 0;
+	//vertical
+	while(counter < Chess_Num)
 	{
-		Floor->ToggleBlue();
+		counter++;
+		index = (Row-counter)*Chess_Num + Col;
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+			if(Temp->GetPieceOnFloor() == nullptr)
+			{
+				MovableFloors.Add(Temp);
+			}
+			else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+			{
+				break;
+			}
+			else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+			{
+				AttackableFloors.Add(Temp);
+				break;
+			}
+		}
 	}
-	for(auto Floor : AttackableFloors)
+	counter = 0;
+	while(counter < Chess_Num)
 	{
-		Floor->ToggleRed();
+		counter++;
+		index = (Row+counter)*Chess_Num + Col;
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+			if(Temp->GetPieceOnFloor() == nullptr)
+			{
+				MovableFloors.Add(Temp);
+			}
+			else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+			{
+				break;
+			}
+			else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+			{
+				AttackableFloors.Add(Temp);
+				break;
+			}
+		}
+	}
+	//horizontal
+	counter = 0;
+	while(counter < Chess_Num)
+	{
+		counter++;
+		index = Row*Chess_Num + (Col - counter);
+		if(Col-counter < 0) break;
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+			if(Temp->GetPieceOnFloor() == nullptr)
+			{
+				MovableFloors.Add(Temp);
+			}
+			else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+			{
+				break;
+			}
+			else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+			{
+				AttackableFloors.Add(Temp);
+				break;
+			}
+		}
+	}
+	counter = 0;
+	while(counter < Chess_Num)
+	{
+		counter++;
+		index = Row*Chess_Num + (Col + counter);
+		if(Col + counter >= Chess_Num) break;
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+			if(Temp->GetPieceOnFloor() == nullptr)
+			{
+				MovableFloors.Add(Temp);
+			}
+			else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+			{
+				break;
+			}
+			else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+			{
+				AttackableFloors.Add(Temp);
+				break;
+			}
+		}
+	}
+}
+
+void AChessBoard::ShowKnightFloors(EPieceColor Color, int32 Row, int32 Col)
+{
+	int32 index;
+	
+	index = (Row + 2) * Chess_Num + Col;
+	if(index >= 0 && index < Chess_Num * Chess_Num)
+	{
+		ABoardFloor* Temp = BoardFloors[index];
+	}
+	for(int i = 0 ; i< Chess_Num; i++)
+	{
+		int32 first = KnightArray[i][0];
+		int32 second = KnightArray[i][1];
+
+		index = (Row + first) * Chess_Num + Col + second;
+
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+		
+			if(Col + second >=0 && Col + second < Chess_Num)
+			{
+				if(Temp->GetPieceOnFloor() == nullptr)
+				{
+					MovableFloors.Add(Temp);
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+				{
+					continue;
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+				{
+					AttackableFloors.Add(Temp);
+					continue;
+				}
+			}
+		}
+	}
+}
+
+void AChessBoard::ShowBishopFloors(EPieceColor Color, int32 Row, int32 Col)
+{
+	int32 index;
+	int32 counter = 0;
+	//left up
+	while(counter < Chess_Num)
+	{
+		counter++;
+		index = (Row+counter)*Chess_Num + (Col -counter);
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+			if(Col -counter >= 0 && Col -counter < Chess_Num)
+			{
+				if(Temp->GetPieceOnFloor() == nullptr)
+				{
+					MovableFloors.Add(Temp);
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+				{
+					break;
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+				{
+					AttackableFloors.Add(Temp);
+					break;
+				}
+			}
+		}
+	}
+	//left down
+	counter = 0;
+	while(counter < Chess_Num)
+	{
+		counter++;
+		index = (Row-counter)*Chess_Num + (Col -counter);
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+			if(Col -counter >= 0 && Col -counter < Chess_Num)
+			{
+				if(Temp->GetPieceOnFloor() == nullptr)
+				{
+					MovableFloors.Add(Temp);
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+				{
+					break;
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+				{
+					AttackableFloors.Add(Temp);
+					break;
+				}
+			}
+		}
+	}
+	//right up
+	counter = 0;
+	while(counter < Chess_Num)
+	{
+		counter++;
+		index = (Row+counter)*Chess_Num + (Col +counter);
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+			if(Col +counter >= 0 && Col +counter < Chess_Num)
+			{
+				if(Temp->GetPieceOnFloor() == nullptr)
+				{
+					MovableFloors.Add(Temp);
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+				{
+					break;
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+				{
+					AttackableFloors.Add(Temp);
+					break;
+				}
+			}
+		}
+	}
+	//right down
+	counter = 0;
+	while(counter < Chess_Num)
+	{
+		counter++;
+		index = (Row-counter)*Chess_Num + (Col+counter);
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+			if(Col +counter >= 0 && Col +counter < Chess_Num)
+			{
+				if(Temp->GetPieceOnFloor() == nullptr)
+				{
+					MovableFloors.Add(Temp);
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+				{
+					break;
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+				{
+					AttackableFloors.Add(Temp);
+					break;
+				}
+			}
+		}
+	}
+}
+
+void AChessBoard::ShowQueenFloors(EPieceColor Color, int32 Row, int32 Col)
+{
+	ShowBishopFloors(Color, Row, Col);
+	ShowRookFloors(Color, Row, Col);
+}
+
+void AChessBoard::ShowKingFloors(EPieceColor Color, int32 Row, int32 Col)
+{
+	int32 index;
+	
+	index = (Row + 2) * Chess_Num + Col;
+	if(index >= 0 && index < Chess_Num * Chess_Num)
+	{
+		ABoardFloor* Temp = BoardFloors[index];
+	}
+	for(int i = 0 ; i< Chess_Num; i++)
+	{
+		int32 first = KingArray[i][0];
+		int32 second = KingArray[i][1];
+
+		index = (Row + first) * Chess_Num + Col + second;
+
+		if(index >= 0 && index < Chess_Num * Chess_Num)
+		{
+			ABoardFloor* Temp = BoardFloors[index];
+		
+			if(Col + second >=0 && Col + second < Chess_Num)
+			{
+				if(Temp->GetPieceOnFloor() == nullptr)
+				{
+					MovableFloors.Add(Temp);
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() == Color)
+				{
+					continue;
+				}
+				else if(Temp->GetPieceOnFloor()->GetPieceColor() != Color)
+				{
+					AttackableFloors.Add(Temp);
+					continue;
+				}
+			}
+		}
 	}
 }
