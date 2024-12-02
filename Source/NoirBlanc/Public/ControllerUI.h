@@ -9,6 +9,7 @@
 /**
  * 
  */
+class UTextBlock;
 UCLASS()
 class NOIRBLANC_API UControllerUI : public UUserWidget
 {
@@ -19,7 +20,16 @@ public:
 	virtual void NativeConstruct() override;
 
 	UPROPERTY(meta=(BindWidget))
-	class UTextBlock* ShuffleText;
+	UTextBlock* StartText;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* ShuffleText;
+
+	UPROPERTY(meta=(BindWidgetAnim), Transient)
+	UWidgetAnimation* BlinkShuffleText;
+
+	void ShowStartText();
+	void HideStartText();
 
 	void ShowShuffleText();
 	void HideShuffleText();

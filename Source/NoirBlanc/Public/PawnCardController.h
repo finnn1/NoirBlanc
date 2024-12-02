@@ -24,10 +24,14 @@ protected:
 	virtual void SetupInputComponent() override;
 
 public:
+	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UControllerUI> CntrUIFactory;
 	
 	UPROPERTY()
 	UControllerUI* CntrUI;
-	
+
+	void GameStart();
+	void StartShuffleText();
+	void HideShuffleText();
 };

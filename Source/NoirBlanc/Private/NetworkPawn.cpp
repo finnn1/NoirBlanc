@@ -38,6 +38,8 @@ void ANetworkPawn::BeginPlay()
 	if(GameMode)
 	{
 		GameMode->OnGameStart.AddUObject(this, &ANetworkPawn::MulticastRPC_GameStart);
+		GameMode->OnShuffleStart.AddUObject(this, &ANetworkPawn::MulticastRPC_ShuffleStart);
+		GameMode->OnShuffleEnd.AddUObject(this, &ANetworkPawn::MulticastRPC_ShuffleEnd);
 		GameMode->OnGameSet.BindUObject(this, &ANetworkPawn::MulticastRPC_GameEnd);
 		GameMode->OnChangePlayerTurn.BindUObject(this, &ANetworkPawn::ChangePlayerTurn);
 		GameMode->AddPlayer(this);
@@ -148,7 +150,32 @@ void ANetworkPawn::MulticastRPC_GameStart_Implementation()
 		APawnCardController* Cntr = Cast<APawnCardController>(GetOwner());
 		if(Cntr && Cntr->CntrUI)
 		{
-			Cntr->CntrUI->HideShuffleText();	
+			Cntr->CntrUI->ShowStartText();
+		}
+	}
+}
+
+void ANetworkPawn::MulticastRPC_ShuffleEnd_Implementation()
+{
+	if(GetOwner())
+	{
+		APawnCardController* Cntr = Cast<APawnCardController>(GetOwner());
+		if(Cntr && Cntr->CntrUI)
+		{
+			Cntr->CntrUI->HideShuffleText();
+		}
+	}
+}
+
+void ANetworkPawn::MulticastRPC_ShuffleStart_Implementation()
+{
+	if(GetOwner())
+	{
+		APawnCardController* Cntr = Cast<APawnCardController>(GetOwner());
+		if(Cntr && Cntr->CntrUI)
+		{
+			Cntr->CntrUI->HideStartText();
+			Cntr->CntrUI->ShowShuffleText();
 		}
 	}
 }

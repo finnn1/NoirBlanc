@@ -81,8 +81,9 @@ void APawnCardSpawner::DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCa
 			}
 			
 			SpawnedCard->SetActorLocation(CardLocation);
+			SpawnedCard->SetActorRotation(FRotator(0,180,0));
 
-			//구조체
+			// 셔플 위한 구조체
 			FMyStruct TempStruct;
 			TempStruct.DestLocation = CardLocation;
 			TempStruct.ElapsedTime = 0.0f;

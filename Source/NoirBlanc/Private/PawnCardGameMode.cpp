@@ -37,34 +37,38 @@ void APawnCardGameMode::BeginPlay()
 	}
 }
 
-void APawnCardGameMode::SetInitCardSetting(APawnCardSpawner* Spawner)
+void APawnCardGameMode::SetInitCardSetting()
 {
-	// 시작하고 텀
-	GetWorldTimerManager().SetTimer(TimerHandle, [this, Spawner]() 
+	OnShuffleStart.Broadcast();
+
+	for(int i = 0; i < PawnCards.Num(); i++)
 	{
-		CardSpawner->ShuffleCard();
-			
+		PawnCards[i]->SetActorRotation(FRotator(0));
+	}
+	
+	// 카드 셔플
+	GetWorldTimerManager().SetTimer(TimerHandle, [this]() 
+	{
 		static float ElapsedTime = 0.0f;
-		ElapsedTime += 1.f;
-			
-		if(ElapsedTime >= 8.5f)
+		
+		if(ElapsedTime >= 5.f)
 		{
 			InitPawnCardGame();
 			ElapsedTime = 0.0f;
+			return;
 		}
+		
+		this->CardSpawner->ShuffleCard();
+		ElapsedTime += 1.f;
+		
 	}, 1.f, true);
 }
 
 void APawnCardGameMode::InitPawnCardGame()
 {
-	/*for(int32 i=0; i < PawnCards.Num(); i++)
-	{
-		PawnCards[i]->SetActorRotation(FRotator(0,180,0));
-		PawnCards[i]->ChangeFrontBackState();
-	}*/
+	OnShuffleEnd.Broadcast();
+	
 	GetWorldTimerManager().ClearTimer(TimerHandle);
-
-	OnGameStart.Broadcast();
 	
 	Players[0]->SetIsTurnPlayer(true);
 	OnChangePlayerTurn.Execute(Players[0]);
@@ -130,14 +134,27 @@ void APawnCardGameMode::ChangeTurn(ANetworkPawn* EndPlayer)
 	OnChangePlayerTurn.Execute(Players[TurnPlayerIdx]);
 }
 
+void APawnCardGameMode::StartPost()
+{
+	OnGameStart.Broadcast();
+	FTimerHandle ShuffleHandle;
+	GetWorldTimerManager().SetTimer(ShuffleHandle, this, &APawnCardGameMode::SetInitCardSetting, 2.f, false);
+}
+
 void APawnCardGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-
-	CurrentPlayerNum++;
-
-	if(PlayerNum >= CurrentPlayerNum)
+	
+	APawnCardController* CardController = Cast<APawnCardController>(NewPlayer);
+	if(CardController)
 	{
-		SetInitCardSetting(CardSpawner);
+		CurrentPlayerNum++;
+
+		if(PlayerNum >= CurrentPlayerNum)
+		{
+			FTimerHandle StartHandle;
+			GetWorldTimerManager().SetTimer(StartHandle, this, &APawnCardGameMode::StartPost, 2.0f, false);
+		}
 	}
+	
 }

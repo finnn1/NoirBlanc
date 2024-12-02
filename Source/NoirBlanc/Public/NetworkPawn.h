@@ -90,6 +90,12 @@ protected:
 	// 네트워크 통신
 	UFUNCTION(NetMulticast, reliable)
 	void MulticastRPC_GameStart();
+	
+	UFUNCTION(NetMulticast, reliable)
+	void MulticastRPC_ShuffleStart();
+
+	UFUNCTION(NetMulticast, reliable)
+	void MulticastRPC_ShuffleEnd();
 
 	// 매칭 된 카드 파괴
 	UFUNCTION(Server, reliable)

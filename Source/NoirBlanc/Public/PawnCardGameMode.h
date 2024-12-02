@@ -13,6 +13,8 @@ class APawnCardController;
  * 
  */
 DECLARE_MULTICAST_DELEGATE(FOnGameStart);
+DECLARE_MULTICAST_DELEGATE(FOnShuffleStart);
+DECLARE_MULTICAST_DELEGATE(FOnShuffleEnd);
 DECLARE_DELEGATE_OneParam(FOnChangePlayerTurn, ANetworkPawn*);
 DECLARE_DELEGATE_OneParam(FOnGameSet, ANetworkPawn*)
 UCLASS()
@@ -48,10 +50,13 @@ public:
 	int32 CurrentPlayerNum = 0;
 
 	FOnGameStart OnGameStart;
+	FOnShuffleStart OnShuffleStart;
+	FOnShuffleEnd OnShuffleEnd;
+	
 	FOnChangePlayerTurn OnChangePlayerTurn;
 	FOnGameSet OnGameSet;
 
-	void SetInitCardSetting(APawnCardSpawner* Spawner);
+	void SetInitCardSetting();
 	
 	void InitPawnCardGame();
 	
@@ -61,6 +66,8 @@ public:
 	void GameSet();
 
 	void ChangeTurn(ANetworkPawn* EndPlayer);
+
+	void StartPost();
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 };

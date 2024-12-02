@@ -2,9 +2,7 @@
 
 
 #include "PawnCardController.h"
-
 #include "ControllerUI.h"
-#include "NetworkPawn.h"
 #include "Blueprint/UserWidget.h"
 
 APawnCardController::APawnCardController()
@@ -30,4 +28,19 @@ void APawnCardController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 	
+}
+
+void APawnCardController::GameStart()
+{
+	if(CntrUI) CntrUI->ShowStartText();
+}
+
+void APawnCardController::StartShuffleText()
+{
+	if(CntrUI) CntrUI->HideStartText();
+}
+
+void APawnCardController::HideShuffleText()
+{
+	if(CntrUI) CntrUI->HideShuffleText();
 }
