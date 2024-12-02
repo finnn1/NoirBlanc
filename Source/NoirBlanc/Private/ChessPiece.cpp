@@ -33,6 +33,7 @@ void AChessPiece::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AChessPiece, PieceType);
 	DOREPLIFETIME(AChessPiece, PieceColor);
+	DOREPLIFETIME(AChessPiece, FloorBeneathPiece);
 }
 
 EPieceType AChessPiece::GetPieceType()

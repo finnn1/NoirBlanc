@@ -63,6 +63,7 @@ void AChessBoard::ClickFloor()
 			{
 				bIsClickedOnce = true;
 				SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
+				ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
 				SelectedFloor->ToggleGreen();
 				ShowMovableFloors(SelectedFloor);
 			}
@@ -80,15 +81,33 @@ void AChessBoard::ClickFloor()
 			bIsClickedTwice = true;
 			bIsTargetPointEmpty = false;
 			TargetFloor = TargetPiece->GetFloorBeneathPiece();
+			//Event when Selected and Target are Equal
+			if(SelectedPiece == TargetPiece)
+			{
+				SamePieceClicked();
+				return;
+			}
+			ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
 			ServerRPC_MovePiece();
 		}
 		//If Target is Floor
 		else if(TargetFloor)
 		{
 			bIsClickedTwice = true;
+			ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
 			ServerRPC_MovePiece();
 		}
 	}
+}
+
+void AChessBoard::ServerRPC_SetPiece_Implementation(ABoardFloor* _SelectedFloor, ABoardFloor* _TargetFloor, AChessPiece* _SelectedPiece, AChessPiece* _TargetPiece,  const TArray<ABoardFloor*>& _MovableFloors,  const TArray<ABoardFloor*>& _AttackableFloors)
+{
+	SelectedFloor = _SelectedFloor;
+	TargetFloor = _TargetFloor;
+	SelectedPiece = _SelectedPiece;
+	TargetPiece = _TargetPiece;
+	MovableFloors = _MovableFloors;
+	AttackableFloors = _AttackableFloors;
 }
 
 void AChessBoard::ServerRPC_MovePiece_Implementation()
@@ -113,7 +132,6 @@ void AChessBoard::MovePiece()
 	//if target floor is empty
 	else
 	{
-	
 		for(int32 i = 0 ; i < MovableFloors.Num(); i++)
 		{
 			//if target floor is movable
@@ -142,13 +160,6 @@ void AChessBoard::MulticastRPC_PieceEncounter_Implementation()
 
 void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 {
-	//Event when Selected and Target are Equal
-	if(Selected == Target)
-	{
-		MoveEnd();
-		ChangeTurn();
-		return;
-	}
 	//Event when two pieces meet
 	for(auto Floor : AttackableFloors)
 	{
@@ -206,6 +217,7 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 void AChessBoard::MoveEnd()
 {
 	ChangeTurn();
+	
 	SelectedFloor->ToggleGreen();
 	for(auto Floor : MovableFloors)
 	{
@@ -226,6 +238,14 @@ void AChessBoard::MoveEnd()
 	TargetPiece = nullptr;
 	bIsClickedOnce = false;
 	bIsClickedTwice = false;
+}
+
+void AChessBoard::SamePieceClicked()
+{
+	bIsClickedOnce = false;
+	//SelectedFloor->ToggleGreen();
+	ChangeTurn();
+	MoveEnd();
 }
 
 void AChessBoard::ChangeTurn()
