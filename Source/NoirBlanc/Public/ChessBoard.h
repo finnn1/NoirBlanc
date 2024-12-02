@@ -95,20 +95,26 @@ public:
 	void PieceEncounter(AChessPiece* Selected, AChessPiece* Target);
 
 	void MoveEnd();
+
+	UFUNCTION()
+	void InitBoard();
+
+	void ForDelay();
 	
+	UFUNCTION()
+	void InitFloor();
+
+	void SetPieceData(int32 num, EPieceType type, EPieceColor color);
 protected:
 	UFUNCTION()
 	void ChangeTurn();
 	
 	UFUNCTION()
 	ABoardFloor* SpawnFloor(int32 row, int32 col);
-
-	UFUNCTION()
-	void InitBoard();
-
+	
 	UFUNCTION()
 	void InitPiece(int32 num, EPieceType type, EPieceColor color);
-
+	
 	UFUNCTION()
 	void ShowMovableFloors(ABoardFloor* Point);
 
@@ -130,5 +136,4 @@ protected:
 	UFUNCTION()
 	void ShowKingFloors(EPieceColor Color, int32 Row, int32 Col);
 private:
-	
 };

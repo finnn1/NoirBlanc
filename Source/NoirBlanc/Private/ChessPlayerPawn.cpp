@@ -18,16 +18,19 @@ AChessPlayerPawn::AChessPlayerPawn()
 
 void AChessPlayerPawn::LeftClick(const FInputActionValue& Value)
 {
+	if(!IsLocallyControlled()) return;
 	ClickDelegate.Broadcast();
 }
 
 void AChessPlayerPawn::RightClick(const FInputActionValue& Value)
 {
+	if(!IsLocallyControlled()) return;
 	bIsRotMode = !bIsRotMode;
 }
 
 void AChessPlayerPawn::Look(const FInputActionValue& Value)
 {
+	if(!IsLocallyControlled()) return;
 	if(!bIsRotMode) return;
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
@@ -57,9 +60,25 @@ void AChessPlayerPawn::BeginPlay()
 	}
 	AActor* Board = UGameplayStatics::GetActorOfClass(GetWorld(), AChessBoard::StaticClass());
 	AChessBoard* ChessBoard = Cast<AChessBoard>(Board);
+	
 	if(ChessBoard)
 	{
 		ClickDelegate.AddUObject(ChessBoard, &AChessBoard::ClickFloor);
+		ChessBoard->SetOwner(this);
+		if(IsLocallyControlled())
+		{
+			if(HasAuthority())
+			{
+
+				FTimerHandle TimerHandle;
+				GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, ChessBoard]()
+				{
+					ChessBoard->InitFloor();
+					ChessBoard->InitBoard();	
+				}, 3, false);				
+				
+			}
+		}
 	}
 	if(HasAuthority())
 	{
