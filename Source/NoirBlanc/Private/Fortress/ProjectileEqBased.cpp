@@ -15,13 +15,13 @@
 // Sets default values
 AProjectileEqBased::AProjectileEqBased()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	Mesh  =  CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	RootComponent = Mesh;
-	
-	Gravity = 980.0f;		// unit: (cm/s^2)
+
+	Gravity = 980.0f; // unit: (cm/s^2)
 	ElapsedTime = 0.0f;
 	WindResistance = 0.1f;
 	Force = 1.0f;
@@ -47,27 +47,30 @@ void AProjectileEqBased::BeginPlay()
 
 		InitSpeed = OwnerCannon->ProjectileVelocity;
 		InitVelocity = LaunchDirection.GetSafeNormal() * InitSpeed;
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,   FString::Printf(TEXT("Speed: %f"), InitSpeed));
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,   FString::Printf(TEXT("Velocity: %s"), *InitVelocity.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, FString::Printf(TEXT("Speed: %f"), InitSpeed));
+		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+		                                 FString::Printf(TEXT("Velocity: %s"), *InitVelocity.ToString()));
 
 		/* if simulate physics is false*/
 		float Mass = 1;
 		// impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
-		Mesh->AddImpulse(InitVelocity* Mass, NAME_None, true);
+		Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
 
 		// when collision happens
 		Mesh->IgnoreActorWhenMoving(this->Owner, true);
 		//Mesh->OnComponentBeginOverlap.AddDynamic(this, &AProjectileEqBased::OnProjectileOverlap);
 		Mesh->OnComponentHit.AddDynamic(this, &AProjectileEqBased::OnProjectileHit);
-		
 	}
 }
 
-// void AProjectileEqBased::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime)
-// {
-// 	Super::GetLifetimeReplicatedProps(OutLifetime);
-// 	DOREPLIFETIME()
-// }
+void AProjectileEqBased::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(AProjectileEqBased, InitVelocity);
+	DOREPLIFETIME(AProjectileEqBased, CurrLocation);
+}
+
 
 
 
@@ -77,7 +80,7 @@ void AProjectileEqBased::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ElapsedTime += DeltaTime;
-	
+
 	FVector NewLocation = CurrLocation;
 
 	/* if simulate physics is true*/
@@ -88,10 +91,9 @@ void AProjectileEqBased::Tick(float DeltaTime)
 	// SetActorLocation(NewLocation, true);
 	//
 	// InitVelocity.Z -= Gravity*DeltaTime;
-	
+
 	CurrLocation = NewLocation;
 }
-
 
 
 void AProjectileEqBased::SetWindResistance(FVector WindDirection, float Resistance)
@@ -120,34 +122,34 @@ void AProjectileEqBased::SetWindResistance(FVector WindDirection, float Resistan
 // }
 
 
-
 void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
                                          UPrimitiveComponent* OtherComp, FVector OtherNormal, const FHitResult& Hit)
 {
+	if (OtherActor && OtherActor == this->Owner) return; // if the projectile hit myself, return
 	if (OtherActor && OtherActor != this)
 	{
-		ACannon*  Opponent = Cast<ACannon>(OtherActor);
-		if (Opponent == this->Owner) return;	// if the projectile hit myself, return
-		if(Opponent)
+		ACannon* Opponent = Cast<ACannon>(OtherActor);
+		if (Opponent)
 		{
 			Opponent->Health -= Opponent->Damage;
-			
+
 			ACannon* OwnCannon = Cast<ACannon>(this->Owner);
 			OwnCannon->FortressUI->ApplyDamageHPBar(Opponent);
-			if (HasAuthority())
-			{
-				MulticastRPC_ClientTakeDamage(Opponent);
-			}
-			else
-			{
-				ServerRPC_TakeDamage(Opponent);
-			}
-			
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, FString::Printf(TEXT("Health: %f"), Opponent->Health));
-			
+			// if (HasAuthority())
+			// {
+			// 	MulticastRPC_ClientTakeDamage(Opponent);
+			// }
+			// else
+			// {
+			// 	ServerRPC_TakeDamage(Opponent);
+			// }
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black,
+			                                 FString::Printf(TEXT("Health: %f"), Opponent->Health));
+
 			if (BombEffect)
 			{
-					PlayBombEffect(Hit);
+				PlayBombEffect(Hit);
 			}
 		}
 		Destroy();
@@ -171,13 +173,8 @@ void AProjectileEqBased::MulticastRPC_ClientTakeDamage_Implementation(ACannon* C
 void AProjectileEqBased::PlayBombEffect(const FHitResult& Hit)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Normal BombEffect"))
+	UE_LOG(LogTemp, Warning, TEXT("HitResult: %s"), *Hit.GetActor()->GetActorNameOrLabel());
 	ServerRPC_PlayBombEffect(Hit);
-}
-
-bool AProjectileEqBased::ServerRPC_PlayBombEffect_Validate(const FHitResult& Hit)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Server Validate"))
-	return true;
 }
 
 void AProjectileEqBased::MulticastRPC_PlayBombEffect_Implementation(const FHitResult& Hit)
@@ -196,6 +193,5 @@ void AProjectileEqBased::MulticastRPC_PlayBombEffect_Implementation(const FHitRe
 void AProjectileEqBased::ServerRPC_PlayBombEffect_Implementation(const FHitResult& Hit)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Server BombEffect"))
-	MulticastRPC_PlayBombEffect(Hit);	
+	MulticastRPC_PlayBombEffect(Hit);
 }
-

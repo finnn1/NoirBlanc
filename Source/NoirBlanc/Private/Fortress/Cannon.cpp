@@ -94,7 +94,6 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(ProjectileDirAction, ETriggerEvent::Triggered, this, &ACannon::ProjectileDir);
 		EnhancedInputComponent->BindAction(ProjectileDirAction, ETriggerEvent::Completed, this, &ACannon::ProjectileDir);
 		EnhancedInputComponent->BindAction(ForceAction, ETriggerEvent::Triggered, this, &ACannon::Force);
-		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ACannon::Fire);
 		EnhancedInputComponent->BindAction(FireBoostAction, ETriggerEvent::Started, this, &ACannon::StartCharging);
 		EnhancedInputComponent->BindAction(FireBoostAction, ETriggerEvent::Completed, this, &ACannon::Fire);
 	}
@@ -114,13 +113,16 @@ void ACannon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	FVector NewLocation = GetActorLocation() + (MovementInput* MoveSpeed*DeltaTime);
-	SetActorLocation(NewLocation);
-
+	
 	// TODO: should set the limit of the rotation angle
 	FRotator NewRotation= Muzzle->GetComponentRotation() + RotationInput*RotationSpeed*DeltaTime;
-	// UE_LOG(LogTemp, Warning, TEXT("New Rotation: Pitch %f, Yaw %f, Roll %f, "),
-	// 	NewRotation.Pitch, NewRotation.Yaw, NewRotation.Roll);
-	//Muzzle->SetRelativeRotation(NewRotation);
+	
+	ServerRPC_Move(NewLocation, NewRotation, DeltaTime);
+}
+
+void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation, float DeltaTime)
+{
+	SetActorLocation(NewLocation);
 	Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
 }
 
@@ -153,6 +155,14 @@ void ACannon::Fire()
 	{
 		FireBoostWidget->Velocity = 0.0f;	// set velocity var in widget 0
 	}
+}
+
+void ACannon::ServerRPC_Fire_Implementation()
+{
+}
+
+void ACannon::MulticastRPC_Fire_Implementation()
+{
 }
 
 void ACannon::StartCharging(const FInputActionValue& Value)
@@ -196,6 +206,7 @@ void ACannon::ContinueCharging()
 void ACannon::Force(const FInputActionValue& Value)
 {
 }
+
 
 
 void ACannon::InitMainUIWiget()

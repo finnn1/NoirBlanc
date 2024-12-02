@@ -22,7 +22,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(Replicated)
 	FVector InitVelocity;
+	UPROPERTY(Replicated)
 	FVector CurrLocation;
 	FVector WindForce;
 	float Gravity;
@@ -35,6 +37,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	UPROPERTY(EditAnywhere)
 	float InitSpeed;
 	
@@ -62,15 +66,12 @@ public:
 		FVector OtherNormal,
 		const FHitResult& Hit
 		);
-
-	// UPROPERTY(Replicated, EditAnywhere)
+	
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* BombEffect;
-
-
 	
 	void PlayBombEffect(const FHitResult& Hit);
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void ServerRPC_PlayBombEffect(const FHitResult& Hit);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_PlayBombEffect(const FHitResult& Hit);
@@ -82,5 +83,6 @@ public:
 
 	
 };
+
 
 

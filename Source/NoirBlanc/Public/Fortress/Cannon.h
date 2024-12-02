@@ -54,9 +54,6 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	UInputAction* ProjectileDirAction;
-
-	UPROPERTY(EditAnywhere)
-	UInputAction* FireAction;
 	
 	UPROPERTY(EditAnywhere)
 	UInputAction* FireBoostAction;
@@ -69,10 +66,10 @@ protected:
 	void ProjectileDir(const FInputActionValue& Value);
 
 	void Fire();
-	// UFUNCTION(Server, Reliable)
-	// void ServerRPC_Fire(bool bHit, FHitResult hitInfo);
-	// UFUNCTION(NetMulticast, Reliable)
-	// void MulticastRPC_Fire(bool bHit, FHitResult hitInfo);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Fire();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Fire();
 
 	
 	void StartCharging(const FInputActionValue& Value);
@@ -84,6 +81,9 @@ protected:
 	FVector MovementInput;
 	FRotator RotationInput;
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Move(FVector NewLocation, FRotator NewRotation, float DeltaTime);
+	
 public:
 	float MoveSpeed;
 	float RotationSpeed;
