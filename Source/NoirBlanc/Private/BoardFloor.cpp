@@ -5,6 +5,7 @@
 
 #include "DiffUtils.h"
 #include "Components/BoxComponent.h"
+#include "Net/UnrealNetwork.h"
 // Sets default values
 ABoardFloor::ABoardFloor()
 {
@@ -30,6 +31,15 @@ void ABoardFloor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void ABoardFloor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABoardFloor, PieceOnFloor);
+	DOREPLIFETIME(ABoardFloor, FloorRow);
+	DOREPLIFETIME(ABoardFloor, FloorCol);
 }
 
 // Called every frame

@@ -17,34 +17,35 @@ class NOIRBLANC_API UNoirBlancGameInstance : public UGameInstance
 
 public:
 	virtual void Init() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceColor DeffenderColor;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceType DeffenderType;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceColor AttackerColor;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceType AttackerType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceColor WinnerColor;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	TArray<EPieceType> BoardTypeData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	TArray<EPieceColor> BoardColorData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	TArray<int32> EncounterCountData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	TArray<int32 > MoveCountData;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	EPieceColor Turn = EPieceColor::Black;
 };

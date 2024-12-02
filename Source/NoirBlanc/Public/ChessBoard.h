@@ -25,6 +25,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 //////////////////////////////////////////
 /////Variable
 public:
@@ -37,26 +39,26 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TSubclassOf<AChessPiece> PieceClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	AChessPiece* SelectedPiece = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	ABoardFloor* SelectedFloor = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	AChessPiece* TargetPiece = nullptr;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	ABoardFloor* TargetFloor = nullptr;
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TArray<ABoardFloor*> BoardFloors;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TArray<ABoardFloor*> MovableFloors;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TArray<ABoardFloor*> AttackableFloors;
 private:
 	const int32 Chess_Num  = 8;
@@ -72,32 +74,47 @@ private:
 	UPROPERTY()
 	class UNoirBlancGameInstance* GameInstance;
 
+	bool bIsTargetPointEmpty = false; 
 //////////////////////////////////////////
 /////FUNCTION
 public:
 	UFUNCTION()
 	void ClickFloor();
 	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_MovePiece();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_MovePiece();
 	void MovePiece();
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PieceEncounter();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_PieceEncounter();
 	UFUNCTION()
 	void PieceEncounter(AChessPiece* Selected, AChessPiece* Target);
 
 	void MoveEnd();
+
+	UFUNCTION()
+	void InitBoard();
+
+	void ForDelay();
 	
+	UFUNCTION()
+	void InitFloor();
+
+	void SetPieceData(int32 num, EPieceType type, EPieceColor color);
 protected:
 	UFUNCTION()
 	void ChangeTurn();
 	
 	UFUNCTION()
 	ABoardFloor* SpawnFloor(int32 row, int32 col);
-
-	UFUNCTION()
-	void InitBoard();
-
+	
 	UFUNCTION()
 	void InitPiece(int32 num, EPieceType type, EPieceColor color);
-
+	
 	UFUNCTION()
 	void ShowMovableFloors(ABoardFloor* Point);
 
@@ -119,5 +136,4 @@ protected:
 	UFUNCTION()
 	void ShowKingFloors(EPieceColor Color, int32 Row, int32 Col);
 private:
-	
 };
