@@ -58,7 +58,7 @@ void AGameStateBase_Knight::CountDown()
 	{
 		CountDownUI->RemoveFromParent();
 		GetWorldTimerManager().ClearTimer(Handle);
-		Started = true;
+		//Started = true;
 
 		GetWorldTimerManager().SetTimer(Handle, this, &AGameStateBase_Knight::StartTimer, 1, true);
 	}
@@ -74,17 +74,17 @@ void AGameStateBase_Knight::StartTimer()
 	APlayer_Knight* serverPlayer = Cast<APlayer_Knight>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 	if(serverPlayer != nullptr && serverPlayer->OtherPlayer != nullptr && serverPlayer->TotalDistance > serverPlayer->OtherPlayer->TotalDistance)
 	{
-		Winner = FText::FromString(TEXT("블랑"));
+		Winner = FText::FromString(TEXT("느와르"));
 	}
 	else
 	{
-		Winner = FText::FromString(TEXT("느와르"));
+		Winner = FText::FromString(TEXT("블랑"));
 	}
 	
 	if(GameTimeLeft == 0)
 	{
 		GetWorldTimerManager().ClearTimer(Handle);
-		Finished = true;
+	
 	}
 }
 

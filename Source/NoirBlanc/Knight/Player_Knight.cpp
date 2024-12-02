@@ -10,6 +10,7 @@
 #include "Blueprint/UserWidget.h"
 #include "NoirBlanc/Knight/GameStateBase_Knight.h"
 #include "FinishUI.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APlayer_Knight::APlayer_Knight()
@@ -23,6 +24,13 @@ APlayer_Knight::APlayer_Knight()
 void APlayer_Knight::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ConnectedPlayers += 1;
+	if(ConnectedPlayers == 2)
+	{
+		ServerRPC_StartGame();
+	}
+	
 	if (IsLocallyControlled())
 	{
 		Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
@@ -37,6 +45,8 @@ void APlayer_Knight::BeginPlay()
 		FTimerHandle handle;
 		GetWorldTimerManager().SetTimer(handle, this, &APlayer_Knight::FindOtherPlayer, 2, false);
 	}
+
+	
 }
 
 // Called every frame
@@ -109,7 +119,75 @@ void APlayer_Knight::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 void APlayer_Knight::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APlayer_Knight, ConnectedPlayers);
+	DOREPLIFETIME(APlayer_Knight, CountDownLeft);
 }
+
+void APlayer_Knight::ServerRPC_StartGame_Implementation()
+{
+	MulticastRPC_CreateCountDown();
+}
+
+
+void APlayer_Knight::MulticastRPC_CreateCountDown_Implementation()
+{
+	CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
+	CountDownUI->AddToViewport();
+	CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+	
+	if(HasAuthority())
+	{
+		GetWorldTimerManager().SetTimer(Handle, this, &APlayer_Knight::CountDown, 1, true);
+	}
+}
+
+void APlayer_Knight::CountDown()
+{
+	CountDownLeft -= 1;
+	if(CountDownLeft < 0)
+	{
+		Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Started = true;
+		
+		CountDownUI->RemoveFromParent();
+		GetWorldTimerManager().ClearTimer(Handle);
+
+
+		//GetWorldTimerManager().SetTimer(Handle, this, &AGameStateBase_Knight::StartTimer, 1, true);
+	}
+	else
+	{
+		if(CountDownLeft == 0)
+		{
+			CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
+		}
+		else
+		{
+			CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+		}
+	}
+	
+
+}
+
+void APlayer_Knight::OnRep_CountDownLeft()
+{
+	if(CountDownLeft < 0)
+	{
+		CountDownUI->RemoveFromParent();
+	}
+	else
+	{
+		if(CountDownLeft == 0)
+		{
+			CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
+		}
+		else
+		{
+			CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+		}
+	}
+}
+
 
 void APlayer_Knight::Move(const FInputActionValue& Value)
 {
@@ -120,6 +198,8 @@ void APlayer_Knight::Jump()
 {
 	Super::Jump();
 }
+
+
 
 void APlayer_Knight::FindOtherPlayer()
 {
