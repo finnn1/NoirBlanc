@@ -3,3 +3,15 @@
 
 #include "GameModeBase_Knight.h"
 
+#include "NoirBlanc/Knight/GameStateBase_Knight.h"
+
+void AGameModeBase_Knight::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+	
+	connectedClients+=1;
+	if(connectedClients == 2)
+	{
+		GetGameState<AGameStateBase_Knight>()->StartCountDown();
+	}
+}

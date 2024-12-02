@@ -20,7 +20,7 @@ class NOIRBLANC_API UMainUI : public UUserWidget
 	
 public:
 	class UTextBlock* Text_Timer;
-	void UpdateTimerText(float time);
+	void UpdateTimerText(int32 time);
 	
 	class UTextBlock* Text_MyDistance;
 	void UpdateMyDistance(float distance);

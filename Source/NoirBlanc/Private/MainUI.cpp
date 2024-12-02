@@ -3,8 +3,8 @@
 
 #include "MainUI.h"
 
-#include "MyGameStateBase.h"
 #include "Components/TextBlock.h"
+#include "NoirBlanc/Knight/GameStateBase_Knight.h"
 
 void UMainUI::NativeConstruct()
 {
@@ -24,17 +24,12 @@ void UMainUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	
-	UpdateTimerText(Cast<AMyGameStateBase>(GetWorld()->GetGameState())->remainingTime);
+	UpdateTimerText(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->GameTimeLeft);
 }
 
-void UMainUI::UpdateTimerText(float time)
+void UMainUI::UpdateTimerText(int32 time)
 {
-	int32 sec = floor(time);
-	if(sec < 0)
-	{
-		sec = 0;
-	}
-	Text_Timer->SetText(FText::FromString(FString::FromInt(sec)));
+	Text_Timer->SetText(FText::FromString(FString::FromInt(time)));
 }
 
 void UMainUI::UpdateMyDistance(float distance)

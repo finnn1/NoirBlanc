@@ -70,9 +70,13 @@ public:
 	//
 	// UI
 	//
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//TSubclassOf<class UFinishUI> FinishUI;
+	//class UFinishUI* Finish;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UFinishUI> FinishUI;
-	class UFinishUI* Finish;
+	TSubclassOf<class UFinishUI> FinishUIFactory;
+	UFinishUI* FinishUI;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UUserWidget> StartUI;

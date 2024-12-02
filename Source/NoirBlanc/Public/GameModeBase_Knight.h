@@ -13,4 +13,8 @@ UCLASS()
 class NOIRBLANC_API AGameModeBase_Knight : public AGameModeBase
 {
 	GENERATED_BODY()
+
+	// TODO : 다른 레벨에서 다른 레벨로 이동할 때 잘 동작하는지 확인하기
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	int connectedClients;
 };

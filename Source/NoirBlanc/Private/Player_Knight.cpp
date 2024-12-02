@@ -3,23 +3,13 @@
 
 #include "Player_Knight.h"
 
-#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-#include "FinishUI.h"
-#include "GameModeBase_Knight.h"
-#include "KnightPlayerState.h"
 #include "MainUI.h"
-#include "MyGameStateBase.h"
-#include "StartUI.h"
-#include "SWarningOrErrorBox.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/TextRenderComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Net/UnrealNetwork.h"
-#include "GameFramework/GameState.h"
-
+#include "NoirBlanc/Knight/GameStateBase_Knight.h"
+#include "FinishUI.h"
 
 // Sets default values
 APlayer_Knight::APlayer_Knight()
@@ -54,12 +44,25 @@ void APlayer_Knight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	/* Time Over */
-	if (Cast<AMyGameStateBase>(GetWorld()->GetGameState())->TimeOver)
+	/* CountDown */
+	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Started == false)
 	{
 		return;
 	}
 
+	/* Time Over */
+	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Finished)
+	{
+		if(IsLocallyControlled() && FinishUI == nullptr)
+		{
+			FinishUI = Cast<UFinishUI>(CreateWidget(GetWorld(), FinishUIFactory));
+			FinishUI->AddToViewport();
+			FinishUI->UpdateWinnerText(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner);
+		}
+		
+		return;
+	}
+	
 	/* Movement */
 	{
 		if (GetActorLocation().Z < -500)
