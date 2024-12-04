@@ -100,6 +100,15 @@ void APlayer_Knight::Tick(float DeltaTime)
 	/* UI */
 	if (HasAuthority() && OtherPlayer != nullptr)
 	{
+		if(TotalDistance > OtherPlayer->TotalDistance)
+		{
+			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("블랑"));
+		}
+		else
+		{
+			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("느와르"));
+		}
+		
 		MulticastRPC_UpdateDistanceUI(TotalDistance, OtherPlayer->TotalDistance);
 	}
 }
@@ -193,17 +202,6 @@ void APlayer_Knight::MulticastRPC_UpdateTimerUI_Implementation()
 	Main->UpdateTimerText(TimeLeft);
 }
 
-
-
-
-
-
-
-
-
-
-
-
 // -----------------------------------------
 //
 // DISTANCE
@@ -213,17 +211,6 @@ void APlayer_Knight::MulticastRPC_UpdateDistanceUI_Implementation(float serverDi
 {
 	Main->UpdateServerDistance(clientDistance);
 	Main->UpdateClientDistance(serverDistance);
-
-	/*
-	if(HasAuthority())
-	{
-
-	}
-	else
-	{
-		Main->UpdateServerDistance(serverDistance);
-		Main->UpdateClientDistance(clientDistance);
-	}*/
 
 }
 
