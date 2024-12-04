@@ -31,6 +31,4 @@ public:
 	float X_Length = 0;
 	
 	TArray<class APlayer_Knight*> AllPlayers;
-
-	void FindPlayers();
 };	

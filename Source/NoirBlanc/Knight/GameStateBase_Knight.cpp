@@ -16,6 +16,8 @@ AGameStateBase_Knight::AGameStateBase_Knight()
 void AGameStateBase_Knight::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AGameStateBase_Knight, ConnectedPlayers);
+	
 	DOREPLIFETIME(AGameStateBase_Knight, CountDownLeft);
 	DOREPLIFETIME(AGameStateBase_Knight, Started);
 	DOREPLIFETIME(AGameStateBase_Knight, Finished);
