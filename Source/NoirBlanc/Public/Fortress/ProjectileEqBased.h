@@ -24,8 +24,7 @@ protected:
 
 	UPROPERTY(Replicated)
 	FVector InitVelocity;
-	UPROPERTY(Replicated)
-	FVector CurrLocation;
+	
 	FVector WindForce;
 	float Gravity;
 	float ElapsedTime;
@@ -39,14 +38,22 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
+	float Speed;
+
+	class ACannon* OwnerCannon;
+
 	UPROPERTY(EditAnywhere)
-	float InitSpeed;
+	float Mass;
 	
 	UPROPERTY(EditAnywhere)
 	float Force;
 	
 	void SetWindResistance(FVector WindDirection, float Resistance);
 
+	void SetSpeedAddImpuse(FVector Direction);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SetSpeedAddImpuse(FVector Direction);
+	
 	// UFUNCTION()
 	// void OnProjectileOverlap(
 	// 	UPrimitiveComponent* OverlappedComponent,

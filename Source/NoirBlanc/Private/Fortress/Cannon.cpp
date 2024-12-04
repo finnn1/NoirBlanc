@@ -20,12 +20,12 @@
 // Sets default values
 ACannon::ACannon()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
 	RootComponent = CapsuleComponent;
-	
+
 	Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
 	Body->SetupAttachment(RootComponent);
 
@@ -35,13 +35,13 @@ ACannon::ACannon()
 
 	SpawnOrigin = CreateDefaultSubobject<USphereComponent>(TEXT("SpawnOrigin"));
 	SpawnOrigin->SetupAttachment(Muzzle);
-	
+
 	SpawnLocation = CreateDefaultSubobject<USphereComponent>(TEXT("SpawnLocation"));
 	SpawnLocation->SetupAttachment(Muzzle);
 
-	MovementInput =  FVector::ZeroVector;
+	MovementInput = FVector::ZeroVector;
 	RotationInput = FRotator::ZeroRotator;
-	
+
 	MoveSpeed = 100.0f;
 	RotationSpeed = 50.0f;
 
@@ -49,13 +49,13 @@ ACannon::ACannon()
 	VelocityBar->SetupAttachment(RootComponent);
 
 	MaxHealth = 100.0f;
-	Health =  MaxHealth;
+	Health = MaxHealth;
 	Damage = 10.0f;
 
 	this->NetUpdateFrequency = 100.0f;
 
 	Muzzle->SetUsingAbsoluteLocation(true);
- }
+}
 
 // Called when the game starts or when spawned
 void ACannon::BeginPlay()
@@ -64,7 +64,7 @@ void ACannon::BeginPlay()
 
 	if (VelocityBar != nullptr)
 	{
-		UUserWidget* Widget = VelocityBar->GetWidget();		// WidgetComponent != Widget
+		UUserWidget* Widget = VelocityBar->GetWidget(); // WidgetComponent != Widget
 		if (Widget != nullptr)
 		{
 			ProjectileVelocity = 0.0f;
@@ -73,7 +73,6 @@ void ACannon::BeginPlay()
 				FireBoostWidget->Velocity = ProjectileVelocity;
 		}
 	}
-	
 }
 
 // Called to bind functionality to input
@@ -83,7 +82,8 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem*  Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<
+			UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 	}
 
@@ -91,8 +91,10 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACannon::Move);
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ACannon::Move);
-		EnhancedInputComponent->BindAction(ProjectileDirAction, ETriggerEvent::Triggered, this, &ACannon::ProjectileDir);
-		EnhancedInputComponent->BindAction(ProjectileDirAction, ETriggerEvent::Completed, this, &ACannon::ProjectileDir);
+		EnhancedInputComponent->BindAction(ProjectileDirAction, ETriggerEvent::Triggered, this,
+		                                   &ACannon::ProjectileDir);
+		EnhancedInputComponent->BindAction(ProjectileDirAction, ETriggerEvent::Completed, this,
+		                                   &ACannon::ProjectileDir);
 		EnhancedInputComponent->BindAction(ForceAction, ETriggerEvent::Triggered, this, &ACannon::Force);
 		EnhancedInputComponent->BindAction(FireBoostAction, ETriggerEvent::Started, this, &ACannon::StartCharging);
 		EnhancedInputComponent->BindAction(FireBoostAction, ETriggerEvent::Completed, this, &ACannon::Fire);
@@ -111,16 +113,45 @@ void ACannon::PossessedBy(AController* NewController)
 void ACannon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	FVector NewLocation = GetActorLocation() + (MovementInput* MoveSpeed*DeltaTime);
-	
+
+	FVector NewLocation = GetActorLocation() + (MovementInput * MoveSpeed * DeltaTime);
+
 	// TODO: should set the limit of the rotation angle
-	FRotator NewRotation= Muzzle->GetComponentRotation() + RotationInput*RotationSpeed*DeltaTime;
+	FRotator NewRotation = Muzzle->GetComponentRotation() + RotationInput * RotationSpeed * DeltaTime;
 	
-	ServerRPC_Move(NewLocation, NewRotation, DeltaTime);
+	// ServerRPC_Move error debug
+	// error message: LogNet: Warning: UNetDriver::ProcessRemoteFunction:
+	// No owning connection for actor BP_Cannon_C_1. Function ServerRPC_Move will not be processed.
+	// if (HasAuthority())
+	// {
+	// 	if (Owner)
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("Server Owner Exists"));
+	// 		UE_LOG(LogTemp, Warning, TEXT("Server | Owner : %s"), *Owner->GetActorNameOrLabel());
+	// 	}
+	// 	else
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("Server Owner Not Exists"));
+	// 	}
+	// }
+	// else
+	// {
+	// 	if (Owner)
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("Client Owner Exists"));
+	// 		UE_LOG(LogTemp, Warning, TEXT("Client | Owner : %s"), *Owner->GetActorNameOrLabel());
+	// 	}
+	// 	else
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("Client Owner Not Exists"));
+	// 	}
+	// }
+	
+	if (IsLocallyControlled())
+		ServerRPC_Move(NewLocation, NewRotation);
 }
 
-void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation, float DeltaTime)
+void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation)
 {
 	SetActorLocation(NewLocation);
 	Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
@@ -142,27 +173,31 @@ void ACannon::ProjectileDir(const FInputActionValue& Value)
 void ACannon::Fire()
 {
 	GetWorld()->GetTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
-	
+
 	if (ProjectileEqBasedFactory)
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;		// 인스턴스 아닌 클래스로 되는거 같아서 확인해보기
-		
-		ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
-			SpawnLocation->GetComponentLocation(), SpawnLocation->GetComponentRotation(), SpawnParams);
-	}
+		ServerRPC_Fire(ProjectileVelocity);
+
 	if (FireBoostWidget != nullptr)
-	{
-		FireBoostWidget->Velocity = 0.0f;	// set velocity var in widget 0
-	}
+		FireBoostWidget->Velocity = 0.0f; // set velocity var in widget 0
 }
 
-void ACannon::ServerRPC_Fire_Implementation()
+void ACannon::ServerRPC_Fire_Implementation(float Velocity)
 {
+	MulticastRPC_Fire(Velocity);
 }
 
-void ACannon::MulticastRPC_Fire_Implementation()
+void ACannon::MulticastRPC_Fire_Implementation(float Velocity)
 {
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	this->ProjectileVelocity = Velocity;
+
+	// 	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+	// FString::Printf(TEXT("Owner: %s"), *this->GetName()));
+
+	ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
+																   SpawnLocation->GetComponentLocation(),
+																   SpawnLocation->GetComponentRotation(), SpawnParams);
 }
 
 void ACannon::StartCharging(const FInputActionValue& Value)
@@ -179,10 +214,9 @@ void ACannon::ContinueCharging()
 {
 	ProjectileVelocity += VelocityChange;
 
-	
 	if (FireBoostWidget != nullptr)
 	{
-    		FireBoostWidget->Velocity = ProjectileVelocity;
+		FireBoostWidget->Velocity = ProjectileVelocity;
 	}
 }
 
@@ -208,10 +242,9 @@ void ACannon::Force(const FInputActionValue& Value)
 }
 
 
-
 void ACannon::InitMainUIWiget()
 {
-	if (IsLocallyControlled()==false) return;
+	if (IsLocallyControlled() == false) return;
 
 	FortressUI = CreateWidget<UFortressUI>(GetWorld(), FortressUIFactory);
 	if (FortressUI != nullptr)

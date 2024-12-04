@@ -28,12 +28,21 @@ void UFortressUI::ChangeHPBar(ACannon* Cannon)
 	// Player2pg->SetPercent(percentage);	// not working
 }
 
-void UFortressUI::ApplyDamageHPBar(ACannon* Cannon)
+void UFortressUI::ApplyDamageHPBar(ACannon* Cannon, ACannon*  player)
 {
 	float percentage = Cannon->Health / Cannon->MaxHealth;
-	// Player2pg->SetPercent(percentage);	// not working
-	Player2Percentage = percentage;
-	UE_LOG(LogTemp, Warning, TEXT("Player2Percentage: %f"), Player2Percentage);
+
+	if (Cannon == player)
+	{
+		Player1Percentage = percentage;
+		UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
+	}
+	else
+	{
+		// Player2pg->SetPercent(percentage);	// not working
+		Player2Percentage = percentage;
+		UE_LOG(LogTemp, Warning, TEXT("Player2Percentage: %f"), Player2Percentage);
+	}
 }
 
 void UFortressUI::TakeDamageHPBar(ACannon* Cannon)

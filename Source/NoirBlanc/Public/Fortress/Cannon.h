@@ -67,10 +67,9 @@ protected:
 
 	void Fire();
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_Fire();
+	void ServerRPC_Fire(float Velocity);
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_Fire();
-
+	void MulticastRPC_Fire(float Velocity);
 	
 	void StartCharging(const FInputActionValue& Value);
 
@@ -82,18 +81,20 @@ protected:
 	FRotator RotationInput;
 
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_Move(FVector NewLocation, FRotator NewRotation, float DeltaTime);
+	void ServerRPC_Move(FVector NewLocation, FRotator NewRotation);
 	
 public:
 	float MoveSpeed;
 	float RotationSpeed;
 
+	// timer for setting projectile velocity
 	FTimerHandle SpeedIncreaseTimerHandle;
 
 	UPROPERTY(EditAnywhere)
 	float ProjectileVelocity;
+	
 	UPROPERTY(EditAnywhere)
-	float VelocityChange = 100.0f;;
+	float VelocityChange = 100.0f;
 	
 	const float MaxSpeed = 1000.0f;
 	const float SpeedIncreaseRate = 50.0f;
@@ -123,6 +124,8 @@ public:
 	// Health and Damage
 	UPROPERTY(EditAnywhere)
 	float MaxHealth;
+	UPROPERTY(EditAnywhere)
+
 	float Health;
 
 	UPROPERTY(EditAnywhere)
@@ -133,7 +136,6 @@ public:
 	TSubclassOf<UUserWidget> FortressUIFactory;
 	class UFortressUI* FortressUI;
 	
-
 	void InitMainUIWiget();
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_Init();

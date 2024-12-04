@@ -7,6 +7,5 @@
 
 void AFortressPlayerController::BeginPlay()
 {
-	
 
 }

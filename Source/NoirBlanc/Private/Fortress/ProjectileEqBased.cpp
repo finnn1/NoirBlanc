@@ -25,11 +25,10 @@ AProjectileEqBased::AProjectileEqBased()
 	ElapsedTime = 0.0f;
 	WindResistance = 0.1f;
 	Force = 1.0f;
-	InitSpeed = 0.0f;
+	Speed = 0.0f;
+	Mass = 1;
 
-	bReplicates = true;
-	// SetReplicates(true);
-	// SetReplicateMovement(true);
+	//bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -37,28 +36,34 @@ void AProjectileEqBased::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CurrLocation = GetActorLocation();
-	ACannon* OwnerCannon = Cast<ACannon>(GetOwner());
+	//SetReplicateMovement(true);
+
+	OwnerCannon = Cast<ACannon>(GetOwner());
+
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+	                                 FString::Printf(TEXT("Owner: %s"), *OwnerCannon->GetName()));
 
 	if (OwnerCannon)
 	{
-		FVector LaunchDirection =
-			OwnerCannon->SpawnLocation->GetComponentLocation() - OwnerCannon->SpawnOrigin->GetComponentLocation();
+		FVector LaunchDirection = OwnerCannon->SpawnLocation->GetComponentLocation() -
+			OwnerCannon->SpawnOrigin->GetComponentLocation();
+		// if (Owner->Owner)
+		// 	UE_LOG(LogTemp, Warning, TEXT("Owner->Owner: %s"), *Owner->Owner->GetName());
+			SetSpeedAddImpuse(LaunchDirection);
 
-		InitSpeed = OwnerCannon->ProjectileVelocity;
-		InitVelocity = LaunchDirection.GetSafeNormal() * InitSpeed;
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, FString::Printf(TEXT("Speed: %f"), InitSpeed));
+		// InitVelocity = LaunchDirection.GetSafeNormal() * Speed;
+		//
+		// /* if simulate physics is false*/
+		// // impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
+		// Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
+
+		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+		                                 FString::Printf(TEXT("Speed: %f"), Speed));
 		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
 		                                 FString::Printf(TEXT("Velocity: %s"), *InitVelocity.ToString()));
 
-		/* if simulate physics is false*/
-		float Mass = 1;
-		// impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
-		Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
-
 		// when collision happens
 		Mesh->IgnoreActorWhenMoving(this->Owner, true);
-		//Mesh->OnComponentBeginOverlap.AddDynamic(this, &AProjectileEqBased::OnProjectileOverlap);
 		Mesh->OnComponentHit.AddDynamic(this, &AProjectileEqBased::OnProjectileHit);
 	}
 }
@@ -66,12 +71,29 @@ void AProjectileEqBased::BeginPlay()
 void AProjectileEqBased::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
+
 	DOREPLIFETIME(AProjectileEqBased, InitVelocity);
-	DOREPLIFETIME(AProjectileEqBased, CurrLocation);
 }
 
+void AProjectileEqBased::SetSpeedAddImpuse(FVector Direction)
+{
+	Speed = OwnerCannon->ProjectileVelocity;
+	InitVelocity = Direction.GetSafeNormal() * Speed;
 
+	/* if simulate physics is false*/
+	// impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
+	Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
+}
+
+void AProjectileEqBased::ServerRPC_SetSpeedAddImpuse_Implementation(FVector Direction)
+{
+	Speed = OwnerCannon->ProjectileVelocity;
+	InitVelocity = Direction.GetSafeNormal() * Speed;
+
+	/* if simulate physics is false*/
+	// impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
+	Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
+}
 
 
 // Called every frame
@@ -81,8 +103,6 @@ void AProjectileEqBased::Tick(float DeltaTime)
 
 	ElapsedTime += DeltaTime;
 
-	FVector NewLocation = CurrLocation;
-
 	/* if simulate physics is true*/
 	// NewLocation.X += InitVelocity.X * DeltaTime;
 	// NewLocation.Y += InitVelocity.Y * DeltaTime;
@@ -91,14 +111,15 @@ void AProjectileEqBased::Tick(float DeltaTime)
 	// SetActorLocation(NewLocation, true);
 	//
 	// InitVelocity.Z -= Gravity*DeltaTime;
-
-	CurrLocation = NewLocation;
 }
 
 
 void AProjectileEqBased::SetWindResistance(FVector WindDirection, float Resistance)
 {
 }
+
+
+
 
 // void AProjectileEqBased::OnProjectileOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 // 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -125,32 +146,70 @@ void AProjectileEqBased::SetWindResistance(FVector WindDirection, float Resistan
 void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
                                          UPrimitiveComponent* OtherComp, FVector OtherNormal, const FHitResult& Hit)
 {
-	if (OtherActor && OtherActor == this->Owner) return; // if the projectile hit myself, return
-	if (OtherActor && OtherActor != this)
+	if (OtherActor && OtherActor == this->Owner)
+	{
+		
+		return;		// if the projectile hit the owner Cannon, return
+	}
+
+	switch (GetNetMode())
+	{
+	case NM_ListenServer:
+		UE_LOG(LogTemp, Warning, TEXT("NetMode ListenServer"));
+		break;
+	case NM_Client:
+		UE_LOG(LogTemp, Warning, TEXT("NetMode Client"));
+	default:
+		break;
+	}
+	 // 가끔 netmode client일때 owner->owner 없다고 뜬다.
+	// if (Owner->Owner == nullptr)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("No Owner->Owner"));		// another Cannon's projectile
+	// 	return;
+	// }
+	//UE_LOG(LogTemp, Warning, TEXT("Owner->Owner: %s"), *Owner->Owner->GetName());
+	
+	if (OtherActor != nullptr)
 	{
 		ACannon* Opponent = Cast<ACannon>(OtherActor);
-		if (Opponent)
+		if (Opponent)		// it the projectile hit the opponent Cannon
 		{
 			Opponent->Health -= Opponent->Damage;
 
-			ACannon* OwnCannon = Cast<ACannon>(this->Owner);
-			OwnCannon->FortressUI->ApplyDamageHPBar(Opponent);
-			// if (HasAuthority())
+			// APlayerController* pc = Cast<APlayerController>(Owner->Owner);
+			// if (pc)
+			// {
+			// 	if (pc->IsLocalController())
+			// 		UE_LOG(LogTemp, Warning, TEXT("Local Controller"));
+			// 	if (pc->GetPawn())
+			// 	{
+			// 		// TODO: 여러 캐릭터의 점수 관리를 어떻게 동기화 하고 있나
+			// 	}
+			// }
+
+			ACannon* cannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
+			cannon->FortressUI->ApplyDamageHPBar(Opponent, cannon);
+				
+			// error message: Player2Percentage == null
+			// if (OwnerCannon->FortressUI)
+			// {
+			// 	OwnerCannon->FortressUI->ApplyDamageHPBar(Opponent);
+			// }
+			
+			// if (Opponent->GetOwner())	// if it is server pawn
 			// {
 			// 	MulticastRPC_ClientTakeDamage(Opponent);
 			// }
-			// else
+			// else	   // if it is client pawn
 			// {
 			// 	ServerRPC_TakeDamage(Opponent);
 			// }
-
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black,
-			                                 FString::Printf(TEXT("Health: %f"), Opponent->Health));
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black,
+			//                                  FString::Printf(TEXT("Health: %f"), Opponent->Health));
 
 			if (BombEffect)
-			{
 				PlayBombEffect(Hit);
-			}
 		}
 		Destroy();
 	}
@@ -159,39 +218,33 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 void AProjectileEqBased::ServerRPC_TakeDamage_Implementation(ACannon* Cannon)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Server Take Damage"))
-	Cannon->FortressUI->TakeDamageHPBar(Cannon);
+	if (Cannon->FortressUI)
+		Cannon->FortressUI->TakeDamageHPBar(Cannon);
 }
 
 void AProjectileEqBased::MulticastRPC_ClientTakeDamage_Implementation(ACannon* Cannon)
 {
-	if (HasAuthority()) return;
+	if (OwnerCannon->HasAuthority()) return;
 	UE_LOG(LogTemp, Warning, TEXT("Client Take Damage"))
-	Cannon->FortressUI->TakeDamageHPBar(Cannon);
+	if (Cannon->FortressUI)
+		Cannon->FortressUI->TakeDamageHPBar(Cannon);
 }
 
 
 void AProjectileEqBased::PlayBombEffect(const FHitResult& Hit)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Normal BombEffect"))
 	UE_LOG(LogTemp, Warning, TEXT("HitResult: %s"), *Hit.GetActor()->GetActorNameOrLabel());
-	ServerRPC_PlayBombEffect(Hit);
+	//ServerRPC_PlayBombEffect(Hit);
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BombEffect, Hit.ImpactPoint, FRotator(0, 0, 0));
 }
 
 void AProjectileEqBased::MulticastRPC_PlayBombEffect_Implementation(const FHitResult& Hit)
 {
 	if (BombEffect)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("BombEffect Exists"))
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BombEffect, Hit.ImpactPoint, FRotator(0, 0, 0));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No BombEffect"))
-	}
 }
 
 void AProjectileEqBased::ServerRPC_PlayBombEffect_Implementation(const FHitResult& Hit)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Server BombEffect"))
 	MulticastRPC_PlayBombEffect(Hit);
 }

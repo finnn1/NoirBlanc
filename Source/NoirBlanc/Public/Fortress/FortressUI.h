@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Cannon.h"
 #include "Blueprint/UserWidget.h"
 
 #include "FortressUI.generated.h"
@@ -44,7 +45,7 @@ public:
 	void ChangeHPBar(ACannon* Cannon);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyDamageHPBar(ACannon* Cannon);
+	void ApplyDamageHPBar(ACannon* Cannon, ACannon*  player);
 
 	UFUNCTION(BlueprintCallable)
 	void TakeDamageHPBar(ACannon* Cannon);
