@@ -20,6 +20,8 @@ class NOIRBLANC_API AGameStateBase_Knight : public AGameStateBase
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
+	UPROPERTY(Replicated)
+	int32 ConnectedPlayers;
 	void StartCountDown();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_CreateCountDownUI();

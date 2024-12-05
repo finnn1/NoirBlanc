@@ -18,35 +18,43 @@ APlayer_Knight::APlayer_Knight()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
-}
+}		
 
-// Called when the game starts or when spawned
-void APlayer_Knight::BeginPlay()
+void APlayer_Knight::PossessedBy(AController* NewController)
 {
-	Super::BeginPlay();
-
-	ConnectedPlayers += 1;
-	if(ConnectedPlayers == 2)
-	{
-		ServerRPC_StartGame();
-	}
+	Super::PossessedBy(NewController);
 	
-	if (IsLocallyControlled())
+	Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->ConnectedPlayers += 1;
+	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->ConnectedPlayers == 2)
 	{
+		/* Create Client UI */
+		ClientRPC_CreateUI();
+		
+		/* Create Server UI */
 		Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
 		Main->AddToViewport();
+		CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
+		CountDownUI->AddToViewport();
+		CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 
-		//Start = Cast<UStartUI>(CreateWidget(GetWorld(), StartUI));
-		//Start->AddToViewport();
+		/* Find Other Player */
+		Road = Cast<ARoad>(UGameplayStatics::GetActorOfClass(GetWorld(), ARoad::StaticClass()));
+		TArray<AActor*> actors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayer_Knight::StaticClass(), actors);
+		for (AActor* Actor : actors)
+		{
+			Road->AllPlayers.Push(Cast<APlayer_Knight>(Actor));
+			APlayer_Knight* tmpPlayer = Cast<APlayer_Knight>(Actor);
+			if(OtherPlayer == nullptr && (IsLocallyControlled() && tmpPlayer->IsLocallyControlled() == false) ||
+				(!IsLocallyControlled() && tmpPlayer->IsLocallyControlled() == true))
+			{
+				OtherPlayer = tmpPlayer;
+			}
+		}
+
+		/* Start CountDown */
+		GetWorldTimerManager().SetTimer(Handle, this, &APlayer_Knight::CountDown, 1, true);
 	}
-
-	if (HasAuthority())
-	{
-		FTimerHandle handle;
-		GetWorldTimerManager().SetTimer(handle, this, &APlayer_Knight::FindOtherPlayer, 2, false);
-	}
-
-	
 }
 
 // Called every frame
@@ -60,7 +68,7 @@ void APlayer_Knight::Tick(float DeltaTime)
 		return;
 	}
 
-	/* Time Over */
+	/* Finished */
 	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Finished)
 	{
 		if(IsLocallyControlled() && FinishUI == nullptr)
@@ -92,8 +100,143 @@ void APlayer_Knight::Tick(float DeltaTime)
 	/* UI */
 	if (HasAuthority() && OtherPlayer != nullptr)
 	{
+		if(TotalDistance > OtherPlayer->TotalDistance)
+		{
+			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("블랑"));
+		}
+		else
+		{
+			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("느와르"));
+		}
+		
 		MulticastRPC_UpdateDistanceUI(TotalDistance, OtherPlayer->TotalDistance);
 	}
+}
+
+
+// ----------------------------------------------------------------------------------------
+//
+// FUNCTION
+//
+
+// -----------------------------------------
+//
+// COUNTDOWN
+//
+void APlayer_Knight::ClientRPC_CreateUI_Implementation()
+{
+	if(IsLocallyControlled())
+	{
+		Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
+		Main->AddToViewport();
+
+		CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
+		CountDownUI->AddToViewport();
+		CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+	}
+}
+
+void APlayer_Knight::CountDown()
+{
+	CountDownLeft -= 1;
+	if(CountDownLeft < 0)
+	{
+		Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Started = true;
+		
+		CountDownUI->RemoveFromParent();
+		GetWorldTimerManager().ClearTimer(Handle);
+		GetWorldTimerManager().SetTimer(Handle, this, &APlayer_Knight::StartTimer, 1, true);
+	}
+	else
+	{
+		if(CountDownLeft == 0)
+		{
+			CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
+		}
+		else
+		{
+			CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+		}
+	}
+}
+
+void APlayer_Knight::OnRep_CountDownLeft()
+{
+	if(IsLocallyControlled())
+	{
+		if(CountDownLeft < 0)
+		{
+			CountDownUI->RemoveFromParent();
+		}
+		else
+		{
+			if(CountDownLeft == 0)
+			{
+				CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
+			}
+			else
+			{
+				CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+			}
+		}
+	}
+}
+
+// -----------------------------------------
+//
+// TIMER
+//
+void APlayer_Knight::StartTimer()
+{
+	TimeLeft -= 1;
+	if(TimeLeft == 0 || Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Finished)
+	{
+		GetWorldTimerManager().ClearTimer(Handle);
+	}
+	
+	MulticastRPC_UpdateTimerUI();
+}
+
+void APlayer_Knight::MulticastRPC_UpdateTimerUI_Implementation()
+{
+	Main->UpdateTimerText(TimeLeft);
+}
+
+// -----------------------------------------
+//
+// DISTANCE
+//
+
+void APlayer_Knight::MulticastRPC_UpdateDistanceUI_Implementation(float serverDistance, float clientDistance)
+{
+	Main->UpdateServerDistance(clientDistance);
+	Main->UpdateClientDistance(serverDistance);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void APlayer_Knight::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APlayer_Knight, CountDownLeft);
+	DOREPLIFETIME(APlayer_Knight, TimeLeft);
 }
 
 // Called to bind functionality to input
@@ -116,79 +259,6 @@ void APlayer_Knight::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	}
 }
 
-void APlayer_Knight::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(APlayer_Knight, ConnectedPlayers);
-	DOREPLIFETIME(APlayer_Knight, CountDownLeft);
-}
-
-void APlayer_Knight::ServerRPC_StartGame_Implementation()
-{
-	MulticastRPC_CreateCountDown();
-}
-
-
-void APlayer_Knight::MulticastRPC_CreateCountDown_Implementation()
-{
-	CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
-	CountDownUI->AddToViewport();
-	CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
-	
-	if(HasAuthority())
-	{
-		GetWorldTimerManager().SetTimer(Handle, this, &APlayer_Knight::CountDown, 1, true);
-	}
-}
-
-void APlayer_Knight::CountDown()
-{
-	CountDownLeft -= 1;
-	if(CountDownLeft < 0)
-	{
-		Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Started = true;
-		
-		CountDownUI->RemoveFromParent();
-		GetWorldTimerManager().ClearTimer(Handle);
-
-
-		//GetWorldTimerManager().SetTimer(Handle, this, &AGameStateBase_Knight::StartTimer, 1, true);
-	}
-	else
-	{
-		if(CountDownLeft == 0)
-		{
-			CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
-		}
-		else
-		{
-			CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
-		}
-	}
-	
-
-}
-
-void APlayer_Knight::OnRep_CountDownLeft()
-{
-	if(CountDownLeft < 0)
-	{
-		CountDownUI->RemoveFromParent();
-	}
-	else
-	{
-		if(CountDownLeft == 0)
-		{
-			CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
-		}
-		else
-		{
-			CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
-		}
-	}
-}
-
-
 void APlayer_Knight::Move(const FInputActionValue& Value)
 {
 	AddControllerYawInput(Value.Get<float>());
@@ -197,32 +267,4 @@ void APlayer_Knight::Move(const FInputActionValue& Value)
 void APlayer_Knight::Jump()
 {
 	Super::Jump();
-}
-
-
-
-void APlayer_Knight::FindOtherPlayer()
-{
-	TArray<AActor*> actors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayer_Knight::StaticClass(), actors);
-	for (AActor* Actor : actors)
-	{
-		APlayer_Knight* tmpPlayer = Cast<APlayer_Knight>(Actor);
-		
-		if((IsLocallyControlled() && tmpPlayer->IsLocallyControlled() == false) ||
-			(!IsLocallyControlled() && tmpPlayer->IsLocallyControlled() == true))
-		{
-			OtherPlayer = tmpPlayer;
-			break;
-		}
-	}
-}
-
-void APlayer_Knight::MulticastRPC_UpdateDistanceUI_Implementation(float serverDistance, float clientDistance)
-{
-	if (IsLocallyControlled())
-	{
-		Main->UpdateMyDistance(serverDistance);
-		Main->UpdateEnemyDistance(clientDistance);
-	}
 }
