@@ -70,6 +70,5 @@ public:
 	void StartPost();
 
 	void DeleteCardFromMap(APawnCard* SelectedCard);
-
-	virtual void PostLogin(APlayerController* NewPlayer) override;
+	
 };

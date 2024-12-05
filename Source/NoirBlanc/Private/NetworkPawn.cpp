@@ -388,6 +388,17 @@ void ANetworkPawn::ChangePlayerTurn(ANetworkPawn* StartPlayer)
 	MulticastRPC_ChangePlayerTurn(StartPlayer);
 }
 
+void ANetworkPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if(GameMode)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GameMode에 플레이어 추가"));
+		GameMode->AddPlayer(this);
+	}
+}
+
 void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* StartPlayer)
 {
 	// 다음 턴 플레이어가 로컬의 첫 번째 플레이어와 같으면 자신 턴

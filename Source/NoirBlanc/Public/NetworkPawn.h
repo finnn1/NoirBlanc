@@ -135,6 +135,8 @@ protected:
 	UFUNCTION()
 	void ChangePlayerTurn(ANetworkPawn* StartPlayer);
 
+	virtual void PossessedBy(AController* NewController) override;
+
 private:
 	UPROPERTY(Replicated)
 	bool IsTurnPlayer = false;

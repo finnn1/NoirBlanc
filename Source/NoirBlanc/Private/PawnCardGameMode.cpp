@@ -77,6 +77,13 @@ void APawnCardGameMode::InitPawnCardGame()
 void APawnCardGameMode::AddPlayer(ANetworkPawn* Player)
 {
 	Players.Add(Player);
+	
+	if(PlayerNum <= Players.Num())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Start: Total Player num is %d"), Players.Num());
+		FTimerHandle StartHandle;
+		GetWorldTimerManager().SetTimer(StartHandle, this, &APawnCardGameMode::StartPost, 2.0f, false);
+	}
 }
 
 bool APawnCardGameMode::CheckRemainCards()
@@ -149,22 +156,4 @@ void APawnCardGameMode::DeleteCardFromMap(APawnCard* SelectedCard)
 		GetWorldTimerManager().ClearTimer(CardSpawner->MapUseStr[SelectedCard].TimerHandle);
 		CardSpawner->MapUseStr.Remove(SelectedCard);
 	}
-}
-
-void APawnCardGameMode::PostLogin(APlayerController* NewPlayer)
-{
-	Super::PostLogin(NewPlayer);
-	
-	APawnCardController* CardController = Cast<APawnCardController>(NewPlayer);
-	if(CardController)
-	{
-		CurrentPlayerNum++;
-
-		if(PlayerNum <= CurrentPlayerNum)
-		{
-			FTimerHandle StartHandle;
-			GetWorldTimerManager().SetTimer(StartHandle, this, &APawnCardGameMode::StartPost, 2.0f, false);
-		}
-	}
-	
 }
