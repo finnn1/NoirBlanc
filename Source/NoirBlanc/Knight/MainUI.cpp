@@ -17,10 +17,7 @@ void UMainUI::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 	Text_Timer = Cast<UTextBlock>(GetWidgetFromName(TEXT("Text_Timer")));
-	
-	//Text_ServerDistance = Cast<UTextBlock>(GetWidgetFromName(TEXT("Txt_ServerDistance")));
-	//Text_ClientDistance = Cast<UTextBlock>(GetWidgetFromName(TEXT("Txt_ClientDistance")));
-	
+	 
 	Image_Noir = Cast<UImage>(GetWidgetFromName(TEXT("Img_Noir")));
 	Image_Blanc = Cast<UImage>(GetWidgetFromName(TEXT("Img_Blanc")));
 }
@@ -38,23 +35,19 @@ void UMainUI::UpdateTimerText(int32 time)
 void UMainUI::UpdateServerDistance(float distance)
 {
 	UCanvasPanelSlot* noirSlot = Cast<UCanvasPanelSlot>(Image_Noir->Slot);
-	noirSlot->SetPosition(FVector2d(distance * 100, 12));
-	
-	//ext_ServerDistance->SetText(FText::FromString(FString::FromInt(floor(distance))));
+	UE_LOG(LogTemp, Warning, TEXT("%f"), distance);
+	noirSlot->SetPosition(FVector2d(distance / MaxDistance * 1600, 12));
 }
 
 void UMainUI::UpdateClientDistance(float distance)
 {
 	UCanvasPanelSlot* slot = Cast<UCanvasPanelSlot>(Image_Blanc->Slot);
-	slot->SetPosition(FVector2d(distance * 100, 68));
-	
-	//Text_ClientDistance->SetText(FText::FromString(FString::FromInt(floor(distance))));
+	slot->SetPosition(FVector2d(distance / MaxDistance * 1600, 68));
 }
 
 void UMainUI::PlayerDisappear()
 {
 	SetRenderOpacity(0);
-	//PlayAnimation(MainDisappearAnim);
 }
 
 
