@@ -95,3 +95,33 @@ void ABoardFloor::ToggleBlue()
 	bool bCurrentVisibility = CompBlue->IsVisible();
 	CompBlue->SetVisibility(!bCurrentVisibility);
 }
+
+void ABoardFloor::ActivateGreen()
+{
+	CompGreen->SetVisibility(true);
+}
+
+void ABoardFloor::DeactivateGreen()
+{
+	CompGreen->SetVisibility(false);
+}
+
+void ABoardFloor::ActivateRed()
+{
+	CompRed->SetVisibility(true);
+}
+
+void ABoardFloor::DeactivateRed()
+{
+	CompRed->SetVisibility(false);
+}
+
+void ABoardFloor::ActivateBlue()
+{
+	CompBlue->SetVisibility(true);
+}
+
+void ABoardFloor::DeactivateBlue()
+{
+	CompBlue->SetVisibility(false);
+}

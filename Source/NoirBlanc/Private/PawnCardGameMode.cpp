@@ -10,6 +10,11 @@
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
+
+APawnCardGameMode::APawnCardGameMode()
+{
+	bUseSeamlessTravel = true;
+}
 void APawnCardGameMode::BeginPlay()
 {
 	Super::BeginPlay();

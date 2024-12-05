@@ -16,6 +16,11 @@ void AChessPlayerController::BeginPlay()
 void AChessPlayerController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if(WasInputKeyJustPressed(EKeys::Zero))
+	{
+		GetWorld()->ServerTravel(TEXT("/Game/Level/Lv_PawnCard?listen"), true);
+	}
 }
 
 AActor* AChessPlayerController::TraceForActor()
@@ -60,4 +65,9 @@ AActor* AChessPlayerController::TraceForActor()
 		}
 	}
 	return nullptr;
+}
+
+void AChessPlayerController::ServerRPC_LevelTravel_Implementation(const FString& LevelName)
+{
+	GetWorld()->ServerTravel(LevelName, true);
 }

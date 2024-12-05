@@ -57,7 +57,7 @@ private:
 	UPROPERTY(Replicated,VisibleAnywhere,Category = "PieceInfo")
 	EPieceColor PieceColor;
 
-	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	UPROPERTY(Replicated, VisibleAnywhere,Category = "PieceInfo")
 	ABoardFloor* FloorBeneathPiece;
 
 	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")

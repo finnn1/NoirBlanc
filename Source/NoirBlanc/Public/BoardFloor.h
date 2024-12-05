@@ -34,6 +34,13 @@ public:
 	void ToggleGreen();
 	void ToggleRed();
 	void ToggleBlue();
+
+	void ActivateGreen();
+	void DeactivateGreen();
+	void ActivateRed();
+	void DeactivateRed();
+	void ActivateBlue();
+	void DeactivateBlue();
 //////////Variables
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompCollision")

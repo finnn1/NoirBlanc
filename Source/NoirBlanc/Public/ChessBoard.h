@@ -74,13 +74,15 @@ private:
 	UPROPERTY()
 	class UNoirBlancGameInstance* GameInstance;
 
-	bool bIsTargetPointEmpty = false; 
+	bool bIsTargetPointEmpty = false;
 //////////////////////////////////////////
 /////FUNCTION
 public:
 	UFUNCTION()
 	void ClickFloor();
-	
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SetPiece(ABoardFloor* _SelectedFloor, ABoardFloor* _TargetFloor, AChessPiece* _SelectedPiece, AChessPiece* _TargetPiece,  const TArray<ABoardFloor*>& _MovableFloors,  const TArray<ABoardFloor*>& _AttackableFloors);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_MovePiece();
 	UFUNCTION(NetMulticast, Reliable)
@@ -93,13 +95,13 @@ public:
 	void MulticastRPC_PieceEncounter();
 	UFUNCTION()
 	void PieceEncounter(AChessPiece* Selected, AChessPiece* Target);
-
+	
 	void MoveEnd();
 
+	void SamePieceClicked();
+	
 	UFUNCTION()
 	void InitBoard();
-
-	void ForDelay();
 	
 	UFUNCTION()
 	void InitFloor();

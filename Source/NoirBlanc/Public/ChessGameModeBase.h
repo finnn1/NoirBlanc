@@ -13,5 +13,8 @@ UCLASS()
 class NOIRBLANC_API AChessGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	AChessGameModeBase();
 	
 };

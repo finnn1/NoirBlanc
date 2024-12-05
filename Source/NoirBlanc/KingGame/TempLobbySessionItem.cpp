@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NoirBlanc/KingGame/TempLobbySessionItem.h"
+
+#include "NoirBlancGameInstance.h"
 #include "TempNoirBlancGameInstance.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -14,7 +16,7 @@ void UTempLobbySessionItem::NativeConstruct()
 
 void UTempLobbySessionItem::JoinSession()
 {
-	UTempNoirBlancGameInstance* GameInstance = Cast<UTempNoirBlancGameInstance>(GetGameInstance());
+	UNoirBlancGameInstance* GameInstance = Cast<UNoirBlancGameInstance>(GetGameInstance());
 	GameInstance->JoinOtherSession(SelectIndex);
 }
 
