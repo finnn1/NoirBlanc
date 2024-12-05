@@ -74,8 +74,8 @@ void APlayer_Knight::Tick(float DeltaTime)
 	{
 		if(Main != nullptr)
 		{
-			//Main->PlayerDisappear();
-			Main->RemoveFromParent();
+			Main->PlayerDisappear();
+			//Main->RemoveFromParent();
 		}
 		
 		if(IsLocallyControlled() && FinishUI == nullptr)

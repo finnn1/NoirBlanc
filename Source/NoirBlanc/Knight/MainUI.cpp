@@ -38,7 +38,7 @@ void UMainUI::UpdateTimerText(int32 time)
 void UMainUI::UpdateServerDistance(float distance)
 {
 	UCanvasPanelSlot* noirSlot = Cast<UCanvasPanelSlot>(Image_Noir->Slot);
-	noirSlot->SetPosition(FVector2d(distance * 10, 12));
+	noirSlot->SetPosition(FVector2d(distance * 100, 12));
 	
 	//ext_ServerDistance->SetText(FText::FromString(FString::FromInt(floor(distance))));
 }
@@ -46,14 +46,15 @@ void UMainUI::UpdateServerDistance(float distance)
 void UMainUI::UpdateClientDistance(float distance)
 {
 	UCanvasPanelSlot* slot = Cast<UCanvasPanelSlot>(Image_Blanc->Slot);
-	slot->SetPosition(FVector2d(distance * 10, 68));
+	slot->SetPosition(FVector2d(distance * 100, 68));
 	
 	//Text_ClientDistance->SetText(FText::FromString(FString::FromInt(floor(distance))));
 }
 
 void UMainUI::PlayerDisappear()
 {
-	PlayAnimation(MainDisappearAnim);
+	SetRenderOpacity(0);
+	//PlayAnimation(MainDisappearAnim);
 }
 
 
