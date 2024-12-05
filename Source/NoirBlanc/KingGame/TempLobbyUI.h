@@ -19,7 +19,7 @@ protected:
 	
 public:
 	UPROPERTY()
-	class UTempNoirBlancGameInstance* GameInstance;
+	class UNoirBlancGameInstance* GameInstance;
 	
 	// Page 0
 	UPROPERTY(meta = (BindWidget))

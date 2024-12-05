@@ -3,3 +3,7 @@
 
 #include "ChessGameModeBase.h"
 
+AChessGameModeBase::AChessGameModeBase()
+{
+	bUseSeamlessTravel = true;
+}

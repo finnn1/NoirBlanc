@@ -95,7 +95,7 @@ public:
 	void MulticastRPC_PieceEncounter();
 	UFUNCTION()
 	void PieceEncounter(AChessPiece* Selected, AChessPiece* Target);
-
+	
 	void MoveEnd();
 
 	void SamePieceClicked();
