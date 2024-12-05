@@ -31,11 +31,12 @@ void APlayer_Knight::PossessedBy(AController* NewController)
 		ClientRPC_CreateUI();
 		
 		/* Create Server UI */
-		Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
-		Main->AddToViewport();
+		//Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
+		//Main->AddToViewport();
 		CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
 		CountDownUI->AddToViewport();
-		CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+		CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
+		//CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 
 		/* Find Other Player */
 		Road = Cast<ARoad>(UGameplayStatics::GetActorOfClass(GetWorld(), ARoad::StaticClass()));
@@ -71,6 +72,12 @@ void APlayer_Knight::Tick(float DeltaTime)
 	/* Finished */
 	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Finished)
 	{
+		if(Main != nullptr)
+		{
+			//Main->PlayerDisappear();
+			Main->RemoveFromParent();
+		}
+		
 		if(IsLocallyControlled() && FinishUI == nullptr)
 		{
 			FinishUI = Cast<UFinishUI>(CreateWidget(GetWorld(), FinishUIFactory));
@@ -83,9 +90,9 @@ void APlayer_Knight::Tick(float DeltaTime)
 	
 	/* Movement */
 	{
-		if (GetActorLocation().Z < -500)
+		if (GetActorLocation().Z < -1000)
 		{
-			SetActorLocation(FVector(0, 0, 190));
+			SetActorLocation(FVector(0, 0, 0));
 			if (IsLocallyControlled())
 			{
 				Controller->SetControlRotation(FRotator::ZeroRotator);
@@ -127,12 +134,13 @@ void APlayer_Knight::ClientRPC_CreateUI_Implementation()
 {
 	if(IsLocallyControlled())
 	{
-		Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
-		Main->AddToViewport();
+		//Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
+		//Main->AddToViewport();
 
 		CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
 		CountDownUI->AddToViewport();
-		CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+		CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
+		//CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 	}
 }
 
@@ -144,6 +152,10 @@ void APlayer_Knight::CountDown()
 		Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Started = true;
 		
 		CountDownUI->RemoveFromParent();
+		
+		Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
+		Main->AddToViewport();
+		
 		GetWorldTimerManager().ClearTimer(Handle);
 		GetWorldTimerManager().SetTimer(Handle, this, &APlayer_Knight::StartTimer, 1, true);
 	}
@@ -151,11 +163,13 @@ void APlayer_Knight::CountDown()
 	{
 		if(CountDownLeft == 0)
 		{
-			CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
+			CountDownUI->UpdateCountDown(FText::FromString(TEXT("시작!")));
+			//CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
 		}
 		else
 		{
-			CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+			CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
+			//CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 		}
 	}
 }
@@ -167,16 +181,21 @@ void APlayer_Knight::OnRep_CountDownLeft()
 		if(CountDownLeft < 0)
 		{
 			CountDownUI->RemoveFromParent();
+
+			Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
+			Main->AddToViewport();
 		}
 		else
 		{
 			if(CountDownLeft == 0)
 			{
-				CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
+				CountDownUI->UpdateCountDown(FText::FromString(TEXT("시작!")));
+				//CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
 			}
 			else
 			{
-				CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
+				CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
+				//CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 			}
 		}
 	}
@@ -191,6 +210,7 @@ void APlayer_Knight::StartTimer()
 	TimeLeft -= 1;
 	if(TimeLeft == 0 || Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Finished)
 	{
+		Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Finished = true;
 		GetWorldTimerManager().ClearTimer(Handle);
 	}
 	
@@ -199,7 +219,10 @@ void APlayer_Knight::StartTimer()
 
 void APlayer_Knight::MulticastRPC_UpdateTimerUI_Implementation()
 {
-	Main->UpdateTimerText(TimeLeft);
+	if(Main != nullptr)
+	{
+		Main->UpdateTimerText(TimeLeft);
+	}
 }
 
 // -----------------------------------------
@@ -209,9 +232,11 @@ void APlayer_Knight::MulticastRPC_UpdateTimerUI_Implementation()
 
 void APlayer_Knight::MulticastRPC_UpdateDistanceUI_Implementation(float serverDistance, float clientDistance)
 {
-	Main->UpdateServerDistance(clientDistance);
-	Main->UpdateClientDistance(serverDistance);
-
+	if(Main != nullptr)
+	{
+		Main->UpdateServerDistance(clientDistance);
+		Main->UpdateClientDistance(serverDistance);
+	}
 }
 
 

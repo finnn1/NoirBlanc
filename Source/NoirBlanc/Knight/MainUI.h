@@ -21,10 +21,16 @@ class NOIRBLANC_API UMainUI : public UUserWidget
 public:
 	class UTextBlock* Text_Timer;
 	void UpdateTimerText(int32 time);
-	
+
+	class UImage* Image_Noir;
+	class UImage* Image_Blanc;
 	class UTextBlock* Text_ServerDistance;
 	void UpdateServerDistance(float distance);
 	
 	class UTextBlock* Text_ClientDistance;
 	void UpdateClientDistance(float distance);
+
+	UPROPERTY(BlueprintReadOnly, Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* MainDisappearAnim;
+	void PlayerDisappear();
 };

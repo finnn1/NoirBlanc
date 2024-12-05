@@ -21,5 +21,9 @@ class NOIRBLANC_API UCountDownUI : public UUserWidget
 public:
 	UPROPERTY()
 	UTextBlock* Txt_Count;
-	
+
+	UPROPERTY(BlueprintReadOnly, Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* CountDownAnim;
+
+	void UpdateCountDown(FText text);
 };
