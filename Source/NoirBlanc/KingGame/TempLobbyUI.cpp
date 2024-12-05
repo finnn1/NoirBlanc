@@ -3,6 +3,7 @@
 
 #include "NoirBlanc/KingGame/TempLobbyUI.h"
 
+#include "NoirBlancGameInstance.h"
 #include "TempLobbySessionItem.h"
 #include "TempNoirBlancGameInstance.h"
 #include "Components/Button.h"
@@ -16,7 +17,7 @@ void UTempLobbyUI::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	GameInstance = Cast<UTempNoirBlancGameInstance>(GetGameInstance());
+	GameInstance = Cast<UNoirBlancGameInstance>(GetGameInstance());
 
 	Btn_GoToCreateSession->OnClicked.AddDynamic(this, &UTempLobbyUI::UTempLobbyUI::GoToCreateSession);
 	Btn_FindSession->OnClicked.AddDynamic(this, &UTempLobbyUI::UTempLobbyUI::FindSession);
@@ -33,11 +34,14 @@ void UTempLobbyUI::NativeConstruct()
 	ComboBox_GameList->AddOption(FName(TEXT("Bishop")));
 	ComboBox_GameList->AddOption(FName(TEXT("Knight")));
 	ComboBox_GameList->AddOption(FName(TEXT("Pawn")));
+	ComboBox_GameList->AddOption(FName(TEXT("Chess")));
 
 	ComboBox_GameList->SetSelectedOption(FName(TEXT("King")));
-
-	GameInstance->OnAddSession.BindUObject(this, &UTempLobbyUI::OnAddSession);
-	GameInstance->OnFindComplete.BindUObject(this, &UTempLobbyUI::OnFindComplete);
+	if(GameInstance)
+	{
+		GameInstance->OnAddSession.BindUObject(this, &UTempLobbyUI::OnAddSession);
+		GameInstance->OnFindComplete.BindUObject(this, &UTempLobbyUI::OnFindComplete);
+	}
 }
 
 void UTempLobbyUI::GoToCreateSession()

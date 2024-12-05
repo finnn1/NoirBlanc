@@ -22,9 +22,9 @@ public:
 	class UTextBlock* Text_Timer;
 	void UpdateTimerText(int32 time);
 	
-	class UTextBlock* Text_MyDistance;
-	void UpdateMyDistance(float distance);
+	class UTextBlock* Text_ServerDistance;
+	void UpdateServerDistance(float distance);
 	
-	class UTextBlock* Text_EnemyDistance;
-	void UpdateEnemyDistance(float distance);
+	class UTextBlock* Text_ClientDistance;
+	void UpdateClientDistance(float distance);
 };

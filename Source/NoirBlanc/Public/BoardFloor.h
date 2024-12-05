@@ -21,6 +21,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	AChessPiece* GetPieceOnFloor();
@@ -33,6 +34,13 @@ public:
 	void ToggleGreen();
 	void ToggleRed();
 	void ToggleBlue();
+
+	void ActivateGreen();
+	void DeactivateGreen();
+	void ActivateRed();
+	void DeactivateRed();
+	void ActivateBlue();
+	void DeactivateBlue();
 //////////Variables
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompCollision")
@@ -46,12 +54,12 @@ protected:
 	UStaticMeshComponent* CompRed;
 	
 private:
-	UPROPERTY(VisibleAnywhere, Category = "FloorInfo")
+	UPROPERTY(Replicated,VisibleAnywhere, Category = "FloorInfo")
 	AChessPiece* PieceOnFloor = nullptr;
 
-	UPROPERTY(VisibleAnywhere, Category = "FloorInfo")
+	UPROPERTY(Replicated,VisibleAnywhere, Category = "FloorInfo")
 	int32 FloorRow;
 
-	UPROPERTY(VisibleAnywhere, Category = "FloorInfo")
+	UPROPERTY(Replicated,VisibleAnywhere, Category = "FloorInfo")
 	int32 FloorCol;
 };

@@ -21,4 +21,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 public:
 	AActor* TraceForActor();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_LevelTravel(const FString& LevelName);
 };

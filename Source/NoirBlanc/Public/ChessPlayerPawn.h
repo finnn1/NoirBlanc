@@ -20,18 +20,28 @@ public:
 	AChessPlayerPawn();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	class UInputAction* ClickAction;
+	class UInputAction* LeftClickAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	class UInputAction* RightClickAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* LookAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* InputMappingContext;
-	
-	void Click(const FInputActionValue& Value);
 
 	FClickActionDelegate ClickDelegate;
-	
+private:
+	UPROPERTY()
+	bool bIsRotMode = true;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	void LeftClick(const FInputActionValue& Value);
+	void RightClick(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
 
 public:	
 	// Called every frame

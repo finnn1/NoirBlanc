@@ -3,6 +3,7 @@
 #include "Components/BoxComponent.h"
 
 #include "HLSLTree/HLSLTreeTypes.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AChessPiece::AChessPiece()
@@ -25,6 +26,14 @@ void AChessPiece::BeginPlay()
 	
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle,this, &AChessPiece::SetPieceMesh, 0.2f, false);
+}
+
+void AChessPiece::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AChessPiece, PieceType);
+	DOREPLIFETIME(AChessPiece, PieceColor);
+	DOREPLIFETIME(AChessPiece, FloorBeneathPiece);
 }
 
 EPieceType AChessPiece::GetPieceType()

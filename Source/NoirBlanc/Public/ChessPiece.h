@@ -21,6 +21,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 public:	
 	EPieceType GetPieceType();
@@ -50,13 +51,13 @@ public:
 	TArray<UStaticMesh*> Meshes;
 
 private:
-	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	UPROPERTY(Replicated, VisibleAnywhere,Category = "PieceInfo")
 	EPieceType PieceType;
 
-	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	UPROPERTY(Replicated,VisibleAnywhere,Category = "PieceInfo")
 	EPieceColor PieceColor;
 
-	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	UPROPERTY(Replicated, VisibleAnywhere,Category = "PieceInfo")
 	ABoardFloor* FloorBeneathPiece;
 
 	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")

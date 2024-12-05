@@ -20,22 +20,6 @@ ARoad::ARoad()
 void ARoad::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if(HasAuthority())
-	{
-		FTimerHandle handle;
-		GetWorldTimerManager().SetTimer(handle, this, &ARoad::FindPlayers, 2, false);
-	}
-}
-
-void ARoad::FindPlayers()
-{
-	TArray<AActor*> actors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayer_Knight::StaticClass(), actors);
-	for (AActor* Actor : actors)
-	{
-		AllPlayers.Push(Cast<APlayer_Knight>(Actor));
-	}
 }
 
 // Called every frame
@@ -43,7 +27,7 @@ void ARoad::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if(HasAuthority())
+	if(HasAuthority() && AllPlayers.Num() == 2)
 	{
 		for(APlayer_Knight* player : AllPlayers)
 		{

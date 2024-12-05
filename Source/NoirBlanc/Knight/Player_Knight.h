@@ -4,8 +4,11 @@
 
 #include "InputMappingContext.h"
 #include "CoreMinimal.h"
+#include "Road.h"
 #include "GameFramework/Character.h"
 #include "Player_Knight.generated.h"
+
+class UCountDownUI;
 
 UCLASS()
 class NOIRBLANC_API APlayer_Knight : public ACharacter
@@ -16,13 +19,11 @@ public:
 	// Sets default values for this character's properties
 	APlayer_Knight();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+
 
 	// --------------------------------------------------------------------------------
 	//
@@ -45,12 +46,27 @@ public:
 	//
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	APlayer_Knight* OtherPlayer;
-	void FindOtherPlayer();
+	virtual void PossessedBy(AController* NewController) override;
 	
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_UpdateDistanceUI(float serverDistance, float clientDistance);
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_CreateUI();
+
+	// --------------------------------------------------------------------------------
+	//
+	// CountDown
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UCountDownUI> CountDownFactory;
+	UCountDownUI* CountDownUI;
+	
+	UFUNCTION()
+	void OnRep_CountDownLeft();
+	UPROPERTY(ReplicatedUsing=OnRep_CountDownLeft)
+	int32 CountDownLeft = 3;
+	void CountDown();
+
+	FTimerHandle Handle;
+	
 	// --------------------------------------------------------------------------------
 	//
 	// Movement
@@ -70,10 +86,6 @@ public:
 	//
 	// UI
 	//
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//TSubclassOf<class UFinishUI> FinishUI;
-	//class UFinishUI* Finish;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UFinishUI> FinishUIFactory;
 	UFinishUI* FinishUI;
@@ -85,6 +97,30 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UMainUI> MainUI;
 	class UMainUI* Main;
+
+	// --------------------------------------------------------------------------------
+	//
+	// Calculate Distance
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	APlayer_Knight* OtherPlayer;
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_UpdateDistanceUI(float serverDistance, float clientDistance);
+
+	ARoad* Road;
+
+
+
+	// --------------------------------------------------------------------------------
+	//
+	// Timer
+	//
+	UPROPERTY(Replicated, EditAnywhere)
+	int32 TimeLeft = 30;
+	void StartTimer();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_UpdateTimerUI();
+	
 	
 	// --------------------------------------------------------------------------------
 	//

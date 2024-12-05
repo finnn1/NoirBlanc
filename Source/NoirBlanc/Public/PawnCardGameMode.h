@@ -23,6 +23,8 @@ class NOIRBLANC_API APawnCardGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+	APawnCardGameMode();
+
 	virtual void BeginPlay() override;
 	FTimerHandle TimerHandle;
 	UPROPERTY(EditDefaultsOnly)

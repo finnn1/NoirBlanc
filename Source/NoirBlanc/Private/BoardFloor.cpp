@@ -5,6 +5,7 @@
 
 #include "DiffUtils.h"
 #include "Components/BoxComponent.h"
+#include "Net/UnrealNetwork.h"
 // Sets default values
 ABoardFloor::ABoardFloor()
 {
@@ -30,6 +31,15 @@ void ABoardFloor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void ABoardFloor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABoardFloor, PieceOnFloor);
+	DOREPLIFETIME(ABoardFloor, FloorRow);
+	DOREPLIFETIME(ABoardFloor, FloorCol);
 }
 
 // Called every frame
@@ -84,4 +94,34 @@ void ABoardFloor::ToggleBlue()
 {
 	bool bCurrentVisibility = CompBlue->IsVisible();
 	CompBlue->SetVisibility(!bCurrentVisibility);
+}
+
+void ABoardFloor::ActivateGreen()
+{
+	CompGreen->SetVisibility(true);
+}
+
+void ABoardFloor::DeactivateGreen()
+{
+	CompGreen->SetVisibility(false);
+}
+
+void ABoardFloor::ActivateRed()
+{
+	CompRed->SetVisibility(true);
+}
+
+void ABoardFloor::DeactivateRed()
+{
+	CompRed->SetVisibility(false);
+}
+
+void ABoardFloor::ActivateBlue()
+{
+	CompBlue->SetVisibility(true);
+}
+
+void ABoardFloor::DeactivateBlue()
+{
+	CompBlue->SetVisibility(false);
 }

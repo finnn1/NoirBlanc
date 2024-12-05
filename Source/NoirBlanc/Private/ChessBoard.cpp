@@ -5,6 +5,8 @@
 #include "ChessPlayerController.h"
 #include "NoirBlancGameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -25,25 +27,28 @@ AChessBoard::AChessBoard()
 void AChessBoard::BeginPlay()
 {
 	Super::BeginPlay();
-	for(int i = 0; i < Chess_Num; i++)
-	{
-		for(int j = 0; j < Chess_Num; j++)
-		{
-			ABoardFloor* TempFloor = SpawnFloor(i, j);
-			TempFloor->SetRow(i);
-			TempFloor->SetCol(j);
-			BoardFloors[i*Chess_Num + j] = TempFloor;
-		}
-	}
+	
 	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());
-	InitBoard();
 }
 
 // Called every frame
 void AChessBoard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AChessBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AChessBoard, BoardFloors);
+	DOREPLIFETIME(AChessBoard, MovableFloors);
+	DOREPLIFETIME(AChessBoard, AttackableFloors);
+	DOREPLIFETIME(AChessBoard, SelectedPiece);
+	DOREPLIFETIME(AChessBoard, SelectedFloor);
+	DOREPLIFETIME(AChessBoard, TargetPiece);
+	DOREPLIFETIME(AChessBoard, TargetFloor);
 }
 
 void AChessBoard::ClickFloor()
@@ -58,6 +63,7 @@ void AChessBoard::ClickFloor()
 			{
 				bIsClickedOnce = true;
 				SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
+				ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
 				SelectedFloor->ToggleGreen();
 				ShowMovableFloors(SelectedFloor);
 			}
@@ -73,16 +79,47 @@ void AChessBoard::ClickFloor()
 		if(TargetPiece)
 		{
 			bIsClickedTwice = true;
+			bIsTargetPointEmpty = false;
 			TargetFloor = TargetPiece->GetFloorBeneathPiece();
-			MovePiece();
+			//Event when Selected and Target are Equal
+			if(SelectedPiece == TargetPiece)
+			{
+				SamePieceClicked();
+				return;
+			}
+			ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
+			ServerRPC_MovePiece();
 		}
 		//If Target is Floor
 		else if(TargetFloor)
 		{
 			bIsClickedTwice = true;
-			MovePiece();
+			ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
+			ServerRPC_MovePiece();
 		}
 	}
+}
+
+void AChessBoard::ServerRPC_SetPiece_Implementation(ABoardFloor* _SelectedFloor, ABoardFloor* _TargetFloor, AChessPiece* _SelectedPiece, AChessPiece* _TargetPiece,  const TArray<ABoardFloor*>& _MovableFloors,  const TArray<ABoardFloor*>& _AttackableFloors)
+{
+	SelectedFloor = _SelectedFloor;
+	TargetFloor = _TargetFloor;
+	SelectedPiece = _SelectedPiece;
+	TargetPiece = _TargetPiece;
+	MovableFloors = _MovableFloors;
+	AttackableFloors = _AttackableFloors;
+}
+
+void AChessBoard::ServerRPC_MovePiece_Implementation()
+{
+	MulticastRPC_MovePiece();
+}
+
+void AChessBoard::MulticastRPC_MovePiece_Implementation()
+{
+	// FTimerHandle TimerHandle;
+	// GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AChessBoard::MovePiece, 0.2f, false);
+	MovePiece();
 }
 
 void AChessBoard::MovePiece()
@@ -90,7 +127,7 @@ void AChessBoard::MovePiece()
 	//if piece is present at target floor
 	if(TargetPiece)
 	{
-		PieceEncounter(SelectedPiece, TargetPiece);
+		ServerRPC_PieceEncounter();
 	}
 	//if target floor is empty
 	else
@@ -103,7 +140,7 @@ void AChessBoard::MovePiece()
 				SelectedFloor->SetPieceOnFloor(nullptr);
 				SelectedPiece->SetFloorBeneathPiece(TargetFloor);
 				TargetFloor->SetPieceOnFloor(SelectedPiece);
-				SelectedPiece->SetActorLocation(TargetFloor->GetActorLocation() + FVector(0.f, 0.f, 200.f));
+				SelectedPiece->SetActorLocation(TargetFloor->GetActorLocation() + FVector(0.f, 0.f, 250.f));
 				SelectedPiece->IncreaseMoveCount();
 				MoveEnd();
 			}
@@ -111,21 +148,26 @@ void AChessBoard::MovePiece()
 	}
 }
 
+void AChessBoard::ServerRPC_PieceEncounter_Implementation()
+{
+	PieceEncounter(SelectedPiece, TargetPiece);
+	//MulticastRPC_PieceEncounter();
+}
+
+void AChessBoard::MulticastRPC_PieceEncounter_Implementation()
+{
+	//PieceEncounter(SelectedPiece, TargetPiece);
+}
+
 void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 {
-	//Event when Selected and Target are Equal
-	if(Selected == Target)
-	{
-		MoveEnd();
-		ChangeTurn();
-		return;
-	}
 	//Event when two pieces meet
+
 	for(auto Floor : AttackableFloors)
 	{
 		if(Floor->GetPieceOnFloor() == Target)
 		{
-			FName LevelName;
+			FString LevelName;
 			EPieceType Game = Selected->GetPieceType();
 			GameInstance->DeffenderColor = Target->GetPieceColor();
 			GameInstance->DeffenderType = Target->GetPieceType();
@@ -150,26 +192,30 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 			switch(Game)
 			{
 			case EPieceType::Pawn:
-				LevelName = "Lv_PawnCard";
+				LevelName = "/Game/Level/Lv_PawnCard?listen";
 				break;
 			case EPieceType::Knight:
-				LevelName = "Lv_Knight";
+				LevelName = "/Game/Level/Lv_Knight";
 				break;
 			case EPieceType::Bishop:
-				LevelName = "Lv_Bishop";
+				LevelName = "/Game/Level/Lv_Bishop";
 				break;
 			case EPieceType::Rook:
-				LevelName = "Lv_Fortress";
+				LevelName = "/Game/Level/Lv_Fortress";
 				break;
 			case EPieceType::Queen:
 				break;
 			case EPieceType::King:
+				LevelName = "/Game/Level/Lv_King";
 				break;
 			}
-			Selected->IncreaseEncounterCount();
-			Target->IncreaseEncounterCount();
+			//set after returning from game
+			// Selected->IncreaseEncounterCount();
+			// Target->IncreaseEncounterCount();
 			MoveEnd();
-			UGameplayStatics::OpenLevel(this, LevelName);
+			UE_LOG(LogTemp, Warning, TEXT("Check"));
+			
+			Controller->ServerRPC_LevelTravel(LevelName);
 		}
 	}
 }
@@ -177,17 +223,17 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 void AChessBoard::MoveEnd()
 {
 	ChangeTurn();
-	SelectedFloor->ToggleGreen();
+	SelectedFloor->DeactivateGreen();
 	for(auto Floor : MovableFloors)
 	{
 		if(Floor->GetPieceOnFloor() == nullptr || Floor->GetPieceOnFloor() == SelectedPiece)
 		{
-			Floor->ToggleBlue();
+			Floor->DeactivateBlue();
 		}
 	}
 	for(auto Floor : AttackableFloors)
 	{
-		Floor->ToggleRed();
+		Floor->DeactivateRed();
 	}
 	MovableFloors.Empty();
 	AttackableFloors.Empty();
@@ -199,15 +245,25 @@ void AChessBoard::MoveEnd()
 	bIsClickedTwice = false;
 }
 
+void AChessBoard::SamePieceClicked()
+{
+	bIsClickedOnce = false;
+	ChangeTurn();
+	MoveEnd();
+}
+
 void AChessBoard::ChangeTurn()
 {
-	if(GameInstance->Turn == EPieceColor::Black)
+	if(HasAuthority())
 	{
-		GameInstance->Turn = EPieceColor::White;
-	}
-	else
-	{
-		GameInstance->Turn = EPieceColor::Black;
+		if(GameInstance->Turn == EPieceColor::Black)
+		{
+			GameInstance->Turn = EPieceColor::White;
+		}
+		else
+		{
+			GameInstance->Turn = EPieceColor::Black;
+		}
 	}
 }
 
@@ -215,7 +271,7 @@ ABoardFloor* AChessBoard::SpawnFloor(int32 row, int32 col)
 {
 	if (UWorld* World = GetWorld()) 
 	{
-		FVector SpawnLocation = GetActorLocation() + FVector(col * 475.0f, row * 475.0f,  0.f) - FVector(1675.f, 1370.f ,0);
+		FVector SpawnLocation = GetActorLocation() + FVector(col * 475.0f, row * 475.0f,  0.f) - FVector(1675.f, 1370.f ,0.f);
 		FRotator SpawnRotation = FRotator(0.0f, 0.0f, 0.0f);
 		
 		FActorSpawnParameters SpawnParams;
@@ -233,6 +289,70 @@ ABoardFloor* AChessBoard::SpawnFloor(int32 row, int32 col)
 		}
 	}
 	return nullptr;
+}
+
+// void AChessBoard::ForDelay()
+// {
+// }
+//
+// void AChessBoard::ServerRPC_SetPieceData_Implementation(int32 num,EPieceType type, EPieceColor color)
+// {
+// 	_num = num;
+// 	_type = type;
+// 	_color = color;
+// 	MulticastRPC_SetPieceData(num,type,color);
+// }
+//
+// void AChessBoard::MulticastRPC_SetPieceData_Implementation(int32 num,EPieceType type, EPieceColor color)
+// {
+// 	if(HasAuthority())
+// 	{
+// 		SetPieceData();
+// 	}
+// 	else
+// 	{
+// 		if(!HasAuthority())
+// 		{
+// 			// FTimerDelegate TimerDelegate;
+// 			// TimerDelegate.BindUFunction(this, FName("SetPieceData"), num, type, color);
+// 			FTimerHandle TimerHandle;
+// 			GetWorld()->GetTimerManager().SetTimer(TimerHandle,this, &AChessBoard::SetPieceData, 5.f, false);
+// 		}
+// 		// FTimerHandle TimerHandle;
+// 		// GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, Piece, type, color, num]()
+// 		// {
+// 		// 	SetPieceData(type,color,num);
+// 		// }, 5, false);				
+// 	}
+// }
+
+void AChessBoard::SetPieceData(int32 num, EPieceType type, EPieceColor color)
+{
+	AChessPiece* Piece = BoardFloors[num]->GetPieceOnFloor();
+	Piece->SetPieceColor(color);
+	Piece->SetPieceType(type);
+	Piece->SetFloorBeneathPiece(BoardFloors[num]);
+	Piece->SetMoveCount(GameInstance->MoveCountData[num]);
+	Piece->SetEncounterCount(GameInstance->EncounterCountData[num]);
+	
+	if (USceneComponent* RootComp = Piece->GetRootComponent())
+	{
+		RootComp->SetWorldScale3D(FVector(100.f, 100.f, 100.f));
+	}
+}
+
+void AChessBoard::InitFloor()
+{
+	for(int i = 0; i < Chess_Num; i++)
+	{
+		for(int j = 0; j < Chess_Num; j++)
+		{
+			ABoardFloor* TempFloor = SpawnFloor(i, j);
+			TempFloor->SetRow(i);
+			TempFloor->SetCol(j);
+			BoardFloors[i*Chess_Num + j] = TempFloor;
+		}
+	}
 }
 
 void AChessBoard::InitBoard()
@@ -259,7 +379,7 @@ void AChessBoard::InitPiece(int32 num, EPieceType type, EPieceColor color)
 	FVector SpawnLocation = BoardFloors[num]->GetActorLocation() + FVector(0.f, 0.f, 250.f);
 	FRotator SpawnRotation;
 	if(color == EPieceColor::Black)
-	{
+	{	
 		SpawnRotation = FRotator(0.0f, 0.f, 0.0f);
 	}
 	else
@@ -275,17 +395,11 @@ void AChessBoard::InitPiece(int32 num, EPieceType type, EPieceColor color)
 	SpawnParams.Instigator = GetInstigator();
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	AChessPiece* SpawnedPiece = GetWorld()->SpawnActor<AChessPiece>(PieceClass, SpawnLocation, SpawnRotation, SpawnParams);
-	SpawnedPiece->SetPieceColor(color);
-	SpawnedPiece->SetPieceType(type);
-	SpawnedPiece->SetFloorBeneathPiece(BoardFloors[num]);
-	SpawnedPiece->SetMoveCount(GameInstance->MoveCountData[num]);
-	SpawnedPiece->SetEncounterCount(GameInstance->EncounterCountData[num]);
-	if (USceneComponent* RootComp = SpawnedPiece->GetRootComponent())
-	{
-		RootComp->SetWorldScale3D(FVector(100.f, 100.f, 100.f));
-	}
+	
 	BoardFloors[num]->SetPieceOnFloor(SpawnedPiece);
+	SetPieceData(num, type, color);
 }
+
 
 void AChessBoard::ShowMovableFloors(ABoardFloor* Point)
 {
