@@ -185,8 +185,8 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 			GameInstance->AttackerType = Target->GetPieceType();
 			GameInstance->AttackerRow = SelectedFloor->GetRow();
 			GameInstance->AttackerCol = SelectedFloor->GetCol();
-			
-			
+			GameInstance->DeffenderRow = TargetFloor->GetRow();
+			GameInstance->DeffenderCol = TargetFloor->GetCol();
 			GameInstance->Saved_Turn = Turn;
 			MoveEnd();
 			if(HasAuthority())
@@ -340,18 +340,41 @@ void AChessBoard::InitBoard()
 	EPieceType Type;
 	EPieceColor Color;
 	Turn = GameInstance->Saved_Turn;
+	EPieceColor Winner = GameInstance->WinnerColor;
+	int32 Delete_Row;
+	int32 Delete_Col;
+	
 	for(int i = 0 ; i < Chess_Num; i++)
 	{
 		for(int j = 0 ; j < Chess_Num; j++)
 		{
 			Type = GameInstance->BoardTypeData[i*Chess_Num+j];
 			Color = GameInstance->BoardColorData[i*Chess_Num+j];
-
+			
 			if(Type!= EPieceType::Blank)
 			{
+			
 				InitPiece(i*Chess_Num + j, Type, Color);
 			}
 		}
+	}
+	if(GameInstance->DeffenderColor == Winner)
+	{
+		Delete_Row = GameInstance->AttackerRow;
+		Delete_Col = GameInstance->AttackerCol;
+		BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor()->Destroy();
+	}
+	else if(GameInstance->AttackerColor == Winner)
+	{
+		Delete_Col = GameInstance->DeffenderCol;
+		Delete_Row = GameInstance->DeffenderRow;
+		BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor()->Destroy();
+
+		AChessPiece* Attacker = BoardFloors[GameInstance->AttackerRow*Chess_Num + GameInstance->AttackerCol]->GetPieceOnFloor();
+		ABoardFloor* Destination = BoardFloors[Delete_Row*Chess_Num + Delete_Col];
+		Attacker->SetFloorBeneathPiece(Destination);
+		Destination->SetPieceOnFloor(Attacker);
+		Attacker->SetActorLocation(Destination->GetActorLocation() + FVector(0.f, 0.f, 250.f));
 	}
 }
 
