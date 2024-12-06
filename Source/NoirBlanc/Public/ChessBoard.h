@@ -60,6 +60,9 @@ protected:
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	TArray<ABoardFloor*> AttackableFloors;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	EPieceColor Turn;
 private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickedOnce = false;

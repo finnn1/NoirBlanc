@@ -72,6 +72,16 @@ inline TArray<EPieceColor> InitColorValue = {
 
  };
 
+static const TMap<FName, FString> GameLevelMap = {
+ {TEXT("King"), TEXT("/Game/Level/Lv_King")},
+ {TEXT("Queen"), TEXT("/Game/Level/Lv_King")},
+ {TEXT("Rook"), TEXT("/Game/Level/Lv_Fortress")},
+ {TEXT("Bishop"), TEXT("/Game/Level/Lv_Bishop")},
+ {TEXT("Knight"), TEXT("/Game/Level/Lv_Knight")},
+ {TEXT("Pawn"), TEXT("/Game/Level/Lv_PawnCard")},
+ {TEXT("Chess"), TEXT("/Game/Level/Lv_ChessBoard")}
+};
+
 class NOIRBLANC_API PieceTypes
 {
 
