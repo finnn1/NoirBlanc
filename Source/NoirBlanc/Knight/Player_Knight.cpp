@@ -10,6 +10,7 @@
 #include "Blueprint/UserWidget.h"
 #include "NoirBlanc/Knight/GameStateBase_Knight.h"
 #include "FinishUI.h"
+#include "NoirBlancGameInstance.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -31,12 +32,9 @@ void APlayer_Knight::PossessedBy(AController* NewController)
 		ClientRPC_CreateUI();
 		
 		/* Create Server UI */
-		//Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
-		//Main->AddToViewport();
 		CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
 		CountDownUI->AddToViewport();
 		CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
-		//CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 
 		/* Find Other Player */
 		Road = Cast<ARoad>(UGameplayStatics::GetActorOfClass(GetWorld(), ARoad::StaticClass()));
@@ -75,7 +73,6 @@ void APlayer_Knight::Tick(float DeltaTime)
 		if(Main != nullptr)
 		{
 			Main->PlayerDisappear();
-			//Main->RemoveFromParent();
 		}
 		
 		if(IsLocallyControlled() && FinishUI == nullptr)
@@ -83,6 +80,8 @@ void APlayer_Knight::Tick(float DeltaTime)
 			FinishUI = Cast<UFinishUI>(CreateWidget(GetWorld(), FinishUIFactory));
 			FinishUI->AddToViewport();
 			FinishUI->UpdateWinnerText(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner);
+
+			// 타이머로 5초 뒤에 다시 체스로 돌아가면 될듯
 		}
 		
 		return;
@@ -118,6 +117,17 @@ void APlayer_Knight::Tick(float DeltaTime)
 		
 		MulticastRPC_UpdateDistanceUI(TotalDistance, OtherPlayer->TotalDistance);
 	}
+
+	
+	/* Save Result to GameInstance */
+	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner.EqualTo(FText::FromString(TEXT("블랑"))))
+	{
+		Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor = EPieceColor::White;
+	}
+	else
+	{
+		Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor = EPieceColor::Black;
+	}
 }
 
 
@@ -134,13 +144,9 @@ void APlayer_Knight::ClientRPC_CreateUI_Implementation()
 {
 	if(IsLocallyControlled())
 	{
-		//Main = Cast<UMainUI>(CreateWidget(GetWorld(), MainUI));
-		//Main->AddToViewport();
-
 		CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
 		CountDownUI->AddToViewport();
 		CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
-		//CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 	}
 }
 
@@ -164,12 +170,10 @@ void APlayer_Knight::CountDown()
 		if(CountDownLeft == 0)
 		{
 			CountDownUI->UpdateCountDown(FText::FromString(TEXT("시작!")));
-			//CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
 		}
 		else
 		{
 			CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
-			//CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 		}
 	}
 }
@@ -190,12 +194,10 @@ void APlayer_Knight::OnRep_CountDownLeft()
 			if(CountDownLeft == 0)
 			{
 				CountDownUI->UpdateCountDown(FText::FromString(TEXT("시작!")));
-				//CountDownUI->Txt_Count->SetText(FText::FromString(TEXT("시작!")));
 			}
 			else
 			{
 				CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
-				//CountDownUI->Txt_Count->SetText(FText::AsNumber(CountDownLeft));
 			}
 		}
 	}
@@ -238,24 +240,6 @@ void APlayer_Knight::MulticastRPC_UpdateDistanceUI_Implementation(float serverDi
 		Main->UpdateClientDistance(serverDistance);
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void APlayer_Knight::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
