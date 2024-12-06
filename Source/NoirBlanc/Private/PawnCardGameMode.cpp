@@ -6,6 +6,7 @@
 #include "PawnCardSpawner.h"
 #include "PawnCard.h"
 #include "PawnCardController.h"
+#include "NoirBlancGameInstance.h"
 #include "PawnCardDataAsset.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +19,8 @@ APawnCardGameMode::APawnCardGameMode()
 void APawnCardGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	NoirBlancGI = Cast<UNoirBlancGameInstance>(GetGameInstance());
 
 	if(TSubCardSpawner)
 	{
@@ -75,8 +78,20 @@ void APawnCardGameMode::InitPawnCardGame()
 	
 	GetWorldTimerManager().ClearTimer(TimerHandle);
 	
-	Players[0]->SetIsTurnPlayer(true);
-	OnChangePlayerTurn.Execute(Players[0]);
+	// 열거형 값의 이름 가져오기
+	const UEnum* EnumPtr = StaticEnum<EPieceColor>();
+	FString atkCol = EnumPtr->GetNameByValue(static_cast<int64>(NoirBlancGI->AttackerColor)).ToString();
+
+	// Server는 White, Client는 Black
+	ANetworkPawn* StartTurnPlayer = Players[0];
+	if(NoirBlancGI->AttackerColor == EPieceColor::Black)
+	{
+		StartTurnPlayer = Players[1];
+		TurnPlayerIdx = 1;
+	}
+	
+	StartTurnPlayer->SetIsTurnPlayer(true);
+	OnChangePlayerTurn.Execute(StartTurnPlayer);
 }
 
 void APawnCardGameMode::AddPlayer(ANetworkPawn* Player)
@@ -85,7 +100,6 @@ void APawnCardGameMode::AddPlayer(ANetworkPawn* Player)
 	
 	if(PlayerNum <= Players.Num())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Start: Total Player num is %d"), Players.Num());
 		FTimerHandle StartHandle;
 		GetWorldTimerManager().SetTimer(StartHandle, this, &APawnCardGameMode::StartPost, 2.0f, false);
 	}
@@ -109,7 +123,7 @@ bool APawnCardGameMode::CheckRemainCards()
 	{
 		GameSet();
 	}
-	else if(RemainCardNum <= 4 && NoLuckCardNum >= 2)
+	else if(RemainCardNum <= 3 && NoLuckCardNum >= 2)
 	{
 		GameSet();
 	}
@@ -131,6 +145,7 @@ void APawnCardGameMode::GameSet()
 		}
 	}
 	OnGameSet.ExecuteIfBound(WinnerPlayer);
+	WinnerPlayer->SetWinnerInstance(WinnerPlayer);
 }
 
 void APawnCardGameMode::ChangeTurn(ANetworkPawn* EndPlayer)

@@ -147,8 +147,8 @@ void APawnCardSpawner::SetMoveTimer(APawnCard* Card)
 
 void APawnCardSpawner::UpdateLocationLerp(APawnCard* Card)
 {
-	if (!Card) return;
-
+	if (!Card || !MapUseStr.Contains(Card)) return;
+	
 	MapUseStr[Card].ElapsedTime += InRate;
 	float Alpha = FMath::Clamp(MapUseStr[Card].ElapsedTime / MapUseStr[Card].Duration, 0.0f, 1.0f);
 

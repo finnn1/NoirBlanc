@@ -53,18 +53,9 @@ public:
 	//초기 상태로
 	void InitCard();
 
-	//선택 됐을 때
-	void Selected();
-
-	//선택 가능한지 체크
-	bool IsCardSelectable();
-
-	//매칭에 성공했을 때 Owner 등록
-	void SuccessMatching(APlayerController* OwnerPlayer);
-
-	//매칭에 성공했는지
-	bool GetOwnerPlayer();
-
+	//매칭에 성공
+	int32 MatchingSuccess();
+	
 	//매칭 취소 함수
 	void CancelMatching();
 };

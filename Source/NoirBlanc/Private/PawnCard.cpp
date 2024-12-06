@@ -26,16 +26,10 @@ void APawnCard::BeginPlay()
 	Super::BeginPlay();
 
 	bIsSelectable = true;
-
-	if(PawnCardData && PawnCardData->CardMaterialIns)
+	
+	if(PawnCardData)
 	{
-		if(StaticMeshComp)
-		{
-			UMaterialInstanceDynamic* MatDynamic = UMaterialInstanceDynamic::Create(PawnCardData->CardMaterialIns, this);
-			StaticMeshComp->SetMaterial(4, MatDynamic);
-			FLinearColor NewUVOffsets(1.f,1.f, PawnCardData->U_Offset,PawnCardData->V_Offset);
-			MatDynamic->SetVectorParameterValue(TEXT("UV"), NewUVOffsets);
-		}
+		PawnCardData->InitMeshMaterial(StaticMeshComp);
 	}
 }
 
@@ -57,27 +51,14 @@ void APawnCard::InitCard()
 	FrontBackState = CardState::Back;
 }
 
-void APawnCard::Selected()
+int32 APawnCard::MatchingSuccess()
 {
-	bIsSelectable = false;
-}
-
-bool APawnCard::IsCardSelectable()
-{
-	return bIsSelectable;
-}
-
-void APawnCard::SuccessMatching(APlayerController* OwnerPlayer)
-{
-	if(OwnerPlayer)
+	if(PawnCardData)
 	{
-		OwnerPlayerState = OwnerPlayer->PlayerState;
+		PawnCardData->SetMatchingMaterial(StaticMeshComp);
+		return PawnCardData->Score;
 	}
-}
-
-bool APawnCard::GetOwnerPlayer()
-{
-	return (OwnerPlayerState != nullptr ? true : false);
+	return 1;
 }
 
 void APawnCard::CancelMatching()

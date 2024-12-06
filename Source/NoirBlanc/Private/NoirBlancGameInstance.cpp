@@ -7,15 +7,15 @@
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
 
-static const TMap<FName, FString> GameLevelMap = {
-	{TEXT("King"), TEXT("/Game/Level/Lv_King")},
-	{TEXT("Queen"), TEXT("/Game/Level/Lv_King")},
-	{TEXT("Rook"), TEXT("/Game/Level/Lv_Fortress")},
-	{TEXT("Bishop"), TEXT("/Game/Level/Lv_Bishop")},
-	{TEXT("Knight"), TEXT("/Game/Level/Lv_Knight")},
-	{TEXT("Pawn"), TEXT("/Game/Level/Lv_PawnCard")},
-	{TEXT("Chess"), TEXT("/Game/Level/Lv_ChessBoard")}
-};
+ static const TMap<FName, FString> GameLevelMap = {
+ 	{TEXT("King"), TEXT("/Game/Level/Lv_King")},
+ 	{TEXT("Queen"), TEXT("/Game/Level/Lv_King")},
+ 	{TEXT("Rook"), TEXT("/Game/Level/Lv_Fortress")},
+ 	{TEXT("Bishop"), TEXT("/Game/Level/Lv_Bishop")},
+ 	{TEXT("Knight"), TEXT("/Game/Level/Lv_Knight")},
+ 	{TEXT("Pawn"), TEXT("/Game/Level/Lv_PawnCard")},
+ 	{TEXT("Chess"), TEXT("/Game/Level/Lv_ChessBoard")}
+ };
 
 void UNoirBlancGameInstance::Init()
 {
@@ -132,6 +132,7 @@ void UNoirBlancGameInstance::OnDestroySessionComplete(FName SessionName, bool bW
 		UE_LOG(LogTemp, Warning, TEXT("[%s] 세션 파괴 실패"), *SessionName.ToString());
 	}
 }
+
 
 void UNoirBlancGameInstance::FindOtherSession()
 {

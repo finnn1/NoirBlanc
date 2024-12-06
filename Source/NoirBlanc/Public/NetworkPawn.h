@@ -80,6 +80,11 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_SelectCard(APawnCard* SelectedCard);
+
+	UFUNCTION()
+	void SetWinnerInstance(ANetworkPawn* Winner);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SetWinnerInstance(ANetworkPawn* Winner);
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;

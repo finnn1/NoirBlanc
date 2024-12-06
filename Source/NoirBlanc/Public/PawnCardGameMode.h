@@ -5,6 +5,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "PawnCardGameMode.generated.h"
 
+class UNoirBlancGameInstance;
 class APawnCard;
 class ANetworkPawn;
 class APawnCardSpawner;
@@ -50,6 +51,9 @@ public:
 
 	UPROPERTY()
 	int32 CurrentPlayerNum = 0;
+
+	UPROPERTY()
+	UNoirBlancGameInstance* NoirBlancGI;
 
 	FOnGameStart OnGameStart;
 	FOnShuffleStart OnShuffleStart;

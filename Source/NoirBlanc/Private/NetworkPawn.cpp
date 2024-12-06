@@ -13,6 +13,7 @@
 #include "PlayerUI.h"
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "NoirBlancGameInstance.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 // Sets default values
@@ -42,7 +43,7 @@ void ANetworkPawn::BeginPlay()
 		GameMode->OnShuffleEnd.AddUObject(this, &ANetworkPawn::MulticastRPC_ShuffleEnd);
 		GameMode->OnGameSet.BindUObject(this, &ANetworkPawn::MulticastRPC_GameEnd);
 		GameMode->OnChangePlayerTurn.BindUObject(this, &ANetworkPawn::ChangePlayerTurn);
-		GameMode->AddPlayer(this);
+		//GameMode->AddPlayer(this);
 	}
 
 	//TimelineComponent로 카드 확인
@@ -124,7 +125,29 @@ void ANetworkPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	if(UEnhancedInputComponent* EnhancedInputCompo = Cast<UEnhancedInputComponent>(InputComponent))
 	{
-		EnhancedInputCompo->BindAction(CardClickAction, ETriggerEvent::Started, this, &ANetworkPawn::SelectCard);
+		if(CardClickAction)
+		{
+			EnhancedInputCompo->BindAction(CardClickAction, ETriggerEvent::Started, this, &ANetworkPawn::SelectCard);	
+		}
+	}
+}
+
+void ANetworkPawn::SetWinnerInstance(ANetworkPawn* Winner)
+{
+	MulticastRPC_SetWinnerInstance(Winner);
+}
+
+void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(ANetworkPawn* Winner)
+{
+	UNoirBlancGameInstance* NB_GM = Cast<UNoirBlancGameInstance>(GetGameInstance());
+	if(!NB_GM) return;
+	if(Winner->HasAuthority() && Winner->IsLocallyControlled())
+	{
+		NB_GM->WinnerColor = EPieceColor::White;
+	}
+	else
+	{
+		NB_GM->WinnerColor = EPieceColor::Black;
 	}
 }
 
@@ -178,7 +201,14 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 	if(!GetIsTurnPlayer()) return;
 
 	FHitResult Hit;
-	PawnCardContr->GetHitResultUnderCursor(ECC_Visibility, false, Hit);
+	if(PawnCardContr)
+	{
+		PawnCardContr->GetHitResultUnderCursor(ECC_Visibility, false, Hit);
+	}
+	else
+	{
+		GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECC_Visibility, false, Hit);
+	}
 
 	if(Hit.bBlockingHit)
 	{
@@ -188,7 +218,7 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 		{
 			ServerRPC_SelectCard(SelectedCard);
 		}
-	}
+	}	
 }
 
 void ANetworkPawn::ServerRPC_SelectCard_Implementation(APawnCard* SelectedCard)
@@ -209,10 +239,11 @@ void ANetworkPawn::MulticastRPC_SelectCard_Implementation(APawnCard* SelectedCar
 		//아무 것도 선택 안 했으면 FirstSelectCard에 할당
 		FirstSelectedCard = TargetCard;
 	}
-		
-	//앞면으로 오픈
-	Timeline->PlayFromStart();
-	TargetCard->Selected();
+	if(HasAuthority())
+	{
+		//앞면으로 오픈
+		Timeline->PlayFromStart();
+	}
 }
 
 
@@ -251,6 +282,10 @@ void ANetworkPawn::InitPlayerUI()
 
 void ANetworkPawn::IncreaseScore(bool IsNoLuck)
 {
+	if(HasAuthority() == false)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PawnGame IncreaseScore Func is Error"));		
+	}
 	//매칭에 성공했으면 자신의 UI에 점수를 올린
 	ServerRPC_IncreaseScore(this, IsNoLuck);
 }
@@ -264,6 +299,8 @@ void ANetworkPawn::ServerRPC_DestroyPawnCard_Implementation(APawnCard* FirstTarg
 
 	FirstTargetCard->Destroy();
 	SecondTargetCard->Destroy();
+	/*FirstTargetCard->MatchingSuccess();
+	SecondTargetCard->MatchingSuccess();*/
 
 	// 남은 카드 체크
 	GameMode->CheckRemainCards();
@@ -391,11 +428,15 @@ void ANetworkPawn::ChangePlayerTurn(ANetworkPawn* StartPlayer)
 void ANetworkPawn::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
-	if(GameMode)
+	
+	if(HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("GameMode에 플레이어 추가"));
-		GameMode->AddPlayer(this);
+		APawnCardGameMode* gm = Cast<APawnCardGameMode>(GetWorld()->GetAuthGameMode());
+		if(!GameMode) GameMode = gm;
+		if(gm)
+		{
+			gm->AddPlayer(this);
+		}
 	}
 }
 

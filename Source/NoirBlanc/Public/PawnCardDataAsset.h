@@ -3,47 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
+#include "DefaultCardDataAsset.h"
 #include "PawnCardDataAsset.generated.h"
 
-UENUM(BlueprintType)
-enum class PawnCardType : uint8
-{
-	NoLuck,
-	PawnRed,
-	RookRed,
-	KnightRed,
-	BishopRed,
-	QueenRed,
-	KingRed,
-	PawnBlue,
-	RookBlue,
-	KnightBlue,
-	BishopBlue,
-	QueenBlue,
-	KingBlue
-};
 /**
  * 
  */
 UCLASS()
-class NOIRBLANC_API UPawnCardDataAsset : public UDataAsset
+class NOIRBLANC_API UPawnCardDataAsset : public UDefaultCardDataAsset
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
-	PawnCardType PawnCardType;
 
 	UPROPERTY(EditAnywhere)
 	int32 TotalNum;
 	
 	UPROPERTY(EditAnywhere)
-	UMaterialInstance* CardMaterialIns;
+	int32 Score;
 
-	UPROPERTY(EditAnywhere)
-	float U_Offset = 0.f;
-	
-	UPROPERTY(EditAnywhere)
-	float V_Offset = 0.f;
+	UFUNCTION()
+	void InitMeshMaterial(UStaticMeshComponent* StaticMeshComp);
+
+	UFUNCTION()
+	void SetMatchingMaterial(UStaticMeshComponent* StaticMeshComp);
 };
