@@ -144,14 +144,12 @@ void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(EPieceColor Win
 
 	if(HasAuthority())
 	{
-		FTimerHandle WinnerHandle;
+		Cast<APawnCardController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChessBoard();
+		/*FTimerHandle WinnerHandle;
 		GetWorldTimerManager().SetTimer(WinnerHandle, [this]()
 		{
-			if(PawnCardContr)
-			{
-				PawnCardContr->ServerRPC_LevelTravelToChessBoard();
-			}
-		}, 1.5f, false);
+			Cast<APawnCardController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChessBoard();
+		}, 1.5f, false);*/
 	}
 }
 
