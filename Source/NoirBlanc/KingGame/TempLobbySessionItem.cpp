@@ -3,7 +3,7 @@
 #include "NoirBlanc/KingGame/TempLobbySessionItem.h"
 
 #include "NoirBlancGameInstance.h"
-#include "TempNoirBlancGameInstance.h"
+//#include "TempNoirBlancGameInstance.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 
