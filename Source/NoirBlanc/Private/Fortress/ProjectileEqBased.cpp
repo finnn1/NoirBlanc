@@ -188,6 +188,14 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 			// 	}
 			// }
 
+			if (Opponent->Health <= 0)
+			{
+				// noir-client-black, blanc-server-white
+				// whether the opponent is server of client
+				
+				OwnerCannon->FortressUI->GameOver(1);
+			}
+			
 			ACannon* cannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
 			cannon->FortressUI->ApplyDamageHPBar(Opponent, cannon);
 				

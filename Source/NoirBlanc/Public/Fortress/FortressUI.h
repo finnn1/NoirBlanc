@@ -11,7 +11,7 @@
 
 class ACannon;
 class UProgressBar;
-
+class UTextBlock;
 /**
  * 
  */
@@ -20,6 +20,27 @@ class NOIRBLANC_API UFortressUI : public UUserWidget
 {
 	GENERATED_BODY()
 
+	virtual void NativeConstruct() override;
+
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	UPROPERTY(meta = (BindWidget))
+	class UWidgetSwitcher* WidgetSwitcher;
+	
+	// Start UI
+public:
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* text_GameStart;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* text_Countdown;
+
+	FTimerHandle CountdownTimer;
+	
+	int32 CountdownTime;
+	void UpdateCountdown();
+
+	// Main UI
 public:
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* Player1pg;
@@ -35,11 +56,7 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly)
 	float Player2Percentage;
-
-	virtual void NativeConstruct() override;
-
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-
+	
 	// when the cannon's health change, change the progress bar
 	UFUNCTION(BlueprintCallable)
 	void ChangeHPBar(ACannon* Cannon);
@@ -49,4 +66,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void TakeDamageHPBar(ACannon* Cannon);
+
+	// End UI
+public:
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* text_Winner;
+
+	void GameOver(int32 index);
 };
+
+
