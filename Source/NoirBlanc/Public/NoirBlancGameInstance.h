@@ -24,7 +24,7 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
-	EPieceColor WinnerColor;
+	EPieceColor WinnerColor = EPieceColor::Blank;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceColor DeffenderColor;
@@ -50,11 +50,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	TArray<int32 > MoveCountData;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceColor Saved_Turn = EPieceColor::White;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	int32 AttackerRow;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	int32 AttackerCol;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	int32 DeffenderRow;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
+	int32 DeffenderCol;
 
 	FName SelectedGame;
-	
 public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_LevelTravel(const FString& LevelName);

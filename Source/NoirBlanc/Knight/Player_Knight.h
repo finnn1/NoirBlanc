@@ -142,4 +142,9 @@ public:
 	FString Piece;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString Team;
+	// --------------------------------------------------------------------------------
+	//
+	// Return to Chess
+	//
+	void ReturnToChessBoard();
 };
