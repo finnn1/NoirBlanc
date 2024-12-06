@@ -132,35 +132,26 @@ void ANetworkPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 }
 
-void ANetworkPawn::SetWinnerInstance(ANetworkPawn* Winner)
-{
-	MulticastRPC_SetWinnerInstance(Winner);
-}
 
-void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(ANetworkPawn* Winner)
+void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(EPieceColor WinnerColor)
 {
 	UNoirBlancGameInstance* NB_GM = Cast<UNoirBlancGameInstance>(GetGameInstance());
 	if(!NB_GM) return;
-	if(Winner->HasAuthority() && Winner->IsLocallyControlled())
-	{
-		NB_GM->WinnerColor = EPieceColor::White;
-		UE_LOG(LogTemp, Warning, TEXT("Winner is White, Blanc"));
-	}
-	else
-	{
-		NB_GM->WinnerColor = EPieceColor::Black;
-		UE_LOG(LogTemp, Warning, TEXT("Winner is Black, Noir"));
-	}
+
+	NB_GM->WinnerColor = WinnerColor;
+	FString ColorStr = StaticEnum<EPieceColor>()->GetDisplayNameTextByValue(static_cast<int64>(WinnerColor)).ToString();
+	UE_LOG(LogTemp, Warning, TEXT("Winner Color is %s"), *ColorStr);
 
 	if(HasAuthority())
 	{
 		FTimerHandle WinnerHandle;
 		GetWorldTimerManager().SetTimer(WinnerHandle, [this]()
 		{
-			//FString ChessLevelStr = TEXT("/Game/Level/Lv_ChessBoard");
-			//FString ChessLevelStr = *GameLevelMap.Find("Pawn");
-			//GetWorld()->ServerTravel(ChessLevelStr, true);
-		}, 2.f, false);
+			if(PawnCardContr)
+			{
+				PawnCardContr->ServerRPC_LevelTravelToChessBoard();
+			}
+		}, 1.5f, false);
 	}
 }
 

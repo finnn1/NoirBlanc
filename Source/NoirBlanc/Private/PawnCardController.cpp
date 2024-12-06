@@ -44,3 +44,8 @@ void APawnCardController::HideShuffleText()
 {
 	if(CntrUI) CntrUI->HideShuffleText();
 }
+
+void APawnCardController::ServerRPC_LevelTravelToChessBoard_Implementation()
+{
+	GetWorld()->ServerTravel(TEXT("/Game/Level/Lv_ChessBoard?listen"), true);
+}

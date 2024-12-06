@@ -145,6 +145,14 @@ void APawnCardGameMode::GameSet()
 		}
 	}
 	OnGameSet.ExecuteIfBound(WinnerPlayer);
+	if(WinnerPlayer->IsLocallyControlled())
+	{
+		WinnerPlayer->MulticastRPC_SetWinnerInstance(EPieceColor::White);	
+	}
+	else
+	{
+		WinnerPlayer->MulticastRPC_SetWinnerInstance(EPieceColor::Black);
+	}
 }
 
 void APawnCardGameMode::ChangeTurn(ANetworkPawn* EndPlayer)

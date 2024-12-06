@@ -34,4 +34,7 @@ public:
 	void GameStart();
 	void StartShuffleText();
 	void HideShuffleText();
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerRPC_LevelTravelToChessBoard();
 };
