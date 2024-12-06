@@ -183,6 +183,10 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 			GameInstance->DeffenderType = Target->GetPieceType();
 			GameInstance->AttackerColor = Selected->GetPieceColor();
 			GameInstance->AttackerType = Target->GetPieceType();
+			GameInstance->AttackerRow = SelectedFloor->GetRow();
+			GameInstance->AttackerCol = SelectedFloor->GetCol();
+			
+			
 			GameInstance->Saved_Turn = Turn;
 			MoveEnd();
 			if(HasAuthority())

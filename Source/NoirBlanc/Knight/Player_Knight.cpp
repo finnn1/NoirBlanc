@@ -11,6 +11,7 @@
 #include "NoirBlanc/Knight/GameStateBase_Knight.h"
 #include "FinishUI.h"
 #include "NoirBlancGameInstance.h"
+#include "TravelPlayerController.h"
 #include "Net/UnrealNetwork.h"
 
 //DEFINE_ENUM_TO_STRING(EPieceColor);
@@ -84,6 +85,11 @@ void APlayer_Knight::Tick(float DeltaTime)
 			FinishUI->UpdateWinnerText(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner);
 
 			// 타이머로 5초 뒤에 다시 체스로 돌아가면 될듯
+			if(HasAuthority())
+			{
+				FTimerHandle TimerHandle;
+				GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &APlayer_Knight::ReturnToChessBoard, 5.f, false);
+			}
 		}
 		
 		return;
@@ -229,6 +235,11 @@ void APlayer_Knight::StartTimer()
 	}
 	
 	MulticastRPC_UpdateTimerUI();
+}
+
+void APlayer_Knight::ReturnToChessBoard()
+{
+	Cast<ATravelPlayerController>(GetController())->ServerRPC_LevelTravelToChess();
 }
 
 void APlayer_Knight::MulticastRPC_UpdateTimerUI_Implementation()
