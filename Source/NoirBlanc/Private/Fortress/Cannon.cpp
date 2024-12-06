@@ -14,8 +14,10 @@
 #include "TimerManager.h"
 #include "Components/WidgetComponent.h"
 #include "Fortress/FireBoostWidget.h"
+#include "Fortress/FortressGameMode.h"
 #include "Fortress/FortressUI.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ACannon::ACannon()
@@ -55,6 +57,9 @@ ACannon::ACannon()
 	this->NetUpdateFrequency = 100.0f;
 
 	Muzzle->SetUsingAbsoluteLocation(true);
+
+	bIsturn = false;
+	
 }
 
 // Called when the game starts or when spawned
@@ -62,6 +67,7 @@ void ACannon::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// set velocity bar widget
 	if (VelocityBar != nullptr)
 	{
 		UUserWidget* Widget = VelocityBar->GetWidget(); // WidgetComponent != Widget
@@ -73,7 +79,17 @@ void ACannon::BeginPlay()
 				FireBoostWidget->Velocity = ProjectileVelocity;
 		}
 	}
+
+	// add players in the array
+	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
+	if (gm != nullptr)
+	{
+		gm->AllPlayers.Add(this);
+		if (gm->AllPlayers.Num() == 1) this->bIsturn = true;		// set the first player turn true
+	}
 }
+
+
 
 // Called to bind functionality to input
 void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -114,6 +130,8 @@ void ACannon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!bIsturn) return; 
+		
 	FVector NewLocation = GetActorLocation() + (MovementInput * MoveSpeed * DeltaTime);
 
 	// TODO: should set the limit of the rotation angle
@@ -160,7 +178,8 @@ void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRot
 void ACannon::Move(const FInputActionValue& Value)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Move called %s"), *Value.ToString());
-	MovementInput.X = Value.Get<float>();
+	if (HasAuthority()) MovementInput.X = Value.Get<float>();
+	else MovementInput.X = -Value.Get<float>();
 }
 
 void ACannon::ProjectileDir(const FInputActionValue& Value)
@@ -172,6 +191,8 @@ void ACannon::ProjectileDir(const FInputActionValue& Value)
 
 void ACannon::Fire()
 {
+	if (!bIsturn) return;
+	
 	GetWorld()->GetTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
 
 	if (ProjectileEqBasedFactory)
@@ -179,11 +200,21 @@ void ACannon::Fire()
 
 	if (FireBoostWidget != nullptr)
 		FireBoostWidget->Velocity = 0.0f; // set velocity var in widget 0
+	
 }
 
 void ACannon::ServerRPC_Fire_Implementation(float Velocity)
 {
 	MulticastRPC_Fire(Velocity);
+
+	// only server can access to the gamemode
+	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
+	if (gm != nullptr)
+	{
+		gm->ChangeTurn();
+		// announce turn by widget
+		
+	}
 }
 
 void ACannon::MulticastRPC_Fire_Implementation(float Velocity)
@@ -191,10 +222,8 @@ void ACannon::MulticastRPC_Fire_Implementation(float Velocity)
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 	this->ProjectileVelocity = Velocity;
-
-	// 	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
-	// FString::Printf(TEXT("Owner: %s"), *this->GetName()));
-
+	
+	// spawn projectile
 	ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
 																   SpawnLocation->GetComponentLocation(),
 																   SpawnLocation->GetComponentRotation(), SpawnParams);
@@ -202,6 +231,8 @@ void ACannon::MulticastRPC_Fire_Implementation(float Velocity)
 
 void ACannon::StartCharging(const FInputActionValue& Value)
 {
+	if (!bIsturn) return; 
+	
 	ProjectileVelocity = 0.0f;
 	GetWorld()->GetTimerManager().SetTimer(SpeedIncreaseTimerHandle, this, &ACannon::ContinueCharging, 0.1f, true);
 	if (FireBoostWidget != nullptr)
@@ -212,6 +243,8 @@ void ACannon::StartCharging(const FInputActionValue& Value)
 
 void ACannon::ContinueCharging()
 {
+	if (!bIsturn) return;
+	
 	ProjectileVelocity += VelocityChange;
 
 	if (FireBoostWidget != nullptr)
@@ -241,7 +274,6 @@ void ACannon::Force(const FInputActionValue& Value)
 {
 }
 
-
 void ACannon::InitMainUIWiget()
 {
 	if (IsLocallyControlled() == false) return;
@@ -249,6 +281,13 @@ void ACannon::InitMainUIWiget()
 	FortressUI = CreateWidget<UFortressUI>(GetWorld(), FortressUIFactory);
 	if (FortressUI != nullptr)
 		FortressUI->AddToViewport();
+}
+
+void ACannon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACannon, bIsturn);
 }
 
 void ACannon::ClientRPC_Init_Implementation()

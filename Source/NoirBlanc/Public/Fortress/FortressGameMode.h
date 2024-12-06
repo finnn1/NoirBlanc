@@ -18,5 +18,12 @@ class NOIRBLANC_API AFortressGameMode : public AGameMode
 	AFortressGameMode();
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+public: 
+	UPROPERTY(VisibleAnywhere)
+	TArray<class ACannon*> AllPlayers;
+
+	int32 turnIdx = 0;
+	void ChangeTurn();
 	
 };

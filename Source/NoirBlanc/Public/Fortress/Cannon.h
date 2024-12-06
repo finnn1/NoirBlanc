@@ -139,8 +139,11 @@ public:
 	void InitMainUIWiget();
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_Init();
-	
-	
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bIsturn;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
 
 

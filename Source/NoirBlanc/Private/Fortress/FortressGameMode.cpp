@@ -62,3 +62,11 @@ void AFortressGameMode::PostLogin(APlayerController* NewPlayer)
 	
 }
 
+void AFortressGameMode::ChangeTurn()
+{
+	AllPlayers[turnIdx]->bIsturn = false;
+	turnIdx++;
+	turnIdx %= AllPlayers.Num();
+	AllPlayers[turnIdx]->bIsturn = true;
+}
+

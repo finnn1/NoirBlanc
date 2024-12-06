@@ -38,6 +38,7 @@ void AProjectileEqBased::BeginPlay()
 
 	//SetReplicateMovement(true);
 
+	// this projectile owner != playerOwner
 	OwnerCannon = Cast<ACannon>(GetOwner());
 
 	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
@@ -148,27 +149,8 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 {
 	if (OtherActor && OtherActor == this->Owner)
 	{
-		
 		return;		// if the projectile hit the owner Cannon, return
 	}
-
-	switch (GetNetMode())
-	{
-	case NM_ListenServer:
-		UE_LOG(LogTemp, Warning, TEXT("NetMode ListenServer"));
-		break;
-	case NM_Client:
-		UE_LOG(LogTemp, Warning, TEXT("NetMode Client"));
-	default:
-		break;
-	}
-	 // 가끔 netmode client일때 owner->owner 없다고 뜬다.
-	// if (Owner->Owner == nullptr)
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("No Owner->Owner"));		// another Cannon's projectile
-	// 	return;
-	// }
-	//UE_LOG(LogTemp, Warning, TEXT("Owner->Owner: %s"), *Owner->Owner->GetName());
 	
 	if (OtherActor != nullptr)
 	{
@@ -176,46 +158,17 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		if (Opponent)		// it the projectile hit the opponent Cannon
 		{
 			Opponent->Health -= Opponent->Damage;
+			
+			ACannon* playerCannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
+			playerCannon->FortressUI->ApplyDamageHPBar(Opponent, playerCannon);
 
-			// APlayerController* pc = Cast<APlayerController>(Owner->Owner);
-			// if (pc)
-			// {
-			// 	if (pc->IsLocalController())
-			// 		UE_LOG(LogTemp, Warning, TEXT("Local Controller"));
-			// 	if (pc->GetPawn())
-			// 	{
-			// 		// TODO: 여러 캐릭터의 점수 관리를 어떻게 동기화 하고 있나
-			// 	}
-			// }
-
+			// noir-client-black, blanc-server-white
+			// whether the opponent is server of client
 			if (Opponent->Health <= 0)
-			{
-				// noir-client-black, blanc-server-white
-				// whether the opponent is server of client
-				
-				OwnerCannon->FortressUI->GameOver(1);
-			}
+				playerCannon->FortressUI->GameOver(1);
 			
-			ACannon* cannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
-			cannon->FortressUI->ApplyDamageHPBar(Opponent, cannon);
-				
-			// error message: Player2Percentage == null
-			// if (OwnerCannon->FortressUI)
-			// {
-			// 	OwnerCannon->FortressUI->ApplyDamageHPBar(Opponent);
-			// }
-			
-			// if (Opponent->GetOwner())	// if it is server pawn
-			// {
-			// 	MulticastRPC_ClientTakeDamage(Opponent);
-			// }
-			// else	   // if it is client pawn
-			// {
-			// 	ServerRPC_TakeDamage(Opponent);
-			// }
-			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black,
-			//                                  FString::Printf(TEXT("Health: %f"), Opponent->Health));
-
+			// error message: OwnerCannon->FortressUI == null
+		
 			if (BombEffect)
 				PlayBombEffect(Hit);
 		}

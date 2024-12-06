@@ -48,7 +48,7 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* Player2pg;
 
-	ACannon* Player1;
+	ACannon* playerCannon;
 	// Cannon* Player2;
 
 	UPROPERTY(BlueprintReadOnly)
@@ -67,6 +67,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void TakeDamageHPBar(ACannon* Cannon);
 
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* text_Turn;
+	
 	// End UI
 public:
 	UPROPERTY(meta = (BindWidget))

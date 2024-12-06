@@ -7,18 +7,23 @@
 #include "Fortress/Cannon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/WidgetSwitcher.h"
-
-
+#include "GameFramework/PawnMovementComponent.h"
 
 
 void UFortressUI::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-    Player1 = Cast<ACannon>(UGameplayStatics::GetPlayerPawn(GetWorld(),0));
+    playerCannon = Cast<ACannon>(UGameplayStatics::GetPlayerPawn(GetWorld(),0));
 	Player1Percentage = 1.0f;
 	Player2Percentage = 1.0f;
 
+	text_Turn->SetVisibility(ESlateVisibility::Hidden);
+
+	// APlayerController* pc = GetWorld()->GetFirstPlayerController();
+	// if (pc)
+	// 	playerCannon->DisableInput(pc);
+	//playerCannon->GetMovementComponent()->Deactivate();
 	CountdownTime = 0;
 	GetWorld()->GetTimerManager().SetTimer(CountdownTimer, this, &UFortressUI::UpdateCountdown, 1.0f, true);
 }
@@ -31,6 +36,10 @@ void UFortressUI::UpdateCountdown()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(CountdownTimer);
 		WidgetSwitcher->SetActiveWidgetIndex(1);
+		//playerCannon->GetMovementComponent()->Activate();
+		// APlayerController* pc = GetWorld()->GetFirstPlayerController();
+		// if (pc)
+		// 	playerCannon->EnableInput(pc);
 	}
 }
 
