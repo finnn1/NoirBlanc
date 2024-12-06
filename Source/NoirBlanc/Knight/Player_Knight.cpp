@@ -13,6 +13,8 @@
 #include "NoirBlancGameInstance.h"
 #include "Net/UnrealNetwork.h"
 
+//DEFINE_ENUM_TO_STRING(EPieceColor);
+
 // Sets default values
 APlayer_Knight::APlayer_Knight()
 {
@@ -127,6 +129,16 @@ void APlayer_Knight::Tick(float DeltaTime)
 	else
 	{
 		Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor = EPieceColor::Black;
+	}
+	
+	if(HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Server : %hhd"), Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Client : %hhd"), Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor);
+		//UE_LOG(LogTemp, Warning, TEXT("Client : %s"), *EnumToString(Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor));
 	}
 }
 
