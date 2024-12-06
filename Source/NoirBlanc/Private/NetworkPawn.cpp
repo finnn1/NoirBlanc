@@ -144,10 +144,23 @@ void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(ANetworkPawn* W
 	if(Winner->HasAuthority() && Winner->IsLocallyControlled())
 	{
 		NB_GM->WinnerColor = EPieceColor::White;
+		UE_LOG(LogTemp, Warning, TEXT("Winner is White, Blanc"));
 	}
 	else
 	{
 		NB_GM->WinnerColor = EPieceColor::Black;
+		UE_LOG(LogTemp, Warning, TEXT("Winner is Black, Noir"));
+	}
+
+	if(HasAuthority())
+	{
+		FTimerHandle WinnerHandle;
+		GetWorldTimerManager().SetTimer(WinnerHandle, [this]()
+		{
+			//FString ChessLevelStr = TEXT("/Game/Level/Lv_ChessBoard");
+			//FString ChessLevelStr = *GameLevelMap.Find("Pawn");
+			//GetWorld()->ServerTravel(ChessLevelStr, true);
+		}, 2.f, false);
 	}
 }
 

@@ -145,7 +145,6 @@ void APawnCardGameMode::GameSet()
 		}
 	}
 	OnGameSet.ExecuteIfBound(WinnerPlayer);
-	WinnerPlayer->SetWinnerInstance(WinnerPlayer);
 }
 
 void APawnCardGameMode::ChangeTurn(ANetworkPawn* EndPlayer)
