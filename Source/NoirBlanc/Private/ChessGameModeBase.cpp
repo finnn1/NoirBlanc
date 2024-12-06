@@ -5,5 +5,5 @@
 
 AChessGameModeBase::AChessGameModeBase()
 {
-	bUseSeamlessTravel = true;
+	//bUseSeamlessTravel = true;
 }
