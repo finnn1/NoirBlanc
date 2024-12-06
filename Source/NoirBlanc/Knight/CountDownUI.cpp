@@ -9,3 +9,9 @@ void UCountDownUI::NativeConstruct()
 
 	Txt_Count = Cast<UTextBlock>(GetWidgetFromName(TEXT("Text_Count")));
 }
+
+void UCountDownUI::UpdateCountDown(FText text)
+{
+	Txt_Count->SetText(text);
+	PlayAnimation(CountDownAnim);
+}

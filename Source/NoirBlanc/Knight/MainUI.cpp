@@ -3,6 +3,8 @@
 
 #include "MainUI.h"
 
+#include "Components/CanvasPanelSlot.h"
+#include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "NoirBlanc/Knight/GameStateBase_Knight.h"
 
@@ -15,9 +17,9 @@ void UMainUI::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 	Text_Timer = Cast<UTextBlock>(GetWidgetFromName(TEXT("Text_Timer")));
-	
-	Text_ServerDistance = Cast<UTextBlock>(GetWidgetFromName(TEXT("Txt_ServerDistance")));
-	Text_ClientDistance = Cast<UTextBlock>(GetWidgetFromName(TEXT("Txt_ClientDistance")));
+	 
+	Image_Noir = Cast<UImage>(GetWidgetFromName(TEXT("Img_Noir")));
+	Image_Blanc = Cast<UImage>(GetWidgetFromName(TEXT("Img_Blanc")));
 }
 
 void UMainUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -32,12 +34,20 @@ void UMainUI::UpdateTimerText(int32 time)
 
 void UMainUI::UpdateServerDistance(float distance)
 {
-	Text_ServerDistance->SetText(FText::FromString(FString::FromInt(floor(distance))));
+	UCanvasPanelSlot* noirSlot = Cast<UCanvasPanelSlot>(Image_Noir->Slot);
+	UE_LOG(LogTemp, Warning, TEXT("%f"), distance);
+	noirSlot->SetPosition(FVector2d(distance / MaxDistance * 1600, 12));
 }
 
 void UMainUI::UpdateClientDistance(float distance)
 {
-	Text_ClientDistance->SetText(FText::FromString(FString::FromInt(floor(distance))));
+	UCanvasPanelSlot* slot = Cast<UCanvasPanelSlot>(Image_Blanc->Slot);
+	slot->SetPosition(FVector2d(distance / MaxDistance * 1600, 68));
+}
+
+void UMainUI::PlayerDisappear()
+{
+	SetRenderOpacity(0);
 }
 
 

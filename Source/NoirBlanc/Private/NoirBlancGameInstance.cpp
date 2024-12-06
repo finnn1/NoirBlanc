@@ -7,16 +7,6 @@
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
 
- static const TMap<FName, FString> GameLevelMap = {
- 	{TEXT("King"), TEXT("/Game/Level/Lv_King")},
- 	{TEXT("Queen"), TEXT("/Game/Level/Lv_King")},
- 	{TEXT("Rook"), TEXT("/Game/Level/Lv_Fortress")},
- 	{TEXT("Bishop"), TEXT("/Game/Level/Lv_Bishop")},
- 	{TEXT("Knight"), TEXT("/Game/Level/Lv_Knight")},
- 	{TEXT("Pawn"), TEXT("/Game/Level/Lv_PawnCard")},
- 	{TEXT("Chess"), TEXT("/Game/Level/Lv_ChessBoard")}
- };
-
 void UNoirBlancGameInstance::Init()
 {
 	Super::Init();
@@ -43,22 +33,6 @@ void UNoirBlancGameInstance::Init()
 		this, &UNoirBlancGameInstance::OnFindOtherSessionComplete);
 	SessionInterFace->OnJoinSessionCompleteDelegates.AddUObject(
 		this, &UNoirBlancGameInstance::OnJoinOtherSessionComplete);
-}
-
-void UNoirBlancGameInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UNoirBlancGameInstance, DeffenderColor);
-	DOREPLIFETIME(UNoirBlancGameInstance, DeffenderType);
-	DOREPLIFETIME(UNoirBlancGameInstance, AttackerColor);
-	DOREPLIFETIME(UNoirBlancGameInstance, AttackerType);
-	DOREPLIFETIME(UNoirBlancGameInstance, WinnerColor);
-	DOREPLIFETIME(UNoirBlancGameInstance, BoardTypeData);
-	DOREPLIFETIME(UNoirBlancGameInstance, BoardColorData);
-	DOREPLIFETIME(UNoirBlancGameInstance, EncounterCountData);
-	DOREPLIFETIME(UNoirBlancGameInstance, MoveCountData);
-	DOREPLIFETIME(UNoirBlancGameInstance, Turn);
-	
 }
 
 void UNoirBlancGameInstance::ServerRPC_LevelTravel_Implementation(const FString& LevelName)
@@ -132,7 +106,6 @@ void UNoirBlancGameInstance::OnDestroySessionComplete(FName SessionName, bool bW
 		UE_LOG(LogTemp, Warning, TEXT("[%s] 세션 파괴 실패"), *SessionName.ToString());
 	}
 }
-
 
 void UNoirBlancGameInstance::FindOtherSession()
 {
