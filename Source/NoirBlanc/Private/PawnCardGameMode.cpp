@@ -14,7 +14,7 @@
 
 APawnCardGameMode::APawnCardGameMode()
 {
-	bUseSeamlessTravel = true;
+	//bUseSeamlessTravel = true;
 }
 void APawnCardGameMode::BeginPlay()
 {
