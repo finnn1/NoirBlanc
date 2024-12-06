@@ -49,6 +49,7 @@ void AChessBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(AChessBoard, SelectedFloor);
 	DOREPLIFETIME(AChessBoard, TargetPiece);
 	DOREPLIFETIME(AChessBoard, TargetFloor);
+	DOREPLIFETIME(AChessBoard, Turn);
 }
 
 void AChessBoard::ClickFloor()
@@ -59,13 +60,24 @@ void AChessBoard::ClickFloor()
 		SelectedPiece = Cast<AChessPiece>(HitActor);
 		if(SelectedPiece)
 		{
-			if(SelectedPiece->GetPieceColor() == GameInstance->Turn)
+			if(SelectedPiece->GetPieceColor() == Turn)
 			{
-				bIsClickedOnce = true;
-				SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
-				ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
-				SelectedFloor->ToggleGreen();
-				ShowMovableFloors(SelectedFloor);
+				if(HasAuthority() && SelectedPiece->GetPieceColor() == EPieceColor::White)
+				{
+					bIsClickedOnce = true;
+					SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
+					ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
+					SelectedFloor->ToggleGreen();
+					ShowMovableFloors(SelectedFloor);
+				}
+				else if(!HasAuthority() && SelectedPiece->GetPieceColor() == EPieceColor::Black)
+				{
+					bIsClickedOnce = true;
+					SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
+					ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
+					SelectedFloor->ToggleGreen();
+					ShowMovableFloors(SelectedFloor);
+				}
 			}
 		}
 	}
@@ -150,72 +162,76 @@ void AChessBoard::MovePiece()
 
 void AChessBoard::ServerRPC_PieceEncounter_Implementation()
 {
-	PieceEncounter(SelectedPiece, TargetPiece);
-	//MulticastRPC_PieceEncounter();
+	MulticastRPC_PieceEncounter();
 }
 
 void AChessBoard::MulticastRPC_PieceEncounter_Implementation()
 {
-	//PieceEncounter(SelectedPiece, TargetPiece);
+	PieceEncounter(SelectedPiece, TargetPiece);
 }
 
 void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 {
 	//Event when two pieces meet
-
 	for(auto Floor : AttackableFloors)
 	{
 		if(Floor->GetPieceOnFloor() == Target)
 		{
-			FString LevelName;
+			FName LevelName;
 			EPieceType Game = Selected->GetPieceType();
+			Selected->IncreaseEncounterCount();
+			Target->IncreaseEncounterCount();
 			GameInstance->DeffenderColor = Target->GetPieceColor();
 			GameInstance->DeffenderType = Target->GetPieceType();
 			GameInstance->AttackerColor = Selected->GetPieceColor();
 			GameInstance->AttackerType = Target->GetPieceType();
-			for(int i = 0 ; i < BoardFloors.Num(); i++)
-			{
-				//search through the board and save data
-				if(BoardFloors[i]->GetPieceOnFloor())
-				{
-					GameInstance->BoardTypeData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceType();
-					GameInstance->BoardColorData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceColor();
-					GameInstance->EncounterCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetEncounterCount();
-					GameInstance->MoveCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetMoveCount();
-				}
-				else
-				{
-					GameInstance->BoardTypeData[i] = EPieceType::Blank;
-					GameInstance->BoardColorData[i] = EPieceColor::Blank;
-				}
-			}
-			switch(Game)
-			{
-			case EPieceType::Pawn:
-				LevelName = "/Game/Level/Lv_PawnCard?listen";
-				break;
-			case EPieceType::Knight:
-				LevelName = "/Game/Level/Lv_Knight";
-				break;
-			case EPieceType::Bishop:
-				LevelName = "/Game/Level/Lv_Bishop";
-				break;
-			case EPieceType::Rook:
-				LevelName = "/Game/Level/Lv_Fortress";
-				break;
-			case EPieceType::Queen:
-				break;
-			case EPieceType::King:
-				LevelName = "/Game/Level/Lv_King";
-				break;
-			}
-			//set after returning from game
-			// Selected->IncreaseEncounterCount();
-			// Target->IncreaseEncounterCount();
+			GameInstance->Saved_Turn = Turn;
 			MoveEnd();
-			UE_LOG(LogTemp, Warning, TEXT("Check"));
-			
-			Controller->ServerRPC_LevelTravel(LevelName);
+			if(HasAuthority())
+			{
+				for(int i = 0 ; i < BoardFloors.Num(); i++)
+				{
+					//search through the board and save data
+					if(BoardFloors[i]->GetPieceOnFloor())
+					{
+						GameInstance->BoardTypeData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceType();
+						GameInstance->BoardColorData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceColor();
+						GameInstance->EncounterCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetEncounterCount();
+						GameInstance->MoveCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetMoveCount();
+					}
+					else
+					{
+						GameInstance->BoardTypeData[i] = EPieceType::Blank;
+						GameInstance->BoardColorData[i] = EPieceColor::Blank;
+					}
+				}
+				switch(Game)
+				{
+				case EPieceType::Pawn:
+					LevelName = "Pawn";
+					break;
+				case EPieceType::Knight:
+					LevelName = "Knight";
+					break;
+				case EPieceType::Bishop:
+					LevelName = "Bishop";
+					break;
+				case EPieceType::Rook:
+					LevelName = "Rook";
+					break;
+				case EPieceType::Queen:
+					break;
+				case EPieceType::King:
+					LevelName = "King";
+					break;
+				}
+				FString ServerURL = *GameLevelMap.Find(LevelName);
+				if (ServerURL.IsEmpty() == false)
+				{
+					ServerURL += TEXT("?listen");
+					Controller->ServerRPC_LevelTravel(ServerURL);
+				}
+			}
 		}
 	}
 }
@@ -254,16 +270,13 @@ void AChessBoard::SamePieceClicked()
 
 void AChessBoard::ChangeTurn()
 {
-	if(HasAuthority())
+	if(Turn == EPieceColor::Black)
 	{
-		if(GameInstance->Turn == EPieceColor::Black)
-		{
-			GameInstance->Turn = EPieceColor::White;
-		}
-		else
-		{
-			GameInstance->Turn = EPieceColor::Black;
-		}
+		Turn = EPieceColor::White;
+	}
+	else
+	{
+		Turn = EPieceColor::Black;
 	}
 }
 
@@ -359,6 +372,7 @@ void AChessBoard::InitBoard()
 {
 	EPieceType Type;
 	EPieceColor Color;
+	Turn = GameInstance->Saved_Turn;
 	for(int i = 0 ; i < Chess_Num; i++)
 	{
 		for(int j = 0 ; j < Chess_Num; j++)

@@ -5,14 +5,14 @@
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
 
-static const TMap<FName, FString> GameLevelMap = {
-	{TEXT("King"), TEXT("/Game/Level/Lv_King")},
-	{TEXT("Queen"), TEXT("/Game/Level/Lv_King")},
-	{TEXT("Rook"), TEXT("/Game/Level/Lv_Fortress")},
-	{TEXT("Bishop"), TEXT("/Game/Level/Lv_Bishop")},
-	{TEXT("Knight"), TEXT("/Game/Level/Lv_Knight")},
-	{TEXT("Pawn"), TEXT("/Game/Level/Lv_PawnCard")}
-};
+// static const TMap<FName, FString> GameLevelMap = {
+// 	{TEXT("King"), TEXT("/Game/Level/Lv_King")},
+// 	{TEXT("Queen"), TEXT("/Game/Level/Lv_King")},
+// 	{TEXT("Rook"), TEXT("/Game/Level/Lv_Fortress")},
+// 	{TEXT("Bishop"), TEXT("/Game/Level/Lv_Bishop")},
+// 	{TEXT("Knight"), TEXT("/Game/Level/Lv_Knight")},
+// 	{TEXT("Pawn"), TEXT("/Game/Level/Lv_PawnCard")}
+// };
 
 void UTempNoirBlancGameInstance::Init()
 {
@@ -65,22 +65,22 @@ void UTempNoirBlancGameInstance::CreateSession(FString DisplayName, FName _Selec
 
 void UTempNoirBlancGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
-	if (bWasSuccessful)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] 세션 생성 성공"), *SessionName.ToString());
-		// 세션 만든 사람(서버) 이 만들어진 세션으로 이동
-		FString ServerURL;
-		ServerURL = *GameLevelMap.Find(SelectedGame);
-		if (ServerURL.IsEmpty() == false)
-		{
-			ServerURL += TEXT("?listen");
-			GetWorld()->ServerTravel(ServerURL);
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] 세션 생성 실패"), *SessionName.ToString());
-	}
+	// if (bWasSuccessful)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("[%s] 세션 생성 성공"), *SessionName.ToString());
+	// 	// 세션 만든 사람(서버) 이 만들어진 세션으로 이동
+	// 	FString ServerURL;
+	// 	ServerURL = *GameLevelMap.Find(SelectedGame);
+	// 	if (ServerURL.IsEmpty() == false)
+	// 	{
+	// 		ServerURL += TEXT("?listen");
+	// 		GetWorld()->ServerTravel(ServerURL);
+	// 	}
+	// }
+	// else
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("[%s] 세션 생성 실패"), *SessionName.ToString());
+	// }
 }
 
 void UTempNoirBlancGameInstance::DestroySession(FString SessionName)

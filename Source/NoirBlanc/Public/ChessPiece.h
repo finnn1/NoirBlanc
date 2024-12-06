@@ -60,9 +60,9 @@ private:
 	UPROPERTY(Replicated, VisibleAnywhere,Category = "PieceInfo")
 	ABoardFloor* FloorBeneathPiece;
 
-	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	UPROPERTY(Replicated, VisibleAnywhere,Category = "PieceInfo")
 	int32 MoveCount = 0;
 	
-	UPROPERTY(VisibleAnywhere,Category = "PieceInfo")
+	UPROPERTY(Replicated, VisibleAnywhere,Category = "PieceInfo")
 	int32 EncounterCount = 0;
 };

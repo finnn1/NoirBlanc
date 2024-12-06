@@ -34,6 +34,8 @@ void AChessPiece::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Ou
 	DOREPLIFETIME(AChessPiece, PieceType);
 	DOREPLIFETIME(AChessPiece, PieceColor);
 	DOREPLIFETIME(AChessPiece, FloorBeneathPiece);
+	DOREPLIFETIME(AChessPiece, MoveCount);
+	DOREPLIFETIME(AChessPiece, EncounterCount);
 }
 
 EPieceType AChessPiece::GetPieceType()
