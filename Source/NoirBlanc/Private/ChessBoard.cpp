@@ -129,8 +129,6 @@ void AChessBoard::ServerRPC_MovePiece_Implementation()
 
 void AChessBoard::MulticastRPC_MovePiece_Implementation()
 {
-	// FTimerHandle TimerHandle;
-	// GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AChessBoard::MovePiece, 0.2f, false);
 	MovePiece();
 }
 
@@ -303,41 +301,6 @@ ABoardFloor* AChessBoard::SpawnFloor(int32 row, int32 col)
 	}
 	return nullptr;
 }
-
-// void AChessBoard::ForDelay()
-// {
-// }
-//
-// void AChessBoard::ServerRPC_SetPieceData_Implementation(int32 num,EPieceType type, EPieceColor color)
-// {
-// 	_num = num;
-// 	_type = type;
-// 	_color = color;
-// 	MulticastRPC_SetPieceData(num,type,color);
-// }
-//
-// void AChessBoard::MulticastRPC_SetPieceData_Implementation(int32 num,EPieceType type, EPieceColor color)
-// {
-// 	if(HasAuthority())
-// 	{
-// 		SetPieceData();
-// 	}
-// 	else
-// 	{
-// 		if(!HasAuthority())
-// 		{
-// 			// FTimerDelegate TimerDelegate;
-// 			// TimerDelegate.BindUFunction(this, FName("SetPieceData"), num, type, color);
-// 			FTimerHandle TimerHandle;
-// 			GetWorld()->GetTimerManager().SetTimer(TimerHandle,this, &AChessBoard::SetPieceData, 5.f, false);
-// 		}
-// 		// FTimerHandle TimerHandle;
-// 		// GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, Piece, type, color, num]()
-// 		// {
-// 		// 	SetPieceData(type,color,num);
-// 		// }, 5, false);				
-// 	}
-// }
 
 void AChessBoard::SetPieceData(int32 num, EPieceType type, EPieceColor color)
 {
