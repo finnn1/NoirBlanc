@@ -63,6 +63,12 @@ protected:
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	EPieceColor Turn;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* PiecePickSound;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TArray<USoundBase*> PiecePutSounds;
 private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickedOnce = false;
@@ -78,6 +84,8 @@ private:
 	class UNoirBlancGameInstance* GameInstance;
 
 	bool bIsTargetPointEmpty = false;
+
+	float SpawnHeight = 100.f;
 //////////////////////////////////////////
 /////FUNCTION
 public:
@@ -140,5 +148,8 @@ protected:
 
 	UFUNCTION()
 	void ShowKingFloors(EPieceColor Color, int32 Row, int32 Col);
+
+	UFUNCTION()
+	void PlaySound(USoundBase* Sound);
 private:
 };

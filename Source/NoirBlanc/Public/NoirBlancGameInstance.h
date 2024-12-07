@@ -24,7 +24,7 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
-	EPieceColor WinnerColor = EPieceColor::Blank;
+	EPieceColor WinnerColor = EPieceColor::White;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceColor DeffenderColor;

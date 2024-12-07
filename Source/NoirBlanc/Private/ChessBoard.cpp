@@ -150,7 +150,7 @@ void AChessBoard::MovePiece()
 				SelectedFloor->SetPieceOnFloor(nullptr);
 				SelectedPiece->SetFloorBeneathPiece(TargetFloor);
 				TargetFloor->SetPieceOnFloor(SelectedPiece);
-				SelectedPiece->SetActorLocation(TargetFloor->GetActorLocation() + FVector(0.f, 0.f, 250.f));
+				SelectedPiece->SetActorLocation(TargetFloor->GetActorLocation() + FVector(0.f, 0.f, SpawnHeight));
 				SelectedPiece->IncreaseMoveCount();
 				MoveEnd();
 			}
@@ -187,8 +187,8 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 			GameInstance->AttackerCol = SelectedFloor->GetCol();
 			GameInstance->DeffenderRow = TargetFloor->GetRow();
 			GameInstance->DeffenderCol = TargetFloor->GetCol();
-			GameInstance->Saved_Turn = Turn;
 			MoveEnd();
+			GameInstance->Saved_Turn = Turn;
 			if(HasAuthority())
 			{
 				for(int i = 0 ; i < BoardFloors.Num(); i++)
@@ -374,13 +374,13 @@ void AChessBoard::InitBoard()
 		ABoardFloor* Destination = BoardFloors[Delete_Row*Chess_Num + Delete_Col];
 		Attacker->SetFloorBeneathPiece(Destination);
 		Destination->SetPieceOnFloor(Attacker);
-		Attacker->SetActorLocation(Destination->GetActorLocation() + FVector(0.f, 0.f, 250.f));
+		Attacker->SetActorLocation(Destination->GetActorLocation() + FVector(0.f, 0.f, SpawnHeight));
 	}
 }
 
 void AChessBoard::InitPiece(int32 num, EPieceType type, EPieceColor color)
 {
-	FVector SpawnLocation = BoardFloors[num]->GetActorLocation() + FVector(0.f, 0.f, 250.f);
+	FVector SpawnLocation = BoardFloors[num]->GetActorLocation() + FVector(0.f, 0.f, SpawnHeight);
 	FRotator SpawnRotation;
 	if(color == EPieceColor::Black)
 	{	
@@ -826,4 +826,8 @@ void AChessBoard::ShowKingFloors(EPieceColor Color, int32 Row, int32 Col)
 			}
 		}
 	}
+}
+
+void AChessBoard::PlaySound(USoundBase* Sound)
+{
 }
