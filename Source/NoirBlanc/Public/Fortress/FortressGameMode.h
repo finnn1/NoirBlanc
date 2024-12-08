@@ -17,6 +17,7 @@ class NOIRBLANC_API AFortressGameMode : public AGameMode
 
 	AFortressGameMode();
 	virtual void BeginPlay() override;
+	// bind player controller to each pawn
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 public: 

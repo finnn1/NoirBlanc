@@ -83,6 +83,8 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_Move(FVector NewLocation, FRotator NewRotation);
 	
+	void BillboardFireBoost();
+	
 public:
 	float MoveSpeed;
 	float RotationSpeed;
@@ -140,6 +142,9 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_Init();
 
+	UPROPERTY(Replicated, VisibleAnywhere)
+	FText turnCannon;
+	
 	UPROPERTY(Replicated, VisibleAnywhere)
 	bool bIsturn;
 

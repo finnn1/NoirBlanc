@@ -42,6 +42,10 @@ public:
 
 	class ACannon* OwnerCannon;
 
+	ACannon* playerCannon;
+
+	class UFortressUI *playerUI;
+	
 	UPROPERTY(EditAnywhere)
 	float Mass;
 	
@@ -83,13 +87,10 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_PlayBombEffect(const FHitResult& Hit);
 
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_TakeDamage(ACannon* Cannon);
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_ClientTakeDamage(ACannon* Cannon);
-
-	
+	void SetTurnWidgetHidden();
 };
+
+
 
 
 

@@ -20,6 +20,7 @@ void AFortressGameMode::BeginPlay()
 	
 }
 
+// bind player controller to each pawn
 void AFortressGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -56,7 +57,6 @@ void AFortressGameMode::PostLogin(APlayerController* NewPlayer)
 			
 			if (Player2Controller != nullptr)
 				Player2Controller->Possess(Player2Pawn);
-			
 		}
 	}
 	

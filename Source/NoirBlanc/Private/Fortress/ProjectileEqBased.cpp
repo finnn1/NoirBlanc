@@ -2,8 +2,11 @@
 
 
 #include "Fortress/ProjectileEqBased.h"
+
+#include "Components/HorizontalBox.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/TextBlock.h"
 #include "Fortress/Cannon.h"
 #include "Fortress/FortressGameMode.h"
 #include "Fortress/FortressPlayerController.h"
@@ -40,6 +43,8 @@ void AProjectileEqBased::BeginPlay()
 
 	// this projectile owner != playerOwner
 	OwnerCannon = Cast<ACannon>(GetOwner());
+	playerCannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	playerUI = playerCannon->FortressUI;
 
 	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
 	                                 FString::Printf(TEXT("Owner: %s"), *OwnerCannon->GetName()));
@@ -159,8 +164,7 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		{
 			Opponent->Health -= Opponent->Damage;
 			
-			ACannon* playerCannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
-			playerCannon->FortressUI->ApplyDamageHPBar(Opponent, playerCannon);
+			playerUI->ApplyDamageHPBar(Opponent, playerCannon);
 
 			// noir-client-black, blanc-server-white
 			// whether the opponent is server of client
@@ -174,23 +178,15 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		}
 		Destroy();
 	}
+
+	playerUI->SetTurnWidgetVisible();
 }
 
-void AProjectileEqBased::ServerRPC_TakeDamage_Implementation(ACannon* Cannon)
+void AProjectileEqBased::SetTurnWidgetHidden()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Server Take Damage"))
-	if (Cannon->FortressUI)
-		Cannon->FortressUI->TakeDamageHPBar(Cannon);
+	UE_LOG(LogTemp, Warning, TEXT("Turn WidgetHidden"));
+	playerUI->horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 }
-
-void AProjectileEqBased::MulticastRPC_ClientTakeDamage_Implementation(ACannon* Cannon)
-{
-	if (OwnerCannon->HasAuthority()) return;
-	UE_LOG(LogTemp, Warning, TEXT("Client Take Damage"))
-	if (Cannon->FortressUI)
-		Cannon->FortressUI->TakeDamageHPBar(Cannon);
-}
-
 
 void AProjectileEqBased::PlayBombEffect(const FHitResult& Hit)
 {

@@ -12,11 +12,14 @@
 #include "Fortress/Projectile.h"
 #include "Fortress/ProjectileEqBased.h"
 #include "TimerManager.h"
+#include "Components/HorizontalBox.h"
+#include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "Fortress/FireBoostWidget.h"
 #include "Fortress/FortressGameMode.h"
 #include "Fortress/FortressUI.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -130,40 +133,13 @@ void ACannon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//BillboardFireBoost();
 	if (!bIsturn) return; 
-		
+	
 	FVector NewLocation = GetActorLocation() + (MovementInput * MoveSpeed * DeltaTime);
 
 	// TODO: should set the limit of the rotation angle
 	FRotator NewRotation = Muzzle->GetComponentRotation() + RotationInput * RotationSpeed * DeltaTime;
-	
-	// ServerRPC_Move error debug
-	// error message: LogNet: Warning: UNetDriver::ProcessRemoteFunction:
-	// No owning connection for actor BP_Cannon_C_1. Function ServerRPC_Move will not be processed.
-	// if (HasAuthority())
-	// {
-	// 	if (Owner)
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("Server Owner Exists"));
-	// 		UE_LOG(LogTemp, Warning, TEXT("Server | Owner : %s"), *Owner->GetActorNameOrLabel());
-	// 	}
-	// 	else
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("Server Owner Not Exists"));
-	// 	}
-	// }
-	// else
-	// {
-	// 	if (Owner)
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("Client Owner Exists"));
-	// 		UE_LOG(LogTemp, Warning, TEXT("Client | Owner : %s"), *Owner->GetActorNameOrLabel());
-	// 	}
-	// 	else
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("Client Owner Not Exists"));
-	// 	}
-	// }
 	
 	if (IsLocallyControlled())
 		ServerRPC_Move(NewLocation, NewRotation);
@@ -207,21 +183,29 @@ void ACannon::ServerRPC_Fire_Implementation(float Velocity)
 {
 	MulticastRPC_Fire(Velocity);
 
+	// after firing, switch the turn and display the turn
 	// only server can access to the gamemode
 	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
 	if (gm != nullptr)
 	{
 		gm->ChangeTurn();
 		// announce turn by widget
-		
+ 		if (gm->turnIdx == 0)
+			turnCannon = FText::FromString(FString(TEXT("Blanc")));
+		else
+			turnCannon = FText::FromString(FString(TEXT("Noir")));
+		// UE_LOG(LogTemp, Warning, TEXT("turnCannon %s"), *turnCannon.ToString());
+		// UE_LOG(LogTemp, Warning, TEXT("turn idx %d"), gm->turnIdx);
 	}
 }
 
-void ACannon::MulticastRPC_Fire_Implementation(float Velocity)
+void ACannon::MulticastRPC_Fire_Implementation(float Velocity) 
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 	this->ProjectileVelocity = Velocity;
+
+	UE_LOG(LogTemp, Warning, TEXT("turnCannon %s"), *turnCannon.ToString());
 	
 	// spawn projectile
 	ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
@@ -274,6 +258,16 @@ void ACannon::Force(const FInputActionValue& Value)
 {
 }
 
+void ACannon::BillboardFireBoost()
+{
+	AActor* cam = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+	FVector forward = -cam->GetActorForwardVector();	// - sign to face the camera
+	FVector up = cam->GetActorUpVector();
+	FRotator rot = UKismetMathLibrary::MakeRotFromXZ(forward, up);
+
+	VelocityBar->SetWorldRotation(rot);
+}
+
 void ACannon::InitMainUIWiget()
 {
 	if (IsLocallyControlled() == false) return;
@@ -288,6 +282,7 @@ void ACannon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ACannon, bIsturn);
+	DOREPLIFETIME(ACannon, turnCannon);
 }
 
 void ACannon::ClientRPC_Init_Implementation()

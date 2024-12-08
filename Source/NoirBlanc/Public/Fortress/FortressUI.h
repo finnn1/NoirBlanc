@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Cannon.h"
 #include "Blueprint/UserWidget.h"
-
 #include "FortressUI.generated.h"
 
 
@@ -59,14 +58,11 @@ public:
 	
 	// when the cannon's health change, change the progress bar
 	UFUNCTION(BlueprintCallable)
-	void ChangeHPBar(ACannon* Cannon);
+	void ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player);
 
-	UFUNCTION(BlueprintCallable)
-	void ApplyDamageHPBar(ACannon* Cannon, ACannon*  player);
-
-	UFUNCTION(BlueprintCallable)
-	void TakeDamageHPBar(ACannon* Cannon);
-
+	UPROPERTY(meta=(BindWidget))
+	class UHorizontalBox* horizontalBox_Turn;
+	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* text_Turn;
 	
@@ -76,6 +72,12 @@ public:
 	UTextBlock* text_Winner;
 
 	void GameOver(int32 index);
+
+	// Etc. 
+public:
+	void SetTurnWidgetVisible(); 
+	
+	void SetTurnWidgetHidden();
 };
 
 

@@ -2,6 +2,8 @@
 
 
 #include "Fortress/FortressUI.h"
+
+#include "Components/HorizontalBox.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Fortress/Cannon.h"
@@ -18,7 +20,7 @@ void UFortressUI::NativeConstruct()
 	Player1Percentage = 1.0f;
 	Player2Percentage = 1.0f;
 
-	text_Turn->SetVisibility(ESlateVisibility::Hidden);
+	horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 
 	// APlayerController* pc = GetWorld()->GetFirstPlayerController();
 	// if (pc)
@@ -48,18 +50,11 @@ void UFortressUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }
 
-void UFortressUI::ChangeHPBar(ACannon* Cannon)
+void UFortressUI::ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player)
 {
-	float percentage = (Cannon->Health / Cannon->MaxHealth) * 100;
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, TEXT("Percent Changed"));
-	// Player2pg->SetPercent(percentage);	// not working
-}
+	float percentage = damagedCannon->Health / damagedCannon->MaxHealth;
 
-void UFortressUI::ApplyDamageHPBar(ACannon* Cannon, ACannon*  player)
-{
-	float percentage = Cannon->Health / Cannon->MaxHealth;
-
-	if (Cannon == player)
+	if (damagedCannon == player)
 	{
 		Player1Percentage = percentage;
 		UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
@@ -72,16 +67,26 @@ void UFortressUI::ApplyDamageHPBar(ACannon* Cannon, ACannon*  player)
 	}
 }
 
-void UFortressUI::TakeDamageHPBar(ACannon* Cannon)
-{
-	float percentage = Cannon->Health / Cannon->MaxHealth;
-	Player1Percentage = percentage;
-	UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
-}
-
 void UFortressUI::GameOver(int32 index)
 {
 	FText winner = index == 0 ? FText::FromString(TEXT("Noir")) : FText::FromString(TEXT("Blanc"));
 	text_Winner->SetText(winner);
 	WidgetSwitcher->SetActiveWidgetIndex(2);
+}
+
+void UFortressUI::SetTurnWidgetVisible()
+{
+	// set widget visible to know whose turn is it
+	if (playerCannon)
+		text_Turn->SetText(playerCannon->turnCannon);
+	horizontalBox_Turn->SetVisibility(ESlateVisibility::Visible);
+	// delay for 2 sec
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UFortressUI::SetTurnWidgetHidden, 1.0f, false);
+}
+
+void UFortressUI::SetTurnWidgetHidden()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Turn WidgetHidden"));
+	horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 }
