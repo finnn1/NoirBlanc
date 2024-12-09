@@ -202,7 +202,7 @@ void ACannon::MulticastRPC_Fire_Implementation(float Velocity)
 	// spawn projectile
 	ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
 																   SpawnLocation->GetComponentLocation(),
-																   SpawnLocation->GetComponentRotation(), SpawnParams);
+																   SpawnLocation->GetComponentRotation()+FRotator(0,90,0), SpawnParams);
 }
 
 void ACannon::StartCharging(const FInputActionValue& Value)
