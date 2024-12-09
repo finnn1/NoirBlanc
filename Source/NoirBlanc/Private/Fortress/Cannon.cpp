@@ -189,14 +189,8 @@ void ACannon::ServerRPC_Fire_Implementation(float Velocity)
 	if (gm != nullptr)
 	{
 		gm->ChangeTurn();
-		// announce turn by widget
- 		if (gm->turnIdx == 0)
-			turnCannon = FText::FromString(FString(TEXT("Blanc")));
-		else
-			turnCannon = FText::FromString(FString(TEXT("Noir")));
-		// UE_LOG(LogTemp, Warning, TEXT("turnCannon %s"), *turnCannon.ToString());
-		// UE_LOG(LogTemp, Warning, TEXT("turn idx %d"), gm->turnIdx);
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Cannon turnCannon %s"), *turnCannon.ToString());
 }
 
 void ACannon::MulticastRPC_Fire_Implementation(float Velocity) 
@@ -204,8 +198,6 @@ void ACannon::MulticastRPC_Fire_Implementation(float Velocity)
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 	this->ProjectileVelocity = Velocity;
-
-	UE_LOG(LogTemp, Warning, TEXT("turnCannon %s"), *turnCannon.ToString());
 	
 	// spawn projectile
 	ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,

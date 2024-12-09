@@ -169,8 +169,22 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 			// noir-client-black, blanc-server-white
 			// whether the opponent is server of client
 			if (Opponent->Health <= 0)
-				playerCannon->FortressUI->GameOver(1);
-			
+			{
+				int32 num = 0;
+				if (Opponent->HasAuthority())	// server
+				{
+					if (Opponent->IsLocallyControlled()) num = 1;
+					else num = 0;
+				}
+				else		// client
+				{
+					if (Opponent->IsLocallyControlled()) num = 0;
+					else num = 1;
+				}
+				playerCannon->FortressUI->GameOver(num);
+			}
+				
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *Opponent->GetName());
 			// error message: OwnerCannon->FortressUI == null
 		
 			if (BombEffect)
@@ -178,7 +192,7 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		}
 		Destroy();
 	}
-
+	
 	playerUI->SetTurnWidgetVisible();
 }
 

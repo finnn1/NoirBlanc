@@ -2,7 +2,6 @@
 
 
 #include "Fortress/FortressUI.h"
-
 #include "Components/HorizontalBox.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -43,6 +42,9 @@ void UFortressUI::UpdateCountdown()
 		// if (pc)
 		// 	playerCannon->EnableInput(pc);
 	}
+
+	// MulticastRPC -> UI 업데이트 해라!!
+	
 }
 
 void UFortressUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -69,16 +71,21 @@ void UFortressUI::ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player)
 
 void UFortressUI::GameOver(int32 index)
 {
-	FText winner = index == 0 ? FText::FromString(TEXT("Noir")) : FText::FromString(TEXT("Blanc"));
+	FText winner = index == 0 ? FText::FromString(TEXT("Blanc")) : FText::FromString(TEXT("Noir"));
 	text_Winner->SetText(winner);
 	WidgetSwitcher->SetActiveWidgetIndex(2);
 }
 
+// turn UI
 void UFortressUI::SetTurnWidgetVisible()
 {
 	// set widget visible to know whose turn is it
-	if (playerCannon)
+	if (playerCannon) // server doesn't have playerCannon
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UI turnCannon %s"), *playerCannon->turnCannon.ToString());
 		text_Turn->SetText(playerCannon->turnCannon);
+	}
+		
 	horizontalBox_Turn->SetVisibility(ESlateVisibility::Visible);
 	// delay for 2 sec
 	FTimerHandle TimerHandle;

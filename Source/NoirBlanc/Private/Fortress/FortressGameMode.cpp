@@ -68,5 +68,19 @@ void AFortressGameMode::ChangeTurn()
 	turnIdx++;
 	turnIdx %= AllPlayers.Num();
 	AllPlayers[turnIdx]->bIsturn = true;
+
+	for (int32 i = 0; i < AllPlayers.Num(); i++)
+	{
+		// announce turn by widget
+		if (turnIdx == 0)
+			AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Change")));	
+			//AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Blanc")));
+		else
+			AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Change")));
+			//AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Noir")));
+		UE_LOG(LogTemp, Warning, TEXT("turnCannon %s"), *AllPlayers[i]->turnCannon.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("turn idx %d"), turnIdx);
+		UE_LOG(LogTemp, Warning, TEXT("") );
+	}
 }
 
