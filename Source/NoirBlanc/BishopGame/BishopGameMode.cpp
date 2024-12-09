@@ -10,6 +10,7 @@
 #include "BishopWeapon.h"
 #include "NoirBlancGameInstance.h"
 #include "TaggerCharacter.h"
+#include "TravelPlayerController.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PawnMovementComponent.h"
 
@@ -394,12 +395,13 @@ void ABishopGameMode::GameOver(APawn* Winner)
 				if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
 				{
 					IUIUpdatable::Execute_MulticastRPC_SetWinner(JoinedPlayers[i]->GetPawn(), _WinnerColor);
-
+					//Level Travel
+					Cast<ATravelPlayerController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChess();
 					// 승리자가 아닐 경우 Destory!
-					if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
-					{
-						JoinedPlayers[i]->GetPawn()->Destroy();
-					}
+					// if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
+					// {
+					// 	JoinedPlayers[i]->GetPawn()->Destroy();
+					// }
 				}
 			}
 		}
