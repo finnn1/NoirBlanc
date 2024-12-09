@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChessPiece.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
@@ -21,13 +22,15 @@ class NOIRBLANC_API UTurnUI : public UUserWidget
 
 	UImage* Bg;
 	UTextBlock* Text_Turn;
+	
 	UPROPERTY()
-	UCanvasPanel* Turn;
+	UCanvasPanel* Turn_Blanc;
+	UCanvasPanel* Turn_Noir;
 
 	
 	FTimerHandle Handle;
 
 public:
-	void ShowTurn();
-	void HideTurn();
+	void ShowTurn(EPieceColor color);
+	void HideBlanc();
 };

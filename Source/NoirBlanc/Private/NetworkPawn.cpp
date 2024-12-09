@@ -133,6 +133,7 @@ void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ANetworkPawn, IsTurnPlayer);
+	DOREPLIFETIME(ANetworkPawn, CurColor);
 }
 
 void ANetworkPawn::MulticastRPC_GameStart_Implementation()
@@ -250,6 +251,13 @@ void ANetworkPawn::InitPlayerUI()
 	if(PlayerUI && !PlayerUI->IsInViewport())
 	{
 		PlayerUI->AddToViewport();
+	}
+
+	/* Turn UI */
+	TurnUI = Cast<UTurnUI>(CreateWidget(GetWorld(), TurnUIFactory));
+	if(TurnUI && !TurnUI->IsInViewport())
+	{
+		TurnUI->AddToViewport();
 	}
 }
 
@@ -393,11 +401,21 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 	if(StartPlayer->IsLocallyControlled())
 	{
 		StartPlayer->PlayerUI->ShowTurnStart();
+
+		
+		/*Turn UI */
+		// 임의로 흰색 넣음
+		StartPlayer->TurnUI->ShowTurn(EPieceColor::White);
 	}
 	else
 	{
 		ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
+
+		
+		/*Turn UI */
+		// 임의로 흰색 넣음
+		LocalNetPawn->TurnUI->ShowTurn(EPieceColor::White);
 	}
 }
 

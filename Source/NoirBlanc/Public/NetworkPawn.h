@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Components/TimelineComponent.h"
+#include "NoirBlanc/Knight/TurnUI.h"
 #include "NetworkPawn.generated.h"
 
 class APawnCardController;
@@ -138,4 +139,9 @@ protected:
 private:
 	UPROPERTY(Replicated)
 	bool IsTurnPlayer = false;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UTurnUI> TurnUIFactory;
+	UTurnUI* TurnUI;
 };
