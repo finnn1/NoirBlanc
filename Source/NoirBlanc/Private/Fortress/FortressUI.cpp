@@ -2,6 +2,8 @@
 
 
 #include "Fortress/FortressUI.h"
+
+#include "NoirBlancGameInstance.h"
 #include "Components/HorizontalBox.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -74,6 +76,10 @@ void UFortressUI::GameOver(int32 index)
 	FText winner = index == 0 ? FText::FromString(TEXT("Blanc")) : FText::FromString(TEXT("Noir"));
 	text_Winner->SetText(winner);
 	WidgetSwitcher->SetActiveWidgetIndex(2);
+
+	// save result to game instance
+	UNoirBlancGameInstance* gi = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
+	gi->WinnerColor = index == 0 ? EPieceColor::White : EPieceColor::Black;
 }
 
 // turn UI
