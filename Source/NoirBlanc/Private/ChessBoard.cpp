@@ -62,6 +62,7 @@ void AChessBoard::ClickFloor()
 		{
 			if(SelectedPiece->GetPieceColor() == Turn)
 			{
+				PlaySound(PiecePickSound);
 				if(HasAuthority() && SelectedPiece->GetPieceColor() == EPieceColor::White)
 				{
 					bIsClickedOnce = true;
@@ -147,6 +148,8 @@ void AChessBoard::MovePiece()
 			//if target floor is movable
 			if(MovableFloors[i] == TargetFloor)
 			{
+				int32 index = FMath::RandRange(0, PiecePutSounds.Num()-1);
+				PlaySound(PiecePutSounds[index]);
 				SelectedFloor->SetPieceOnFloor(nullptr);
 				SelectedPiece->SetFloorBeneathPiece(TargetFloor);
 				TargetFloor->SetPieceOnFloor(SelectedPiece);
@@ -830,4 +833,8 @@ void AChessBoard::ShowKingFloors(EPieceColor Color, int32 Row, int32 Col)
 
 void AChessBoard::PlaySound(USoundBase* Sound)
 {
+	if (Sound)
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), Sound);
+	}
 }

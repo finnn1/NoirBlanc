@@ -85,7 +85,7 @@ private:
 
 	bool bIsTargetPointEmpty = false;
 
-	float SpawnHeight = 100.f;
+	float SpawnHeight = 50.f;
 //////////////////////////////////////////
 /////FUNCTION
 public:
