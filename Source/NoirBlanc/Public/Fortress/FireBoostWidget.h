@@ -18,6 +18,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Velocity;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxVelocity = 4000;
+	
 	UFUNCTION(BlueprintCallable)
 	float ChargeVelocity();
 };

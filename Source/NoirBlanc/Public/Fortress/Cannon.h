@@ -67,9 +67,9 @@ protected:
 
 	void Fire();
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_Fire(float Velocity);
+	void ServerRPC_Fire(float Velocity, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass);
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_Fire(float Velocity);
+	void MulticastRPC_Fire(float Velocity, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass);
 	
 	void StartCharging(const FInputActionValue& Value);
 
@@ -98,9 +98,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	float VelocityChange = 100.0f;
 	
-	const float MaxSpeed = 1000.0f;
-	const float SpeedIncreaseRate = 50.0f;
-	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -120,8 +117,24 @@ public:
 	TSubclassOf<AProjectileEqBased> ProjectileEqBasedFactory;		// class
 
 	UPROPERTY(EditAnywhere)
-	AProjectileEqBased* ProjectileEqBased;	// object
+	TSubclassOf<class ACannonBall> CannonBallFactory;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AMissile> MissileFactory;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ABomb> BombFactory;
+	
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<AProjectileEqBased>>ProjectilesEqBasedFactoryArray;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AProjectileEqBased> ProjectileEqBasedClass;	// object
+
+	TArray<int32> randomProjectileIdxArray;
+	int32 numprojectile;
+	int32 projectileIdx = 0;
+	
 public:
 	// Health and Damage
 	UPROPERTY(EditAnywhere)
@@ -130,8 +143,8 @@ public:
 
 	float Health;
 
-	UPROPERTY(EditAnywhere)
-	float Damage;
+	// UPROPERTY(EditAnywhere)
+	// float Damage;
 
 public:
 	UPROPERTY(EditAnywhere)

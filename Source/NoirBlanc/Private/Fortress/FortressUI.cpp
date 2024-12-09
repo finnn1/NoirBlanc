@@ -90,7 +90,7 @@ void UFortressUI::SetTurnWidgetVisible()
 	// set widget visible to know whose turn is it
 	if (playerCannon) // server doesn't have playerCannon
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UI turnCannon %s"), *playerCannon->turnCannon.ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("UI turnCannon %s"), *playerCannon->turnCannon.ToString());
 		text_Turn->SetText(playerCannon->turnCannon);
 	}
 		
@@ -102,6 +102,5 @@ void UFortressUI::SetTurnWidgetVisible()
 
 void UFortressUI::SetTurnWidgetHidden()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Turn WidgetHidden"));
 	horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 }
