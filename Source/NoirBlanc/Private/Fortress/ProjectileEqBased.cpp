@@ -69,7 +69,7 @@ void AProjectileEqBased::BeginPlay()
 		                                 FString::Printf(TEXT("Velocity: %s"), *InitVelocity.ToString()));
 
 		// when collision happens
-		Mesh->IgnoreActorWhenMoving(this->Owner, true);
+		Mesh->IgnoreActorWhenMoving(OwnerCannon, true);
 		Mesh->OnComponentHit.AddDynamic(this, &AProjectileEqBased::OnProjectileHit);
 	}
 }
