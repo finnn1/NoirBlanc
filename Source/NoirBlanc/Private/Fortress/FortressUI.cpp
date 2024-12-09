@@ -4,6 +4,7 @@
 #include "Fortress/FortressUI.h"
 
 #include "NoirBlancGameInstance.h"
+#include "TravelPlayerController.h"
 #include "Components/HorizontalBox.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -80,6 +81,7 @@ void UFortressUI::GameOver(int32 index)
 	// save result to game instance
 	UNoirBlancGameInstance* gi = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	gi->WinnerColor = index == 0 ? EPieceColor::White : EPieceColor::Black;
+	Cast<ATravelPlayerController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChess();
 }
 
 // turn UI
