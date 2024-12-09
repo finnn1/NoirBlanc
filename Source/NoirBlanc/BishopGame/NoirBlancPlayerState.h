@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PieceTypes.h"
 #include "GameFramework/PlayerState.h"
 #include "NoirBlancPlayerState.generated.h"
 
@@ -15,6 +16,9 @@ class NOIRBLANC_API ANoirBlancPlayerState : public APlayerState
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(Replicated)
+	EPieceColor PieceColor = EPieceColor::Blank;
+	
 	UPROPERTY(Replicated)
 	bool bIsAttaker = true;
 

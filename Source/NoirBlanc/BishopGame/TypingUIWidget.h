@@ -16,6 +16,9 @@ class NOIRBLANC_API UTypingUIWidget : public UUserWidget
 
 public:
 	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Text_Timer;
+	
+	UPROPERTY(meta = (BindWidget))
 	class URichTextBlock* TextToTypeUI;
 
 	UPROPERTY(meta = (BindWidget))

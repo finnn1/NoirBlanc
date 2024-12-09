@@ -8,5 +8,6 @@ void ANoirBlancPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimePro
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// Replicate 할 변수 등록
+	DOREPLIFETIME(ANoirBlancPlayerState, PieceColor);
 	DOREPLIFETIME(ANoirBlancPlayerState, bIsAttaker);
 }

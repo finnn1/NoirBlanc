@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "UIUpdatable.h"
+#include "WaitingOtherPlayerUI.h"
 #include "GameFramework/Character.h"
 #include "TaggerCharacter.generated.h"
 
@@ -21,21 +22,26 @@ public:
 	UStaticMeshComponent* MeshComponent;
 
 	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY
+	(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY
+	(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY
+	(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* TaggerMappingContext;
 
 	/** Look Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY
+	(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY
+	(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
 	UPROPERTY(EditAnywhere, Category = "UI")
@@ -46,7 +52,13 @@ public:
 	TSubclassOf<class UTaggerUIWidget> TaggerUIWidgetClass;
 	class UTaggerUIWidget* TaggerUIWidget;
 
-	
+
+	/// UIUpdatble Interface ///
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_SetPieceColor(EPieceColor NewPieceColor) override;
+
+	virtual EPieceColor GetPieceColor_Implementation() override;
+
 	UFUNCTION(Server, Reliable)
 	virtual void ServerRPC_SetRandomText() override;
 
@@ -55,20 +67,46 @@ public:
 	virtual void ServerRPC_UpdateText(const FText& InputedText) override;
 
 	UFUNCTION(NetMulticast, Reliable)
-	virtual void MulticastRPC_SpawnWeapon(FVector Location, FRotator Rotation, UClass* WeaponClass) override;
-	
-	UFUNCTION(NetMulticast, Reliable)
-	virtual void MulticastRPC_SetUITextTo(const FText& InputedText, const FText& CurrentTextToType, const TArray<bool>& StringCorrectArray) override;
-	
-protected:
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void MulticastRPC_InitializeTypingUI() override;
 
-	// Called when the game starts or when spawned
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_SpawnWeapon(FVector Location, FRotator Rotation, UClass* WeaponClass) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_SetUITextTo(const FText& InputedText, const FText& CurrentTextToType,
+	                                      const TArray<bool>& StringCorrectArray) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_UpdateMainTimerUI(const FText& NewText) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_UpdateStartCountdownUI(const FText& NewText) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_SetInput(bool bIsEnable) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_SetWinner(EPieceColor WinnerColor) override;
+
+protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Look(const FInputActionValue& Value);
 	void JumpStarted(const FInputActionValue& Value);
 	void JumpEnded(const FInputActionValue& Value);
+
+public:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UWaitingOtherPlayerUI> UWaitingOtherPlayerUIClass;
+	UWaitingOtherPlayerUI* WaitingOtherPlayerUI;
+	// 서버에게 들어왔다고 알려주기
+	void Joined(APlayerController* NewPlayer);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Joined(APlayerController* JoinedPlayer);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_ShowWaitingUI(APlayerController* JoinedPlayer);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_JumpStarted(const FInputActionValue& Value);
@@ -85,15 +123,13 @@ protected:
 	float MaxJumpPower = 1000.f;
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_UpdateProgressBar(float Value);
-	
+
 	// 점프 힘에 따라 스케일 줄어들기
 	void UpdateScale();
-	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"), Category = "Tagger Jump")
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"),
+		Category = "Tagger Jump")
 	float MinSquashScale = 0.3f;
-	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"), Category = "Tagger Jump")
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"),
+		Category = "Tagger Jump")
 	float MaxSquashScale = 1.f;
-
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 };
