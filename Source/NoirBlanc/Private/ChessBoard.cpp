@@ -10,6 +10,7 @@
 #include "Net/UnrealNetwork.h"
 #include "NoirBlanc/Knight/TurnUI.h"
 #include "QueenSelectWidget.h"
+#include "NoirBlanc/Knight/BattleUI.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -225,7 +226,11 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	bIsGoingToAnotherLevel = true;
 	MoveEnd();
 	GameInstance->Saved_Turn = Turn;
+	//Contact Begin
 	PlaySound(BattleSound);
+	BattleUI = CreateWidget<UBattleUI>(GetWorld(), BattleUIClass);
+	BattleUI->AddToViewport();
+	
 	if(HasAuthority())
 	{
 		for(int i = 0 ; i < BoardFloors.Num(); i++)

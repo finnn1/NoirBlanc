@@ -92,6 +92,11 @@ protected:
 	TSubclassOf<class UQueenSelectWidget> QueenSelectUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UQueenSelectWidget* QueenSelectUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UBattleUI> BattleUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UBattleUI* BattleUI;
 	
 private:
 	const int32 Chess_Num  = 8;
