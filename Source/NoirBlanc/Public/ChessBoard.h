@@ -87,7 +87,11 @@ protected:
 	TSubclassOf<class UTurnUI> TurnUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UTurnUI* TurnUI;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UResultUI> ResultUIClass;
+	UResultUI* ResultUI;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class UQueenSelectWidget> QueenSelectUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
