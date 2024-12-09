@@ -50,6 +50,10 @@ public:
 	
 	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GamePlay")
 	ABoardFloor* TargetFloor = nullptr;
+
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ChessBoard")
+	bool bIsSamePieceClicked = false;
 	
 protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
@@ -62,13 +66,33 @@ protected:
 	TArray<ABoardFloor*> AttackableFloors;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
-	EPieceColor Turn;
+	EPieceColor Turn = EPieceColor::White;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* PiecePickSound;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TArray<USoundBase*> PiecePutSounds;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* BackgroundMusic;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* BattleSound;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* WinningSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UTurnUI> TurnUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UTurnUI* TurnUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UQueenSelectWidget> QueenSelectUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UQueenSelectWidget* QueenSelectUI;
+	
 private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickedOnce = false;
@@ -86,6 +110,12 @@ private:
 	bool bIsTargetPointEmpty = false;
 
 	float SpawnHeight = 50.f;
+
+	//bool bIsSamePieceClicked = false;
+
+	bool bIsGoingToAnotherLevel = false;
+
+	FName LevelToOpen;
 //////////////////////////////////////////
 /////FUNCTION
 public:
@@ -118,6 +148,9 @@ public:
 	void InitFloor();
 
 	void SetPieceData(int32 num, EPieceType type, EPieceColor color);
+	
+	UFUNCTION()
+	void OpenLevel();
 protected:
 	UFUNCTION()
 	void ChangeTurn();
@@ -151,5 +184,19 @@ protected:
 
 	UFUNCTION()
 	void PlaySound(USoundBase* Sound);
+
+	UFUNCTION()
+	void TurnUIChange();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_TurnUIChange();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_TurnUIChange();
+	
+	UFUNCTION()
+	FString ShowQueenWidget();
+	UFUNCTION()
+	void DestroyQueenWidget();
+	void QueenEncounter();
+	void AfterQueen(AChessPiece* Selected, AChessPiece* Target);
 private:
 };
