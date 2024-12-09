@@ -141,6 +141,10 @@ protected:
 
 	virtual void PossessedBy(AController* NewController) override;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPT_Test(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard);
+
+
 private:
 	UPROPERTY(Replicated)
 	bool IsTurnPlayer = false;
@@ -154,4 +158,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	EPieceColor PawnPieceColor;
+
+	UFUNCTION()
+	void DtyCard(APawnCard* DestroyCard);
 };

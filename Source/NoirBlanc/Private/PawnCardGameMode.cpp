@@ -39,6 +39,11 @@ void APawnCardGameMode::BeginPlay()
 				if(PawnCard)
 				{
 					PawnCards.Add(PawnCard);
+					/*ANetworkPawn* authPlayer = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
+					if(authPlayer)
+					{
+						PawnCard->OnFinishSetMat.AddUObject(authPlayer, &ANetworkPawn::DtyCard);	
+					}*/
 				}
 			}
 		}
@@ -59,7 +64,7 @@ void APawnCardGameMode::SetInitCardSetting()
 	{
 		static float ElapsedTime = 0.0f;
 		
-		if(ElapsedTime >= 2.f)
+		if(ElapsedTime >= 5.f)
 		{
 			InitPawnCardGame();
 			ElapsedTime = 0.0f;
@@ -127,7 +132,7 @@ bool APawnCardGameMode::CheckRemainCards()
 	{
 		GameSet();
 	}
-	
+	UE_LOG(LogTemp, Warning, TEXT("RemainNum : %d"), PawnCards.Num());
 	return (PawnCards.Num() == 0);
 }
 

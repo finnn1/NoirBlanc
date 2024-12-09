@@ -6,14 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "PawnCard.generated.h"
 
-class UPawnCardDataAsset;
-
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnFinishSetMat, APawnCard* PawnCard);
 UENUM(BlueprintType)
 enum class CardState : uint8
 {
 	Front,
 	Back
 };
+class UPawnCardDataAsset;
 
 UCLASS()
 class NOIRBLANC_API APawnCard : public AActor
@@ -29,6 +29,7 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	FOnFinishSetMat OnFinishSetMat;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
 	UStaticMeshComponent* StaticMeshComp;
@@ -45,6 +46,13 @@ private:
 	
 	UPROPERTY()
 	bool bIsSelectable;
+
+	void SetLerpMaterial();
+	
+	FTimerHandle LerpTimer;
+
+	float CurrentLerpTime;
+	float LerpCycle = 0.08;
 
 public:
 	//카드 앞뒷면 상태 변화

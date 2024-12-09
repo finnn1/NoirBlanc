@@ -2,6 +2,8 @@
 
 
 #include "PawnCard.h"
+
+#include "NetworkPawn.h"
 #include "PawnCardDataAsset.h"
 
 // Sets default values
@@ -33,6 +35,23 @@ void APawnCard::BeginPlay()
 	}
 }
 
+void APawnCard::SetLerpMaterial()
+{
+	if(!PawnCardData) return;
+	GetWorldTimerManager().SetTimer(LerpTimer, [this]()
+	{
+		if(!StaticMeshComp) return;
+		CurrentLerpTime += LerpCycle;
+		PawnCardData->SetMatchingMaterial(StaticMeshComp, CurrentLerpTime);
+		
+		if(CurrentLerpTime > 1)
+		{
+			GetWorldTimerManager().ClearTimer(LerpTimer);
+			OnFinishSetMat.Broadcast(this);	
+		}
+	}, LerpCycle, true);
+}
+
 void APawnCard::ChangeFrontBackState()
 {
 	if(FrontBackState == CardState::Front)
@@ -53,9 +72,9 @@ void APawnCard::InitCard()
 
 int32 APawnCard::MatchingSuccess()
 {
+	SetLerpMaterial();
 	if(PawnCardData)
 	{
-		PawnCardData->SetMatchingMaterial(StaticMeshComp);
 		return PawnCardData->Score;
 	}
 	return 1;

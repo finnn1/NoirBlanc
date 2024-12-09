@@ -26,5 +26,5 @@ public:
 	void InitMeshMaterial(UStaticMeshComponent* StaticMeshComp);
 
 	UFUNCTION()
-	void SetMatchingMaterial(UStaticMeshComponent* StaticMeshComp);
+	void SetMatchingMaterial(UStaticMeshComponent* StaticMeshComp, float Alpha);
 };
