@@ -21,12 +21,17 @@ class NOIRBLANC_API UTurnUI : public UUserWidget
 	virtual void NativeConstruct() override;
 
 	UImage* Bg;
-	UTextBlock* Text_Turn;
+	UTextBlock* Text_Blanc;
+	UTextBlock* Text_Noir;
 	
 	UPROPERTY()
 	UCanvasPanel* Turn_Blanc;
 	UCanvasPanel* Turn_Noir;
-
+public:
+	UPROPERTY(BlueprintReadOnly, Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* Anim_Blanc;
+	UPROPERTY(BlueprintReadOnly, Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* Anim_Noir;
 	
 	FTimerHandle Handle;
 
