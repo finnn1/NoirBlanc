@@ -25,5 +25,5 @@ public:
 	
 	virtual void NativeConstruct() override;
 
-	FName ChooseLevel();
+//	FName ChooseLevel();
 };
