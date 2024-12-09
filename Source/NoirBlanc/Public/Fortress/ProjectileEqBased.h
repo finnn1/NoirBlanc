@@ -22,8 +22,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(Replicated)
 	FVector InitVelocity;
-	FVector CurrLocation;
+	
 	FVector WindForce;
 	float Gravity;
 	float ElapsedTime;
@@ -35,24 +36,39 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	float Speed;
+
+	class ACannon* OwnerCannon;
+
+	ACannon* playerCannon;
+
+	class UFortressUI *playerUI;
+	
 	UPROPERTY(EditAnywhere)
-	float InitSpeed;
+	float Mass;
 	
 	UPROPERTY(EditAnywhere)
 	float Force;
 	
 	void SetWindResistance(FVector WindDirection, float Resistance);
 
-	UFUNCTION()
-	void OnProjectileOverlap(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult
-		);
+	void SetSpeedAddImpuse(FVector Direction);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SetSpeedAddImpuse(FVector Direction);
+	
+	// UFUNCTION()
+	// void OnProjectileOverlap(
+	// 	UPrimitiveComponent* OverlappedComponent,
+	// 	AActor* OtherActor,
+	// 	UPrimitiveComponent* OtherComp,
+	// 	int32 OtherBodyIndex,
+	// 	bool bFromSweep,
+	// 	const FHitResult& SweepResult
+	// 	);
 
+	// binding function for OnHit delegate
 	UFUNCTION()
 	void  OnProjectileHit(
 		UPrimitiveComponent* HitComponent,
@@ -61,7 +77,20 @@ public:
 		FVector OtherNormal,
 		const FHitResult& Hit
 		);
-
+	
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* BombEffect;
+	
+	void PlayBombEffect(const FHitResult& Hit);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_PlayBombEffect(const FHitResult& Hit);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_PlayBombEffect(const FHitResult& Hit);
+
+	void SetTurnWidgetHidden();
 };
+
+
+
+
+

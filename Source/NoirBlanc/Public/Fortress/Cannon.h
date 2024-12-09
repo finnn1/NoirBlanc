@@ -37,7 +37,7 @@ public:
 	class USphereComponent* SpawnLocation;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UWidgetComponent* ProgressBar;
+	class UWidgetComponent* VelocityBar;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UFireBoostWidget* FireBoostWidget;
@@ -54,9 +54,6 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	UInputAction* ProjectileDirAction;
-
-	UPROPERTY(EditAnywhere)
-	UInputAction* FireAction;
 	
 	UPROPERTY(EditAnywhere)
 	UInputAction* FireBoostAction;
@@ -68,8 +65,12 @@ protected:
 
 	void ProjectileDir(const FInputActionValue& Value);
 
-	void Fire(const FInputActionValue& Value);
-
+	void Fire();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Fire(float Velocity);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Fire(float Velocity);
+	
 	void StartCharging(const FInputActionValue& Value);
 
 	void ContinueCharging();
@@ -79,16 +80,23 @@ protected:
 	FVector MovementInput;
 	FRotator RotationInput;
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Move(FVector NewLocation, FRotator NewRotation);
+	
+	void BillboardFireBoost();
+	
 public:
 	float MoveSpeed;
 	float RotationSpeed;
 
+	// timer for setting projectile velocity
 	FTimerHandle SpeedIncreaseTimerHandle;
 
 	UPROPERTY(EditAnywhere)
 	float ProjectileVelocity;
+	
 	UPROPERTY(EditAnywhere)
-	float VelocityChange = 100.0f;;
+	float VelocityChange = 100.0f;
 	
 	const float MaxSpeed = 1000.0f;
 	const float SpeedIncreaseRate = 50.0f;
@@ -98,6 +106,8 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void PossessedBy(AController* NewController) override;
 
 public:
 	// UPROPERTY(EditAnywhere)
@@ -113,11 +123,32 @@ public:
 	AProjectileEqBased* ProjectileEqBased;	// object
 
 public:
+	// Health and Damage
 	UPROPERTY(EditAnywhere)
+	float MaxHealth;
+	UPROPERTY(EditAnywhere)
+
 	float Health;
 
-	//virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+	UPROPERTY(EditAnywhere)
+	float Damage;
+
+public:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> FortressUIFactory;
+	class UFortressUI* FortressUI;
 	
+	void InitMainUIWiget();
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_Init();
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	FText turnCannon;
 	
-	
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bIsturn;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
+
+
