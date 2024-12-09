@@ -30,7 +30,7 @@ AProjectileEqBased::AProjectileEqBased()
 	Force = 1.0f;
 	Speed = 0.0f;
 	Mass = 1;
-
+	Damage = 10.0f;
 	//bReplicates = true;
 }
 
@@ -46,8 +46,8 @@ void AProjectileEqBased::BeginPlay()
 	playerCannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	playerUI = playerCannon->FortressUI;
 
-	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
-	                                 FString::Printf(TEXT("Owner: %s"), *OwnerCannon->GetName()));
+	// GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+	//                                  FString::Printf(TEXT("Owner: %s"), *OwnerCannon->GetName()));
 
 	if (OwnerCannon)
 	{
@@ -63,10 +63,10 @@ void AProjectileEqBased::BeginPlay()
 		// // impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
 		// Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
 
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
-		                                 FString::Printf(TEXT("Speed: %f"), Speed));
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
-		                                 FString::Printf(TEXT("Velocity: %s"), *InitVelocity.ToString()));
+		// GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+		//                                  FString::Printf(TEXT("Speed: %f"), Speed));
+		// GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+		//                                  FString::Printf(TEXT("Velocity: %s"), *InitVelocity.ToString()));
 
 		// when collision happens
 		Mesh->IgnoreActorWhenMoving(OwnerCannon, true);
@@ -91,15 +91,15 @@ void AProjectileEqBased::SetSpeedAddImpuse(FVector Direction)
 	Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
 }
 
-void AProjectileEqBased::ServerRPC_SetSpeedAddImpuse_Implementation(FVector Direction)
-{
-	Speed = OwnerCannon->ProjectileVelocity;
-	InitVelocity = Direction.GetSafeNormal() * Speed;
-
-	/* if simulate physics is false*/
-	// impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
-	Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
-}
+// void AProjectileEqBased::ServerRPC_SetSpeedAddImpuse_Implementation(FVector Direction)
+// {
+// 	Speed = OwnerCannon->ProjectileVelocity;
+// 	InitVelocity = Direction.GetSafeNormal() * Speed;
+//
+// 	/* if simulate physics is false*/
+// 	// impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
+// 	Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
+// }
 
 
 // Called every frame
@@ -162,7 +162,7 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		ACannon* Opponent = Cast<ACannon>(OtherActor);
 		if (Opponent)		// it the projectile hit the opponent Cannon
 		{
-			Opponent->Health -= Opponent->Damage;
+			Opponent->Health -= Damage;
 			
 			playerUI->ApplyDamageHPBar(Opponent, playerCannon);
 
@@ -184,7 +184,7 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 				playerCannon->FortressUI->GameOver(num);
 			}
 				
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *Opponent->GetName());
+			//UE_LOG(LogTemp, Warning, TEXT("%s"), *Opponent->GetName());
 			// error message: OwnerCannon->FortressUI == null
 		
 			if (BombEffect)
@@ -198,13 +198,11 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 
 void AProjectileEqBased::SetTurnWidgetHidden()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Turn WidgetHidden"));
 	playerUI->horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void AProjectileEqBased::PlayBombEffect(const FHitResult& Hit)
 {
-	UE_LOG(LogTemp, Warning, TEXT("HitResult: %s"), *Hit.GetActor()->GetActorNameOrLabel());
 	//ServerRPC_PlayBombEffect(Hit);
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BombEffect, Hit.ImpactPoint, FRotator(0, 0, 0));
 }

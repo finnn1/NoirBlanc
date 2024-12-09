@@ -31,6 +31,9 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	float WindResistance;
+
+	UPROPERTY(EditAnywhere)
+	float Damage;
 	
 public:	
 	// Called every frame
@@ -55,8 +58,8 @@ public:
 	void SetWindResistance(FVector WindDirection, float Resistance);
 
 	void SetSpeedAddImpuse(FVector Direction);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_SetSpeedAddImpuse(FVector Direction);
+	// UFUNCTION(Server, Reliable)
+	// void ServerRPC_SetSpeedAddImpuse(FVector Direction);
 	
 	// UFUNCTION()
 	// void OnProjectileOverlap(

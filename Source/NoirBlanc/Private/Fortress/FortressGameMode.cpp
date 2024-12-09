@@ -78,9 +78,9 @@ void AFortressGameMode::ChangeTurn()
 		else
 			AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Change")));
 			//AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Noir")));
-		UE_LOG(LogTemp, Warning, TEXT("turnCannon %s"), *AllPlayers[i]->turnCannon.ToString());
-		UE_LOG(LogTemp, Warning, TEXT("turn idx %d"), turnIdx);
-		UE_LOG(LogTemp, Warning, TEXT("") );
+		// UE_LOG(LogTemp, Warning, TEXT("turnCannon %s"), *AllPlayers[i]->turnCannon.ToString());
+		// UE_LOG(LogTemp, Warning, TEXT("turn idx %d"), turnIdx);
+		// UE_LOG(LogTemp, Warning, TEXT("") );
 	}
 }
 

@@ -21,6 +21,10 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Fortress/Bomb.h"
+#include "Fortress/CannonBall.h"
+#include "Fortress/Missile.h"
+#include "Algo/RandomShuffle.h"
 
 // Sets default values
 ACannon::ACannon()
@@ -55,14 +59,13 @@ ACannon::ACannon()
 
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
-	Damage = 10.0f;
+	// Damage = 10.0f;
 
 	this->NetUpdateFrequency = 100.0f;
 
 	Muzzle->SetUsingAbsoluteLocation(true);
 
 	bIsturn = false;
-	
 }
 
 // Called when the game starts or when spawned
@@ -70,6 +73,14 @@ void ACannon::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// does not work if it is located in constructor
+	ProjectilesEqBasedFactoryArray.Append({ProjectileEqBasedFactory,
+	CannonBallFactory, MissileFactory, BombFactory});
+
+	numprojectile = ProjectilesEqBasedFactoryArray.Num();
+
+	for (int32 i = 0; i < numprojectile; i++) randomProjectileIdxArray.Add(i);
+	
 	// set velocity bar widget
 	if (VelocityBar != nullptr)
 	{
@@ -123,7 +134,7 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void ACannon::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	UE_LOG(LogTemp, Warning, TEXT("Possessed by: %s"), *GetActorNameOrLabel());
+	//UE_LOG(LogTemp, Warning, TEXT("Possessed by: %s"), *GetActorNameOrLabel());
 
 	ClientRPC_Init();
 }
@@ -171,18 +182,28 @@ void ACannon::Fire()
 	
 	GetWorld()->GetTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
 
+	if (projectileIdx==0)
+		Algo::RandomShuffle(randomProjectileIdxArray);
+	
+	if (projectileIdx>=numprojectile) projectileIdx -= numprojectile;
+	//UE_LOG(LogTemp, Warning, TEXT("total num: %d"), randomProjectileIdxArray.Num());
+	
+	ProjectileEqBasedClass = ProjectilesEqBasedFactoryArray[projectileIdx];
+	
 	if (ProjectileEqBasedFactory)
-		ServerRPC_Fire(ProjectileVelocity);
+		ServerRPC_Fire(ProjectileVelocity, ProjectileEqBasedClass);
 
 	if (FireBoostWidget != nullptr)
 		FireBoostWidget->Velocity = 0.0f; // set velocity var in widget 0
-	
+
+	projectileIdx++;
 }
 
-void ACannon::ServerRPC_Fire_Implementation(float Velocity)
+void ACannon::ServerRPC_Fire_Implementation(float Velocity, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass)
 {
-	MulticastRPC_Fire(Velocity);
-
+	
+	MulticastRPC_Fire(Velocity, ProjectileEqBasedSubclass);
+	
 	// after firing, switch the turn and display the turn
 	// only server can access to the gamemode
 	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
@@ -190,10 +211,10 @@ void ACannon::ServerRPC_Fire_Implementation(float Velocity)
 	{
 		gm->ChangeTurn();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Cannon turnCannon %s"), *turnCannon.ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("Cannon turnCannon %s"), *turnCannon.ToString());
 }
 
-void ACannon::MulticastRPC_Fire_Implementation(float Velocity) 
+void ACannon::MulticastRPC_Fire_Implementation(float Velocity, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass) 
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
@@ -201,9 +222,9 @@ void ACannon::MulticastRPC_Fire_Implementation(float Velocity)
 	
 	// spawn projectile
 	FVector direction = SpawnLocation->GetComponentLocation() - SpawnOrigin->GetComponentLocation();
-	ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
-																   SpawnLocation->GetComponentLocation(),
-																   direction.Rotation(), SpawnParams);
+	
+	GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedSubclass,
+		SpawnLocation->GetComponentLocation(), direction.Rotation(), SpawnParams);
 }
 
 void ACannon::StartCharging(const FInputActionValue& Value)
