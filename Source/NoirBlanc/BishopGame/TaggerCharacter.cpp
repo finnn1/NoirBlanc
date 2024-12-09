@@ -1,32 +1,30 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "TaggerCharacter.h"
-
 #include "BishopGameMode.h"
 #include "BishopPawn.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "TypingUIWidget.h"
 #include "BishopWeapon.h"
+#include "NoirBlancGameInstance.h"
+#include "NoirBlancPlayerState.h"
 #include "TaggerUIWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/EditableTextBox.h"
 #include "Components/ProgressBar.h"
-#include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NoirBlanc/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
+#include "PieceTypes.h"
 
 class ABishopGameMode;
 // Sets default values
 ATaggerCharacter::ATaggerCharacter()
 {
-	SetReplicates(true);
-
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -97,10 +95,44 @@ void ATaggerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 	else
 	{
-		UE_LOG(LogTemplateCharacter, Error,
-		       TEXT(
-			       "'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."
-		       ), *GetNameSafe(this));
+		UE_LOG
+		(
+		 LogTemplateCharacter,
+		 Error,
+		 TEXT(
+			 "'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."
+		 ),
+		 *GetNameSafe(this)
+		);
+	}
+}
+
+void ATaggerCharacter::MulticastRPC_UpdateMainTimerUI_Implementation(const FText& NewText)
+{
+	if (IsLocallyControlled())
+	{
+		TypingUIWidget->Text_Timer->SetText(NewText);
+	}
+}
+
+void ATaggerCharacter::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
+{
+	if (IsLocallyControlled())
+	{
+		WaitingOtherPlayerUI->SetText(NewText);
+	}
+}
+
+void ATaggerCharacter::MulticastRPC_SetWinner_Implementation(EPieceColor WinnerColor)
+{
+	if (IsLocallyControlled())
+	{
+		UNoirBlancGameInstance* _NoirBlanc = GetGameInstance<UNoirBlancGameInstance>();
+		if (_NoirBlanc)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Tagger :: Winner : %d"), WinnerColor);
+			_NoirBlanc->WinnerColor = WinnerColor;
+		}
 	}
 }
 
@@ -109,25 +141,35 @@ void ATaggerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (HasAuthority())
+	{
+		SetReplicates(true);
+	}
+
+	// 로컬컨트롤 하고 있는 애라면? --> 클라니까 서버한테 Join 했다고 알려주자.
 	if (IsLocallyControlled())
 	{
-		// Tagger 플레이어에게 타이핑 UI 띄우기
-		if (TypingUIWidgetClass == nullptr) return;
-		TypingUIWidget = CreateWidget<UTypingUIWidget>(GetWorld()->GetFirstPlayerController(), TypingUIWidgetClass);
-		if (TypingUIWidget == nullptr) return;
-		TypingUIWidget->AddToViewport();
-		TypingUIWidget->UserInput->SetVisibility(ESlateVisibility::Hidden);
-
-		// TODO: 비즈니스 로직은 서버에서 해줘야 함
-		// 서버에서 랜덤 텍스트 요청하기
-		ServerRPC_SetRandomText();
-		
-		// Taager UI 띄우기 (점프 Power Progress Bar)
-		if (TaggerUIWidgetClass == nullptr) return;
-		TaggerUIWidget = CreateWidget<UTaggerUIWidget>(GetWorld()->GetFirstPlayerController(), TaggerUIWidgetClass);
-		if (TaggerUIWidget == nullptr) return;
-		TaggerUIWidget->AddToViewport();
+		APlayerController* NewPlayerController = Cast<APlayerController>(GetController());
+		if (NewPlayerController)
+		{
+			Joined(NewPlayerController);
+			UE_LOG(LogTemp, Warning, TEXT("Tagger Character Possed : %s"), *GetActorNameOrLabel());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Tagger Character PlayerController is NULL!!"));
+		}
 	}
+}
+
+void ATaggerCharacter::MulticastRPC_SetPieceColor_Implementation(EPieceColor NewPieceColor)
+{
+	GetPlayerState<ANoirBlancPlayerState>()->PieceColor = NewPieceColor;
+}
+
+EPieceColor ATaggerCharacter::GetPieceColor_Implementation()
+{
+	return GetPlayerState<ANoirBlancPlayerState>()->PieceColor;
 }
 
 void ATaggerCharacter::ServerRPC_SetRandomText_Implementation()
@@ -155,6 +197,28 @@ void ATaggerCharacter::ServerRPC_UpdateText_Implementation(const FText& InputedT
 	// MulticastRPC_SetUITextTo(InputedText, BishopGameMode->CurrentTextToType, TODO);
 }
 
+void ATaggerCharacter::MulticastRPC_InitializeTypingUI_Implementation()
+{
+	// Tagger 플레이어에게 타이핑 UI 띄우기
+	if (IsLocallyControlled())
+	{
+		if (TypingUIWidgetClass == nullptr) return;
+		TypingUIWidget = CreateWidget<UTypingUIWidget>(GetWorld()->GetFirstPlayerController(), TypingUIWidgetClass);
+		if (TypingUIWidget == nullptr) return;
+		TypingUIWidget->AddToViewport();
+		TypingUIWidget->UserInput->SetVisibility(ESlateVisibility::Hidden);
+
+		// 서버에게 랜덤 텍스트 요청하기
+		ServerRPC_SetRandomText();
+
+		// Tager UI 띄우기 (점프 Power Progress Bar)
+		if (TaggerUIWidgetClass == nullptr) return;
+		TaggerUIWidget = CreateWidget<UTaggerUIWidget>(GetWorld()->GetFirstPlayerController(), TaggerUIWidgetClass);
+		if (TaggerUIWidget == nullptr) return;
+		TaggerUIWidget->AddToViewport();
+	}
+}
+
 void ATaggerCharacter::MulticastRPC_SpawnWeapon_Implementation(FVector Location, FRotator Rotation, UClass* WeaponClass)
 {
 	// 공격하라고 Multicast
@@ -173,7 +237,6 @@ void ATaggerCharacter::MulticastRPC_SetUITextTo_Implementation
 	TypingUIWidget->SetStyledTextToTypeUI(CurrentTextToType, StringCorrectArray);
 	TypingUIWidget->TypedTextUI->SetText(InputedText);
 }
-
 
 void ATaggerCharacter::Look(const FInputActionValue& Value)
 {
@@ -198,44 +261,100 @@ void ATaggerCharacter::JumpEnded(const FInputActionValue& Value)
 	ServerRPC_JumpEnded(Value);
 }
 
+void ATaggerCharacter::Joined(APlayerController* NewPlayer)
+{
+	ServerRPC_Joined(NewPlayer);
+}
+
+void ATaggerCharacter::ServerRPC_Joined_Implementation(APlayerController* JoinedPlayer)
+{
+	// 지금 들어온 플레이어 입력 방지
+	MulticastRPC_SetInput(false);
+	MulticastRPC_ShowWaitingUI(JoinedPlayer);
+
+	// 게임모드 JoinedPlayers 배열에 플레이어 추가
+	ABishopGameMode* _BishopGameMode = GetWorld()->GetAuthGameMode<ABishopGameMode>();
+	if (_BishopGameMode)
+	{
+		_BishopGameMode->NotifyJoined(JoinedPlayer);
+	}
+}
+
+void ATaggerCharacter::MulticastRPC_ShowWaitingUI_Implementation(APlayerController* JoinedPlayer)
+{
+	// Waiting For Player UI 띄우기
+	if (IsLocallyControlled())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Joined Player : %s"), *JoinedPlayer->GetActorNameOrLabel());
+		WaitingOtherPlayerUI = CreateWidget<UWaitingOtherPlayerUI>
+			(
+			 JoinedPlayer,
+			 UWaitingOtherPlayerUIClass
+			);
+		if (WaitingOtherPlayerUI)
+		{
+			WaitingOtherPlayerUI->AddToViewport();
+		}
+	}
+}
+
+void ATaggerCharacter::MulticastRPC_SetInput_Implementation(bool bIsEnable)
+{
+	if (IsLocallyControlled())
+	{
+		if (bIsEnable)
+		{
+			EnableInput(GetWorld()->GetFirstPlayerController());
+		}
+		else
+		{
+			DisableInput(GetWorld()->GetFirstPlayerController());
+		}
+	}
+}
+
 void ATaggerCharacter::ServerRPC_JumpStarted_Implementation(const FInputActionValue& Value)
 {
 	// 현재 공중에 있으면 Return
 	if (GetMovementComponent()->IsFalling()) return;
 
 	// 힘 쌓기 시작
-	GetWorld()->GetTimerManager().SetTimer(JumpChargineTimerHandle, this, &ATaggerCharacter::ChargeJumpPower, 0.01f,
-	                                       true);
+	GetWorld()->GetTimerManager().SetTimer
+		(
+		 JumpChargineTimerHandle,
+		 this,
+		 &ATaggerCharacter::ChargeJumpPower,
+		 0.01f,
+		 true
+		);
 }
 
 void ATaggerCharacter::ServerRPC_JumpEnded_Implementation(const FInputActionValue& Value)
 {
 	if (CurrentJumpPower <= 0.f) return;
 	if (GetMovementComponent()->IsFalling()) return;
-	// 현재 쌓아놓은 힘 만큼 캐릭터 발사!
 
 	// 타이머 초기화
 	GetWorld()->GetTimerManager().ClearTimer(JumpChargineTimerHandle);
 
+	// 현재 쌓아놓은 힘 만큼 캐릭터 발사!
 	// TODO: Bishop이 죽으면 동작을 안함. 수정할 것.
 	// Bishop을 향하는 Vector 구하기
 	TArray<AActor*> AllBishopPawns;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABishopPawn::StaticClass(), AllBishopPawns);
 	for (AActor* BishopPawn : AllBishopPawns)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Bishop? : %s"), *BishopPawn->GetActorNameOrLabel());
 		FVector ToBishop = BishopPawn->GetActorLocation() - GetActorLocation();
 		ToBishop.Normalize();
-		
+
 		FVector ForwardUpVector = ToBishop + FVector::UpVector;
 		ForwardUpVector.Normalize();
-		
+
 		// 캐릭터 발사!
 		float PercentJumpPower = FMath::GetRangePct(MinJumpPower, MaxJumpPower, CurrentJumpPower);
 		float EaseCurrentJumpPower = FMath::InterpEaseOut(MinJumpPower, MaxJumpPower, PercentJumpPower, 5.f);
 		float ClampCurrentJumpPower = FMath::Clamp(EaseCurrentJumpPower, MinJumpPower, MaxJumpPower);
 
-		UE_LOG(LogTemp, Warning, TEXT("Ease Jump Power : %f"), ClampCurrentJumpPower);
 		LaunchCharacter(ForwardUpVector * EaseCurrentJumpPower, true, true);
 
 		// 현재 JumpPower 초기화
@@ -249,8 +368,7 @@ void ATaggerCharacter::ChargeJumpPower()
 {
 	CurrentJumpPower += MultiplyJumpPower * 0.01f;
 	CurrentJumpPower = FMath::Clamp(CurrentJumpPower, MinJumpPower, MaxJumpPower);
-	// UE_LOG(LogTemp, Warning, TEXT("Jump Power : %f"), CurrentJumpPower);
-	
+
 	UpdateScale();
 
 	// Progress Bar Update
@@ -274,7 +392,6 @@ void ATaggerCharacter::UpdateScale()
 	float JumpScale = FMath::GetRangePct(MaxJumpPower, MinJumpPower, CurrentJumpPower);
 	// 다시 범위 조정
 	float EaseJumpScale = FMath::InterpEaseIn(MinSquashScale, MaxSquashScale, JumpScale, 5.f);
-	// UE_LOG(LogTemp, Warning, TEXT("JumpScale : %f"), EaseJumpScale);
 	MeshComponent->SetWorldScale3D(FVector(1.f, 1.f, EaseJumpScale));
 }
 

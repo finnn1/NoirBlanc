@@ -8,47 +8,96 @@
 #include "Kismet/GameplayStatics.h"
 #include "NoirBlanc/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "BishopWeapon.h"
+#include "NoirBlancGameInstance.h"
+#include "TaggerCharacter.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/PawnMovementComponent.h"
 
 ABishopGameMode::ABishopGameMode()
 {
-	UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), AllStartPoints);
+	TArray<AActor*> AllStartPointActors;
+	UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), AllStartPointActors);
+
+	for (int i = 0; i < AllStartPointActors.Num(); ++i)
+	{
+		APlayerStart* _PlayerStart = Cast<APlayerStart>(AllStartPointActors[i]);
+		if (_PlayerStart)
+		{
+			AllStartPoints.Add(_PlayerStart);
+		}
+	}
 }
 
 AActor* ABishopGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
 	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
+	UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
 
-	// TODO: Chess판 완성되면 수정할 부분 //
-	if (StartPointOrder >= AllStartPoints.Num()) return Super::ChoosePlayerStart_Implementation(Player);
-	if (StartPointOrder < 1) StartPointOrder++;
-
-	if (_PlayerState)
+	// 게임모드 안에서 LocalPlayer다? 서버이다 => 하얀색
+	if (Player->IsLocalPlayerController())
 	{
-		// Bishop
-		if (StartPointOrder == 0)
+		_PlayerState->PieceColor = EPieceColor::White;
+
+		if (_NoirBlancGameInstance->AttackerColor == EPieceColor::White)
 		{
-			_PlayerState->bIsAttaker = false;
+			_PlayerState->bIsAttaker = true;
+			for (int i = 0; i < AllStartPoints.Num(); ++i)
+			{
+				if (AllStartPoints[i]->PlayerStartTag == TEXT("Tagger"))
+				{
+					return AllStartPoints[i];
+				}
+			}
 		}
 		else
 		{
-			_PlayerState->bIsAttaker = true;
+			_PlayerState->bIsAttaker = false;
+			for (int i = 0; i < AllStartPoints.Num(); ++i)
+			{
+				if (AllStartPoints[i]->PlayerStartTag == TEXT("Bishop"))
+				{
+					return AllStartPoints[i];
+				}
+			}
 		}
 	}
-	////////////////////////////////////////////////
+	// 게임모드 안에서 LocalPlayer가 아니다? 클라이언트다 => 검은색
+	else
+	{
+		_PlayerState->PieceColor = EPieceColor::Black;
 
-	UE_LOG(LogTemp, Warning, TEXT("Inside ChoosePlayerStart Function"));
+		if (_NoirBlancGameInstance->AttackerColor == EPieceColor::Black)
+		{
+			_PlayerState->bIsAttaker = true;
+			for (int i = 0; i < AllStartPoints.Num(); ++i)
+			{
+				if (AllStartPoints[i]->PlayerStartTag == TEXT("Tagger"))
+				{
+					return AllStartPoints[i];
+				}
+			}
+		}
+		else
+		{
+			_PlayerState->bIsAttaker = false;
+			for (int i = 0; i < AllStartPoints.Num(); ++i)
+			{
+				if (AllStartPoints[i]->PlayerStartTag == TEXT("Bishop"))
+				{
+					return AllStartPoints[i];
+				}
+			}
+		}
+	}
 
-	return AllStartPoints[StartPointOrder];
+	return Super::ChoosePlayerStart_Implementation(Player);
 }
 
 UClass* ABishopGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
 {
-	UE_LOG(LogTemp, Warning, TEXT("GetDefaultPawnClassForController : %s"), *InController->GetActorNameOrLabel());
-
 	ANoirBlancPlayerState* PlayerState = InController->GetPlayerState<ANoirBlancPlayerState>();
 	if (PlayerState)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerState : %d"), PlayerState->bIsAttaker);
 		// If Bishop
 		if (PlayerState->bIsAttaker == false)
 		{
@@ -74,6 +123,128 @@ void ABishopGameMode::BeginPlay()
 
 	FText RandomText = PickRandomText();
 	CurrentTextToType = RandomText;
+
+	CurrentRemainTime = DefaultRemainTime;
+}
+
+void ABishopGameMode::NotifyJoined(APlayerController* JoinedPlayer)
+{
+	JoinedPlayers.Add(JoinedPlayer);
+	// 2명 들어왔으면 게임 시작 (GameMode에게 게임 시작하라고 알려주기)
+	if (JoinedPlayers.Num() >= 2)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("두 명 다 들어옴!"));
+		// 게임 시작
+		// 1. 3, 2, 1 GO 타이머 고고
+		GetWorld()->GetTimerManager().SetTimer
+			(
+			 StartCountDownTimerHandle,
+			 this,
+			 &ABishopGameMode::StartCountTimer,
+			 1.f,
+			 true
+			);
+	}
+}
+
+void ABishopGameMode::StartCountTimer()
+{
+	// 카운트 다운 내리자!
+	if (CountdownNumber > -1)
+	{
+		--CountdownNumber;
+		for (int i = 0; i < JoinedPlayers.Num(); ++i)
+		{
+			// UIUpdatable 인터페이스 구현 여부 확인
+			if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+			{
+				if (CountdownNumber > 0)
+				{
+					IUIUpdatable::Execute_MulticastRPC_UpdateStartCountdownUI
+						(
+						 JoinedPlayers[i]->GetPawn(),
+						 FText::AsNumber(CountdownNumber)
+						);
+				}
+				else
+				{
+					IUIUpdatable::Execute_MulticastRPC_UpdateStartCountdownUI
+						(
+						 JoinedPlayers[i]->GetPawn(),
+						 FText::FromString(TEXT("GO!"))
+						);
+				}
+			}
+		}
+	}
+
+	// Countdown Number가 3, 2, 1, 0 땡하면
+	// 게임을 시작하자!
+	if (CountdownNumber == -1)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(StartCountDownTimerHandle); // 타이머 클리어
+
+		for (int i = 0; i < JoinedPlayers.Num(); ++i)
+		{
+			// UIUpdatable 인터페이스 구현 여부 확인
+			if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+			{
+				// 3. 모든 플레이어의 입력 제한 해제
+				IUIUpdatable::Execute_MulticastRPC_SetInput(JoinedPlayers[i]->GetPawn(), true);
+
+				// 4. Wait UI 삭제하고
+				IUIUpdatable::Execute_MulticastRPC_UpdateStartCountdownUI(JoinedPlayers[i]->GetPawn(), FText());
+
+				// 5. 게임 UI 띄우기
+				IUIUpdatable::Execute_MulticastRPC_InitializeTypingUI(JoinedPlayers[i]->GetPawn());
+
+				// 6. Main Timer 똑딱똑딱 시작
+				IUIUpdatable::Execute_MulticastRPC_UpdateMainTimerUI(JoinedPlayers[i]->GetPawn(),
+				                                                     FText::AsNumber(CurrentRemainTime));
+				GetWorld()->GetTimerManager().SetTimer
+					(
+					 MainTimerHandle,
+					 this,
+					 &ABishopGameMode::UpdateTimer,
+					 1.f,
+					 true
+					);
+			}
+		}
+	}
+}
+
+void ABishopGameMode::UpdateTimer()
+{
+	CurrentRemainTime--;
+
+	if (CurrentRemainTime < 0)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MainTimerHandle);
+
+		// Game Over
+		for (int i = 0; i < JoinedPlayers.Num(); ++i)
+		{
+			if (JoinedPlayers[i]->GetPawn() == nullptr) return;
+
+			if (JoinedPlayers[i]->GetPawn()->IsA(ABishopPawn::StaticClass()))
+			{
+				// Game Over 처리 (Pawn 승리)
+				GameOver(JoinedPlayers[i]->GetPawn());
+			}
+		}
+		return;
+	}
+
+	for (int i = 0; i < JoinedPlayers.Num(); ++i)
+	{
+		// UIUpdatable 인터페이스 구현 여부 확인
+		if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+		{
+			IUIUpdatable::Execute_MulticastRPC_UpdateMainTimerUI(JoinedPlayers[i]->GetPawn(),
+			                                                     FText::AsNumber(CurrentRemainTime));
+		}
+	}
 }
 
 bool ABishopGameMode::CheckCommittedText(const FText& TypedText)
@@ -99,7 +270,13 @@ void ABishopGameMode::UpdateInputtedText(const FText& TypedText)
 			{
 				// 복붙했으면 입력한 내용 다 초기화 시켜버리기
 				UE_LOG(LogTemp, Warning, TEXT("Don't cheat!! GO AWAY!!!!"));
-				IUIUpdatable::Execute_MulticastRPC_SetUITextTo(_Pawn, FText::FromString(""), CurrentTextToType, TArray<bool>());
+				IUIUpdatable::Execute_MulticastRPC_SetUITextTo
+					(
+					 _Pawn,
+					 FText::FromString(""),
+					 CurrentTextToType,
+					 TArray<bool>()
+					);
 				CurrentTypedText = TEXT("");
 			}
 			else
@@ -124,7 +301,13 @@ void ABishopGameMode::PickRandomTextAndUpdateUI()
 		if (_Pawn && _Pawn->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
 		{
 			// 메시지 호출
-			IUIUpdatable::Execute_MulticastRPC_SetUITextTo(_Pawn, FText::FromString(""), CurrentTextToType, TArray<bool>());
+			IUIUpdatable::Execute_MulticastRPC_SetUITextTo
+				(
+				 _Pawn,
+				 FText::FromString(""),
+				 CurrentTextToType,
+				 TArray<bool>()
+				);
 		}
 	}
 }
@@ -132,8 +315,8 @@ void ABishopGameMode::PickRandomTextAndUpdateUI()
 void ABishopGameMode::CommitText(const FText& TypedText)
 {
 	bool bIsCorrect = CheckCommittedText(TypedText);
-	UE_LOG(LogTemp, Warning, TEXT("%s / %p"), *TypedText.ToString(),
-	       *CurrentTextToType.ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("%s / %p"), *TypedText.ToString(),
+	//        *CurrentTextToType.ToString());
 	// 친 문장이 맞는 경우
 	if (bIsCorrect)
 	{
@@ -156,7 +339,13 @@ void ABishopGameMode::CommitText(const FText& TypedText)
 			if (_Pawn && _Pawn->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
 			{
 				// 메시지 호출
-				IUIUpdatable::Execute_MulticastRPC_SetUITextTo(_Pawn, FText::FromString(""), _RandomText, TArray<bool>());
+				IUIUpdatable::Execute_MulticastRPC_SetUITextTo
+					(
+					 _Pawn,
+					 FText::FromString(""),
+					 _RandomText,
+					 TArray<bool>()
+					);
 			}
 		}
 	}
@@ -178,8 +367,8 @@ FText ABishopGameMode::PickRandomText()
 		const int32 MaxNum = TextsToType.Num();
 		const int32 RandomNumber = FMath::RandRange(0, MaxNum - 1);
 		RandomText = TextsToType[RandomNumber];
-		UE_LOG(LogTemp, Warning, TEXT("Current Text: %s"), *CurrentTextToType.ToString());
-		UE_LOG(LogTemp, Warning, TEXT("Random Text: %s"), *RandomText.ToString());
+		// UE_LOG(LogTemp, Warning, TEXT("Current Text: %s"), *CurrentTextToType.ToString());
+		// UE_LOG(LogTemp, Warning, TEXT("Random Text: %s"), *RandomText.ToString());
 	}
 	while (TextsToType.Num() >= 2 && RandomText.EqualTo(CurrentTextToType));
 	CurrentTextToType = RandomText;
@@ -187,8 +376,38 @@ FText ABishopGameMode::PickRandomText()
 	return RandomText;
 }
 
-void ABishopGameMode::GameOver(APawn* Winner, APawn* Loser)
+void ABishopGameMode::GameOver(APawn* Winner)
 {
+	GetWorld()->GetTimerManager().ClearTimer(StartCountDownTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(MainTimerHandle);
+	UE_LOG(LogTemp, Warning, TEXT("들어옴!"));
+	// UIUpdatable 인터페이스 구현 여부 확인
+	if (Winner->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+	{
+		UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
+		if (_NoirBlancGameInstance)
+		{
+			EPieceColor _WinnerColor = IUIUpdatable::Execute_GetPieceColor(Winner);
+			for (int i = 0; i < JoinedPlayers.Num(); ++i)
+			{
+				// UIUpdatable 인터페이스 구현 여부 확인
+				if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+				{
+					IUIUpdatable::Execute_MulticastRPC_SetWinner(JoinedPlayers[i]->GetPawn(), _WinnerColor);
+
+					// 승리자가 아닐 경우 Destory!
+					if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
+					{
+						JoinedPlayers[i]->GetPawn()->Destroy();
+					}
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
+		}
+	}
 }
 
 bool ABishopGameMode::CheckCheatting(const FText& TypedText)
@@ -210,17 +429,35 @@ bool ABishopGameMode::CheckCheatting(const FText& TypedText)
 	return false; // not cheatting
 }
 
+void ABishopGameMode::OnTaggerOverlapped(AActor* OtherActor)
+{
+	ATaggerCharacter* TaggerCharacter = Cast<ATaggerCharacter>(OtherActor);
+	if (TaggerCharacter == nullptr) return;
+	if (TaggerCharacter->GetMovementComponent()->IsFalling() == false) return;
+
+	// Game Over : Bishop Win
+	for (APlayerController* JoinedPlayer : JoinedPlayers)
+	{
+		if (JoinedPlayer->GetPawn()->IsA(ABishopPawn::StaticClass()))
+		{
+			GameOver(JoinedPlayer->GetPawn());
+			return;
+		}
+	}
+}
+
 void ABishopGameMode::OnButtonPressed()
 {
-	// Destory Bishop Pawn!
-	TArray<AActor*> AllBishopPawns;
-	UGameplayStatics::GetAllActorsOfClass(this, ABishopPawn::StaticClass(), AllBishopPawns);
-	for (AActor* _BishopPawn : AllBishopPawns)
+	for (int i = 0; i < JoinedPlayers.Num(); ++i)
 	{
-		_BishopPawn->Destroy();
-	}
+		if (JoinedPlayers[i]->GetPawn() == nullptr) return;
 
-	// TODO: Game Over 처리 (Tagger 승리)
+		if (JoinedPlayers[i]->GetPawn()->IsA(ATaggerCharacter::StaticClass()))
+		{
+			// Game Over 처리 (Tagger 승리)
+			GameOver(JoinedPlayers[i]->GetPawn());
+		}
+	}
 }
 
 TArray<bool> ABishopGameMode::CheckTypingCorrect(const FText& TypedText)

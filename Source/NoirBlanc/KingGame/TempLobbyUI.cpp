@@ -1,11 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "NoirBlanc/KingGame/TempLobbyUI.h"
-
 #include "NoirBlancGameInstance.h"
 #include "TempLobbySessionItem.h"
-#include "TempNoirBlancGameInstance.h"
 #include "Components/Button.h"
 #include "Components/ComboBoxKey.h"
 #include "Components/EditableTextBox.h"

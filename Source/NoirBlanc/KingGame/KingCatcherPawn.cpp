@@ -46,7 +46,7 @@ void AKingCatcherPawn::OnConfirmButtonClicked()
 
 	// 화면의 Go! 버튼을 누르면 해당 위치에서 레이저 발사!
 	// 서버 Pawn 쪽에서 갯수 4개가 차면 서버 KingGameMode로 보내서 처리하도록 하기!
-
+	
 	ServerRPC_OnConfirmButtonClicked();
 }
 

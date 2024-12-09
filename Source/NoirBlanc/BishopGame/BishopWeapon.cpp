@@ -2,9 +2,13 @@
 
 
 #include "BishopWeapon.h"
+
+#include "BishopGameMode.h"
 #include "TaggerCharacter.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+
+class ABishopGameMode;
 
 ABishopWeapon::ABishopWeapon()
 {
@@ -53,13 +57,6 @@ void ABishopWeapon::OnBoxComponentOverlap(
 	const FHitResult& SweepResult
 )
 {
-	// TODO: 충돌 판정 및 Destroy 서버에서 하도록 하기
-	ATaggerCharacter* TaggerCharacter = Cast<ATaggerCharacter>(OtherActor);
-	if (TaggerCharacter == nullptr) return;
-	if (TaggerCharacter->GetMovementComponent()->IsFalling() == false) return;
-	TaggerCharacter->Destroy();
-
-	// TODO: 서버에서 게임 오버 처리 및 UI 띄우기
-	// ABishopGameMode* BishopGameMode = Cast<ABishopGameMode>(GetWorld()->GetAuthGameMode());
-	// BishopGameMode
+	ABishopGameMode* BishopGameMode = Cast<ABishopGameMode>(GetWorld()->GetAuthGameMode());
+	BishopGameMode->OnTaggerOverlapped(OtherActor);
 }
