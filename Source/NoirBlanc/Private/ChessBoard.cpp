@@ -11,6 +11,7 @@
 #include "NoirBlanc/Knight/TurnUI.h"
 #include "QueenSelectWidget.h"
 #include "NoirBlanc/Knight/BattleUI.h"
+#include "NoirBlanc/Knight/ResultUI.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -41,6 +42,12 @@ void AChessBoard::BeginPlay()
 	FTimerHandle TurnTimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 4.f, false);
 	PlaySound(BackgroundMusic);
+
+	ResultUI = Cast<UResultUI>(CreateWidget(GetWorld(), ResultUIClass));
+	ResultUI->AddToViewport();
+	ResultUI->ShowResult(EPieceType::King, EPieceColor::Black,
+						EPieceType::King, EPieceColor::White,
+						EPieceColor::Black);
 }
 
 // Called every frame
