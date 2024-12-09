@@ -13,6 +13,8 @@ void UTurnUI::NativeConstruct()
 	
 	Text_Blanc = Cast<UTextBlock>(GetWidgetFromName(TEXT("Txt_Blanc")));
 	Text_Noir = Cast<UTextBlock>(GetWidgetFromName(TEXT("Txt_Noir")));
+
+	PlayAnimation(Anim_Start);
 }
 
 void UTurnUI::ShowTurn(EPieceColor color)
