@@ -116,6 +116,8 @@ private:
 	bool bIsGoingToAnotherLevel = false;
 
 	FName LevelToOpen;
+
+	FString QueenLevel;
 //////////////////////////////////////////
 /////FUNCTION
 public:
@@ -191,11 +193,15 @@ protected:
 	void ServerRPC_TurnUIChange();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_TurnUIChange();
-	
+
+public:
 	UFUNCTION()
-	FString ShowQueenWidget();
+	void ShowQueenWidget();
 	UFUNCTION()
 	void DestroyQueenWidget();
+	UFUNCTION()
+	void QueenWidgetClicked(const FString& Level);
+	
 	void QueenEncounter();
 	void AfterQueen(AChessPiece* Selected, AChessPiece* Target);
 private:

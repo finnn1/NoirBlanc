@@ -38,7 +38,7 @@ void AChessBoard::BeginPlay()
 	FTimerHandle UITimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(UITimerHandle, [this](){TurnUI->AddToViewport();}, 1.f, false);
 	FTimerHandle TurnTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 3.f, false);
+	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 4.f, false);
 	PlaySound(BackgroundMusic);
 }
 
@@ -206,11 +206,12 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 
 void AChessBoard::QueenEncounter()
 {
-	
+	ShowQueenWidget();
 }
 
 void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 {
+	DestroyQueenWidget();
 	FName LevelName;
 	EPieceType Game = Selected->GetPieceType();
 	GameInstance->DeffenderColor = Target->GetPieceColor();
@@ -879,7 +880,7 @@ void AChessBoard::TurnUIChange()
 	TurnUI->ShowTurn(Turn);
 }
 
-FString AChessBoard::ShowQueenWidget()
+void AChessBoard::ShowQueenWidget()
 {
 	FString Selected;
 	if (Controller)
@@ -891,11 +892,8 @@ FString AChessBoard::ShowQueenWidget()
 	        FInputModeUIOnly InputMode;
 	        Controller->SetInputMode(InputMode);
 			UGameplayStatics::SetGamePaused(GetWorld(), true);
-			QueenSelectUI->ChooseLevel();
 		}
 	}
-	DestroyQueenWidget();
-	return TEXT("");
 }
 
 void AChessBoard::DestroyQueenWidget()
@@ -904,12 +902,18 @@ void AChessBoard::DestroyQueenWidget()
 	{
 		QueenSelectUI->RemoveFromParent();
 		QueenSelectUI = nullptr;
+		if (Controller)
+		{
+			FInputModeGameOnly InputMode;
+			Controller->SetInputMode(InputMode);
+		}
 	}
-	if (Controller)
-	{
-		FInputModeGameOnly InputMode;
-		Controller->SetInputMode(InputMode);
-	}
+}
+
+void AChessBoard::QueenWidgetClicked(const FString& Level)
+{
+	QueenLevel = Level;
+	AfterQueen(SelectedPiece, TargetPiece);
 }
 
 void AChessBoard::OpenLevel()

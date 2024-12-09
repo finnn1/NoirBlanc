@@ -9,6 +9,8 @@
 /**
  * 
  */
+DECLARE_DELEGATE_OneParam(FButtonDelegate, const FString&);
+
 UCLASS()
 class NOIRBLANC_API UQueenSelectWidget : public UUserWidget
 {
@@ -24,9 +26,7 @@ public:
 	UButton* Btn_Bishop;
 	
 	virtual void NativeConstruct() override;
-
-	void ChooseLevel();
-
+	
 	UFUNCTION()
 	void OnPawnClicked();
 	UFUNCTION()
@@ -35,7 +35,8 @@ public:
 	void OnRookClicked();
 	UFUNCTION()
 	void OnBishopClicked();
+	
+	FButtonDelegate OnBtnClicked;
 private:
 	FString SelectedLevel = TEXT("Pawn");
-	bool bCanMoveOn = false;
 };
