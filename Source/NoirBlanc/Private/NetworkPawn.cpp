@@ -158,7 +158,7 @@ void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ANetworkPawn, IsTurnPlayer);
-	DOREPLIFETIME(ANetworkPawn, CurColor);
+//	DOREPLIFETIME(ANetworkPawn, CurColor);
 }
 
 void ANetworkPawn::MulticastRPC_GameStart_Implementation()
