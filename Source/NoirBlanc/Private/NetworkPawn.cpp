@@ -91,23 +91,19 @@ void ANetworkPawn::Tick(float DeltaTime)
 	//내 것인지
 	FString IsMine = IsLocallyControlled() ? TEXT("LocalControl") : TEXT("No Control");
 
-	FString IsUI = (TurnUI ? TEXT("Has UI") : TEXT("No UI"));
+	FString IsUI = (PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
 
 	FString IsTurn = (GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
 
 	int32 Score = (GetPlayerState() ? GetPlayerState()->GetScore() : -1);
-
-	const UEnum* EnumPtr = StaticEnum<EPieceColor>();
-	FString EnumName = EnumPtr->GetNameByValue(static_cast<int64>(PawnPieceColor)).ToString();
 	
-	FString LogStr = FString::Printf(TEXT("Connection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nNowScore: %d\nColor : %s"),
-		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, Score, *EnumName);
+	FString LogStr = FString::Printf(TEXT("Connection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nNowScore: %d"),
+		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, Score);
 	
-	FVector TestLoc = GetActorLocation();
-	TestLoc.Y += -200;
+	FVector TestLoc = FVector(500,500,300);
 	if(IsLocallyControlled())
 	{
-		TestLoc.X += -100;
+		TestLoc += FVector(500,500,500);
 	}
 
 	//TextBaseActor를 this를 넣는지 여부는 상대좌표, 월드좌표?
@@ -162,7 +158,7 @@ void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ANetworkPawn, IsTurnPlayer);
-	DOREPLIFETIME(ANetworkPawn, PawnPieceColor);
+//	DOREPLIFETIME(ANetworkPawn, CurColor);
 }
 
 void ANetworkPawn::MulticastRPC_GameStart_Implementation()
@@ -426,16 +422,12 @@ void ANetworkPawn::CheckLog(ANetworkPawn* TargetPawn)
 	//내 것인지
 	FString IsMine = TargetPawn->IsLocallyControlled() ? TEXT("LocalControl") : TEXT("No Control");
 
-	//FString IsUI = (TargetPawn->PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
-	FString IsUI = (TargetPawn->TurnUI ? TEXT("Has UI") : TEXT("No UI"));
+	FString IsUI = (TargetPawn->PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
 
 	FString IsTurn = (TargetPawn->GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
 
-	const UEnum* EnumPtr = StaticEnum<EPieceColor>();
-	FString EnumName = EnumPtr->GetNameByValue(static_cast<int64>(PawnPieceColor)).ToString();
-
-	UE_LOG(LogTemp, Warning, TEXT("CheckLog -\nConnection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nColor : %s"),
-		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, *EnumName)
+	UE_LOG(LogTemp, Warning, TEXT("CheckLog -\nConnection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s"),
+		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn)
 }
 
 void ANetworkPawn::ChangePlayerTurn(ANetworkPawn* StartPlayer)
@@ -455,16 +447,6 @@ void ANetworkPawn::PossessedBy(AController* NewController)
 		{
 			gm->AddPlayer(this);
 		}
-
-		// 서버는 무조건 White
-		if(IsLocallyControlled())
-		{
-			PawnPieceColor = EPieceColor::White;	
-		}
-		else
-		{
-			PawnPieceColor = EPieceColor::Black;		
-		}
 	}
 }
 
@@ -473,18 +455,22 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 	// 다음 턴 플레이어가 로컬의 첫 번째 플레이어와 같으면 자신 턴
 	if(StartPlayer->IsLocallyControlled())
 	{
-		//StartPlayer->PlayerUI->ShowTurnStart();
+		StartPlayer->PlayerUI->ShowTurnStart();
+
 		
 		/*Turn UI */
-		StartPlayer->TurnUI->ShowTurn(StartPlayer->PawnPieceColor);
+		// 임의로 흰색 넣음
+		StartPlayer->TurnUI->ShowTurn(EPieceColor::White);
 	}
 	else
 	{
 		ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		//LocalNetPawn->PlayerUI->ShowEnmTurnStart();
+		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
+
 		
 		/*Turn UI */
-		LocalNetPawn->TurnUI->ShowTurn(StartPlayer->PawnPieceColor);
+		// 임의로 흰색 넣음
+		LocalNetPawn->TurnUI->ShowTurn(EPieceColor::White);
 	}
 }
 

@@ -85,7 +85,7 @@ void AChessPlayerPawn::BeginPlay()
 		if(IsLocallyControlled())
 		{
 			SetActorLocation(FVector(150.f,3500.f,4000.f));
-			GetController()->SetControlRotation(FRotator(320.f,-90.f,0.f));
+			GetController()->SetControlRotation(FRotator(310.f,-90.f,0.f));
 			// SetActorRotation();
 		}
 	}
@@ -94,7 +94,7 @@ void AChessPlayerPawn::BeginPlay()
 		if(IsLocallyControlled())
 		{
 			SetActorLocation(FVector(150.f,-3000.f,4000.f));
-			GetController()->SetControlRotation(FRotator(-40.f,90.f,0.f));
+			GetController()->SetControlRotation(FRotator(-50.f,90.f,0.f));
 		}
 	}
 }
