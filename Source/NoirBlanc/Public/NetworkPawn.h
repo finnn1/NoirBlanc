@@ -148,5 +148,10 @@ private:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UTurnUI> TurnUIFactory;
+
+	UPROPERTY()
 	UTurnUI* TurnUI;
+
+	UPROPERTY(VisibleAnywhere, Replicated)
+	EPieceColor PawnPieceColor;
 };

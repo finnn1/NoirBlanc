@@ -59,7 +59,7 @@ void APawnCardGameMode::SetInitCardSetting()
 	{
 		static float ElapsedTime = 0.0f;
 		
-		if(ElapsedTime >= 5.f)
+		if(ElapsedTime >= 2.f)
 		{
 			InitPawnCardGame();
 			ElapsedTime = 0.0f;
