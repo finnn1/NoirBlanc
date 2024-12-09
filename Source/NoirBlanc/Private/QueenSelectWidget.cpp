@@ -2,6 +2,7 @@
 
 
 #include "QueenSelectWidget.h"
+#include "ChessBoard.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
@@ -10,46 +11,53 @@ void UQueenSelectWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	Btn_Pawn->OnClicked.AddDynamic(this, &UQueenSelectWidget::OnPawnClicked);
+	Btn_Knight->OnClicked.AddDynamic(this, &UQueenSelectWidget::OnKnightClicked);
+	Btn_Rook->OnClicked.AddDynamic(this, &UQueenSelectWidget::OnRookClicked);
+	Btn_Bishop->OnClicked.AddDynamic(this, &UQueenSelectWidget::OnBishopClicked);
 	
+	AActor* Board = UGameplayStatics::GetActorOfClass(GetWorld(), AChessBoard::StaticClass());
+	AChessBoard* ChessBoard = Cast<AChessBoard>(Board);
+
+	OnBtnClicked.BindUObject(ChessBoard, &AChessBoard::QueenWidgetClicked);
 }
 
-// FName UQueenSelectWidget::ChooseLevel()
-// {
-// 	UGameplayStatics::SetGamePaused(GetWorld(), true);
-// }
+void UQueenSelectWidget::OnPawnClicked()
+{
+	SelectedLevel = TEXT("Pawn");
+	UGameplayStatics::SetGamePaused(GetWorld(), false);
+	if(OnBtnClicked.IsBound())
+	{
+		OnBtnClicked.Execute(SelectedLevel);
+	}
+}
 
-// void AYourClass::ShowPauseMenu()
-// {
-// 	// 게임 일시 정지
-// 	
-//
-// 	// 입력 모드를 UI 전용으로 설정
-//
-//
-// 		// 입력 모드 변경
-// 		FInputModeUIOnly InputMode;
-// 		InputMode.SetWidgetToFocus(PauseMenu->TakeWidget());
-// 		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-// 		PlayerController->SetInputMode(InputMode);
-//
-// 		// 마우스 커서 표시
-// 		PlayerController->bShowMouseCursor = true;
-// 	}
-// }
-//
-// void AYourClass::HidePauseMenu()
-// {
-// 	// 게임 재개
-// 	UGameplayStatics::SetGamePaused(GetWorld(), false);
-//
-// 	// 입력 모드를 게임 전용으로 변경
-// 	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-// 	if (PlayerController)
-// 	{
-// 		FInputModeGameOnly InputMode;
-// 		PlayerController->SetInputMode(InputMode);
-//
-// 		// 마우스 커서 숨기기
-// 		PlayerController->bShowMouseCursor = false;
-// 	}
-// }
+void UQueenSelectWidget::OnKnightClicked()
+{
+	SelectedLevel = TEXT("Knight");
+	UGameplayStatics::SetGamePaused(GetWorld(), false);
+	if(OnBtnClicked.IsBound())
+	{
+		OnBtnClicked.Execute(SelectedLevel);
+	}
+}
+
+void UQueenSelectWidget::OnRookClicked()
+{
+	SelectedLevel = TEXT("Rook");
+	UGameplayStatics::SetGamePaused(GetWorld(), false);
+	if(OnBtnClicked.IsBound())
+	{
+		OnBtnClicked.Execute(SelectedLevel);
+	}
+}
+
+void UQueenSelectWidget::OnBishopClicked()
+{
+	SelectedLevel = TEXT("Bishop");
+	UGameplayStatics::SetGamePaused(GetWorld(), false);
+	if(OnBtnClicked.IsBound())
+	{
+		OnBtnClicked.Execute(SelectedLevel);
+	}
+}
