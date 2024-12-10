@@ -22,6 +22,7 @@ class NOIRBLANC_API AGameStateBase_Knight : public AGameStateBase
 public:
 	UPROPERTY(Replicated)
 	int32 ConnectedPlayers;
+	
 	void StartCountDown();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_CreateCountDownUI();

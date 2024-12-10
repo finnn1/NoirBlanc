@@ -24,6 +24,7 @@ APlayer_Knight::APlayer_Knight()
 	bReplicates = true;
 }		
 
+// 서버에서만 실행됨
 void APlayer_Knight::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -122,6 +123,7 @@ void APlayer_Knight::Tick(float DeltaTime)
 		{
 			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("블랑"));
 		}
+
 		
 		MulticastRPC_UpdateDistanceUI(TotalDistance, OtherPlayer->TotalDistance);
 	}
