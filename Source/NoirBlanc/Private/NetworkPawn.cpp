@@ -91,7 +91,7 @@ void ANetworkPawn::Tick(float DeltaTime)
 	//내 것인지
 	FString IsMine = IsLocallyControlled() ? TEXT("LocalControl") : TEXT("No Control");
 
-	FString IsUI = (TurnUI ? TEXT("Has UI") : TEXT("No UI"));
+	FString IsUI = (PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
 
 	FString IsTurn = (GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
 
@@ -99,9 +99,11 @@ void ANetworkPawn::Tick(float DeltaTime)
 
 	const UEnum* EnumPtr = StaticEnum<EPieceColor>();
 	FString EnumName = EnumPtr->GetNameByValue(static_cast<int64>(PawnPieceColor)).ToString();
+
+	FString IsPlaying = (Timeline->IsPlaying() ? TEXT("Playing") : TEXT("Not Playing"));
 	
-	FString LogStr = FString::Printf(TEXT("Connection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nNowScore: %d\nColor : %s"),
-		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, Score, *EnumName);
+	FString LogStr = FString::Printf(TEXT("Connection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nIsPlaying : %s"),
+		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, *IsPlaying);
 	
 	FVector TestLoc = GetActorLocation();
 	TestLoc.Y += -200;
@@ -144,7 +146,6 @@ void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(EPieceColor Win
 
 	NB_GM->WinnerColor = WinnerColor;
 	FString ColorStr = StaticEnum<EPieceColor>()->GetDisplayNameTextByValue(static_cast<int64>(WinnerColor)).ToString();
-	UE_LOG(LogTemp, Warning, TEXT("Winner Color is %s"), *ColorStr);
 
 	if(HasAuthority())
 	{
@@ -206,7 +207,7 @@ void ANetworkPawn::MulticastRPC_ShuffleStart_Implementation()
 void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 {
 	if(!GetIsTurnPlayer()) return;
-
+	
 	FHitResult Hit;
 	if(PawnCardContr)
 	{
@@ -223,6 +224,7 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 		
 		if(SelectedCard)
 		{
+			// 카드 회전 중 다른 카드 선택 막음
 			ServerRPC_SelectCard(SelectedCard);
 		}
 	}	
@@ -230,7 +232,23 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 
 void ANetworkPawn::ServerRPC_SelectCard_Implementation(APawnCard* SelectedCard)
 {
-	MulticastRPC_SelectCard(SelectedCard);
+	//MulticastRPC_SelectCard(SelectedCard);
+	if(Timeline->IsPlaying()) return;
+	
+	TargetCard = SelectedCard;
+	if(FirstSelectedCard.IsValid())
+	{
+		//이미 첫 번째 카드를 선택했으면 체크
+		SecondSelectedCard = TargetCard;
+	}
+	else
+	{
+		//아무 것도 선택 안 했으면 FirstSelectCard에 할당
+		FirstSelectedCard = TargetCard;
+	}
+	
+	//앞면으로 오픈
+	Timeline->PlayFromStart();
 }
 
 void ANetworkPawn::MulticastRPC_SelectCard_Implementation(APawnCard* SelectedCard)
@@ -377,7 +395,8 @@ void ANetworkPawn::EndTurnLerp()
 		}
 		else
 		{
-			// 1초 동안 확인
+			SetIsTurnPlayer(false);
+			// 잠시 확인
 			FTimerHandle TermTimerHandle;
 			GetWorldTimerManager().SetTimer(TermTimerHandle, [this]()
 			{
@@ -390,7 +409,7 @@ void ANetworkPawn::EndTurnLerp()
 				{
 					this->ServerRPC_ChangeTurn(this);
 				}
-			}, 0.5f, false);
+			}, 0.3f, false);
 		}
 	}
 	else
@@ -486,7 +505,12 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 	EPieceColor TurnPlayerColor = StartPlayer->PawnPieceColor;
 	if(StartPlayer->IsLocallyControlled())
 	{
-		//StartPlayer->PlayerUI->ShowTurnStart();
+		//초기화
+		StartPlayer->PlayerUI->HideTurnStart();
+		StartPlayer->PlayerUI->HideEnmTurnStart();
+
+		//My Turn UI
+		StartPlayer->PlayerUI->ShowTurnStart();
 		
 		/*Turn UI */
 		StartPlayer->TurnUI->ShowTurn(TurnPlayerColor);
@@ -494,7 +518,13 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 	else
 	{
 		ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		//LocalNetPawn->PlayerUI->ShowEnmTurnStart();
+
+		//초기화
+		LocalNetPawn->PlayerUI->HideTurnStart();
+		LocalNetPawn->PlayerUI->HideEnmTurnStart();
+
+		//Enemy Turn UI
+		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
 		
 		/*Turn UI */
 		LocalNetPawn->TurnUI->ShowTurn(TurnPlayerColor);
