@@ -187,7 +187,7 @@ void AChessBoard::MovePiece()
 void AChessBoard::ServerRPC_PieceEncounter_Implementation()
 {
 	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle,[this](){MulticastRPC_PieceEncounter();}, 0.2f ,false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle,[this](){MulticastRPC_PieceEncounter();}, 0.3f ,false);
 	
 }
 
@@ -236,6 +236,17 @@ void AChessBoard::QueenEncounter()
 	}
 }
 
+void AChessBoard::ServerRPC_AfterQueen_Implementation(const FString& Level)
+{
+	QueenLevel = Level;
+	MulticastRPC_AfterQueen();
+}
+
+void AChessBoard::MulticastRPC_AfterQueen_Implementation()
+{
+	AfterQueen(SelectedPiece, TargetPiece);
+}
+
 void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 {
 	DestroyQueenWidget();
@@ -246,6 +257,7 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	{
 		 KingGame = Target->GetPieceType();
 	}
+	//Save Data to GameInstance
 	GameInstance->DeffenderColor = Target->GetPieceColor();
 	GameInstance->DeffenderType = Target->GetPieceType();
 	GameInstance->AttackerColor = Selected->GetPieceColor();
@@ -953,8 +965,7 @@ void AChessBoard::DestroyQueenWidget()
 
 void AChessBoard::QueenWidgetClicked(const FString& Level)
 {
-	QueenLevel = Level;
-	AfterQueen(SelectedPiece, TargetPiece);
+	ServerRPC_AfterQueen(Level);
 }
 
 void AChessBoard::OpenLevel()
