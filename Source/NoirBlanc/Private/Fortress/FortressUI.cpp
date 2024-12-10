@@ -62,13 +62,13 @@ void UFortressUI::ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player)
 	if (damagedCannon == player)
 	{
 		Player1Percentage = percentage;
-		UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
+		//UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
 	}
 	else
 	{
 		// Player2pg->SetPercent(percentage);	// not working
 		Player2Percentage = percentage;
-		UE_LOG(LogTemp, Warning, TEXT("Player2Percentage: %f"), Player2Percentage);
+		//UE_LOG(LogTemp, Warning, TEXT("Player2Percentage: %f"), Player2Percentage);
 	}
 }
 
@@ -104,3 +104,19 @@ void UFortressUI::SetTurnWidgetHidden()
 {
 	horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 }
+
+void UFortressUI::SetWindBar(float percent)
+{
+	if (percent >= 0)
+	{
+		windForcePlus->SetPercent(percent);
+		windForceMinus->SetPercent(0);
+	}
+	else
+	{
+		windForcePlus->SetPercent(0);
+		windForceMinus->SetPercent(-percent);
+	}
+}
+
+

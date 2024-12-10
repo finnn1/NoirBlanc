@@ -6,6 +6,6 @@
 
 float UFireBoostWidget::ChargeVelocity()
 {
-	float percentage = FMath::Clamp(Velocity/MaxVelocity, 0.0f, 1.0f);
+	float percentage = FMath::Clamp(Impulse/MaxVelocity, 0.0f, 1.0f);
 	return percentage;
 }

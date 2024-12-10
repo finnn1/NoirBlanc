@@ -37,7 +37,7 @@ public:
 	class USphereComponent* SpawnLocation;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UWidgetComponent* VelocityBar;
+	class UWidgetComponent* ImpulseBar;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UFireBoostWidget* FireBoostWidget;
@@ -67,9 +67,9 @@ protected:
 
 	void Fire();
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_Fire(float Velocity, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass);
+	void ServerRPC_Fire(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass);
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_Fire(float Velocity, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass);
+	void MulticastRPC_Fire(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass);
 	
 	void StartCharging(const FInputActionValue& Value);
 
@@ -89,14 +89,14 @@ public:
 	float MoveSpeed;
 	float RotationSpeed;
 
-	// timer for setting projectile velocity
+	// timer for setting projectile impulse
 	FTimerHandle SpeedIncreaseTimerHandle;
 
 	UPROPERTY(EditAnywhere)
-	float ProjectileVelocity;
+	float ProjectileImpulse;
 	
 	UPROPERTY(EditAnywhere)
-	float VelocityChange = 100.0f;
+	float ImpulseChange = 100.0f;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -162,6 +162,11 @@ public:
 	bool bIsturn;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	FVector WindForce;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SetWindForce(FVector NewWindForce, float NewWindForceMax);
 };
 
 

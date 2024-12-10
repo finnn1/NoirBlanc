@@ -2,7 +2,6 @@
 
 
 #include "Fortress/ProjectileEqBased.h"
-
 #include "Components/HorizontalBox.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -26,10 +25,9 @@ AProjectileEqBased::AProjectileEqBased()
 
 	Gravity = 980.0f; // unit: (cm/s^2)
 	ElapsedTime = 0.0f;
-	WindResistance = 0.1f;
+	WindResistance = 1.0f;
 	Force = 1.0f;
-	Speed = 0.0f;
-	Mass = 1;
+	Impulse = 0.0f;
 	Damage = 10.0f;
 	//bReplicates = true;
 }
@@ -45,28 +43,27 @@ void AProjectileEqBased::BeginPlay()
 	OwnerCannon = Cast<ACannon>(GetOwner());
 	playerCannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	playerUI = playerCannon->FortressUI;
-
-	// GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
-	//                                  FString::Printf(TEXT("Owner: %s"), *OwnerCannon->GetName()));
+	//ServerRPC_Init();
 
 	if (OwnerCannon)
 	{
 		FVector LaunchDirection = OwnerCannon->SpawnLocation->GetComponentLocation() -
-			OwnerCannon->SpawnOrigin->GetComponentLocation();
-		// if (Owner->Owner)
-		// 	UE_LOG(LogTemp, Warning, TEXT("Owner->Owner: %s"), *Owner->Owner->GetName());
-			SetSpeedAddImpuse(LaunchDirection);
+		                          OwnerCannon->SpawnOrigin->GetComponentLocation();
 
-		// InitVelocity = LaunchDirection.GetSafeNormal() * Speed;
+		WindForce = OwnerCannon->WindForce * WindResistance;
+		UE_LOG(LogTemp, Warning, TEXT("Windforce: %s"), *WindForce.ToString());
+		SetSpeedAddImpuse(LaunchDirection);
+
+		// InitImpulse = LaunchDirection.GetSafeNormal() * Speed;
 		//
 		// /* if simulate physics is false*/
 		// // impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
-		// Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
+		// Mesh->AddImpulse(InitImpulse * Mass, NAME_None, true);
 
 		// GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
 		//                                  FString::Printf(TEXT("Speed: %f"), Speed));
 		// GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
-		//                                  FString::Printf(TEXT("Velocity: %s"), *InitVelocity.ToString()));
+		//                                  FString::Printf(TEXT("Velocity: %s"), *InitImpulse.ToString()));
 
 		// when collision happens
 		Mesh->IgnoreActorWhenMoving(OwnerCannon, true);
@@ -78,53 +75,42 @@ void AProjectileEqBased::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AProjectileEqBased, InitVelocity);
+	//DOREPLIFETIME(AProjectileEqBased, InitImpulse);
 }
 
 void AProjectileEqBased::SetSpeedAddImpuse(FVector Direction)
 {
-	Speed = OwnerCannon->ProjectileVelocity;
-	InitVelocity = Direction.GetSafeNormal() * Speed;
-
+	Impulse = OwnerCannon->ProjectileImpulse;
+	FVector InitImpulse = Direction.GetSafeNormal() * Impulse;
+	float mass = Mesh->GetMass();
 	/* if simulate physics is false*/
-	// impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
-	Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
+	// impulse = F*t -> m*v, bVelChange: to consider mass or not: engine automatically set the mass
+	Mesh->AddImpulse(InitImpulse/mass*20.0f, NAME_None, true);
+	UE_LOG(LogTemp, Warning, TEXT("Mass: %f"), Mesh->GetMass());
 }
-
-// void AProjectileEqBased::ServerRPC_SetSpeedAddImpuse_Implementation(FVector Direction)
-// {
-// 	Speed = OwnerCannon->ProjectileVelocity;
-// 	InitVelocity = Direction.GetSafeNormal() * Speed;
-//
-// 	/* if simulate physics is false*/
-// 	// impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
-// 	Mesh->AddImpulse(InitVelocity * Mass, NAME_None, true);
-// }
-
 
 // Called every frame
 void AProjectileEqBased::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	Mesh->AddForce(WindForce);
 	ElapsedTime += DeltaTime;
 
 	/* if simulate physics is true*/
-	// NewLocation.X += InitVelocity.X * DeltaTime;
-	// NewLocation.Y += InitVelocity.Y * DeltaTime;
-	// NewLocation.Z += InitVelocity.Z * DeltaTime - 0.5f*Gravity*FMath::Square(DeltaTime);
+	// NewLocation.X += InitImpulse.X * DeltaTime;
+	// NewLocation.Y += InitImpulse.Y * DeltaTime;
+	// NewLocation.Z += InitImpulse.Z * DeltaTime - 0.5f*Gravity*FMath::Square(DeltaTime);
 	//
 	// SetActorLocation(NewLocation, true);
 	//
-	// InitVelocity.Z -= Gravity*DeltaTime;
+	// InitImpulse.Z -= Gravity*DeltaTime;
 }
 
 
 void AProjectileEqBased::SetWindResistance(FVector WindDirection, float Resistance)
 {
 }
-
-
 
 
 // void AProjectileEqBased::OnProjectileOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -154,16 +140,16 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 {
 	if (OtherActor && OtherActor == this->Owner)
 	{
-		return;		// if the projectile hit the owner Cannon, return
+		return; // if the projectile hit the owner Cannon, return
 	}
-	
+
 	if (OtherActor != nullptr)
 	{
 		ACannon* Opponent = Cast<ACannon>(OtherActor);
-		if (Opponent)		// it the projectile hit the opponent Cannon
+		if (Opponent) // it the projectile hit the opponent Cannon
 		{
 			Opponent->Health -= Damage;
-			
+
 			playerUI->ApplyDamageHPBar(Opponent, playerCannon);
 
 			// noir-client-black, blanc-server-white
@@ -171,35 +157,64 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 			if (Opponent->Health <= 0)
 			{
 				int32 num = 0;
-				if (Opponent->HasAuthority())	// server
+				if (Opponent->HasAuthority()) // server
 				{
 					if (Opponent->IsLocallyControlled()) num = 1;
 					else num = 0;
 				}
-				else		// client
+				else // client
 				{
 					if (Opponent->IsLocallyControlled()) num = 0;
 					else num = 1;
 				}
 				playerCannon->FortressUI->GameOver(num);
 			}
-				
+
 			//UE_LOG(LogTemp, Warning, TEXT("%s"), *Opponent->GetName());
 			// error message: OwnerCannon->FortressUI == null
-		
+
 			if (BombEffect)
 				PlayBombEffect(Hit);
 		}
 		Destroy();
 	}
-	
-	playerUI->SetTurnWidgetVisible();
+
+	// next turn
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle,
+	                                       FTimerDelegate::CreateUObject(playerUI, &UFortressUI::SetTurnWidgetVisible),
+	                                       1.0f, false);
+
+	if (HasAuthority())
+	{
+		AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
+		if (gm != nullptr)
+		{
+			gm->SetWind();
+		}
+	}
 }
 
 void AProjectileEqBased::SetTurnWidgetHidden()
 {
 	playerUI->horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 }
+
+// void AProjectileEqBased::PrepareNextTurn()
+// {
+// 	// next turn
+// 	FTimerHandle TimerHandle;
+// 	GetWorld()->GetTimerManager().SetTimer(TimerHandle,
+// 		FTimerDelegate::CreateUObject(playerUI, &UFortressUI::SetTurnWidgetVisible), 1.0f, false);
+// 	playerUI->SetWindBar(WindForce.X/WindForceMax);
+// }
+
+// void AProjectileEqBased::ServerRPC_Init_Implementation()
+// {
+// 	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
+// 	if (gm)
+// 		WindForceMax = gm->WindMaxStrength;
+// }
 
 void AProjectileEqBased::PlayBombEffect(const FHitResult& Hit)
 {

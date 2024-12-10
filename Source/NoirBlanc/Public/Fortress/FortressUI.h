@@ -65,7 +65,12 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* text_Turn;
-	
+
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* windForcePlus;
+
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* windForceMinus;
 	// End UI
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -78,6 +83,10 @@ public:
 	void SetTurnWidgetVisible(); 
 	
 	void SetTurnWidgetHidden();
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void SetWindBar(float percent);
 };
 
 
