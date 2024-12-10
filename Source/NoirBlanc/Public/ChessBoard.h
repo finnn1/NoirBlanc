@@ -213,7 +213,7 @@ public:
 	
 	void QueenEncounter();
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_AfterQueen();
+	void ServerRPC_AfterQueen(const FString& Level);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_AfterQueen();
 	void AfterQueen(AChessPiece* Selected, AChessPiece* Target);

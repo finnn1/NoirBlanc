@@ -236,8 +236,9 @@ void AChessBoard::QueenEncounter()
 	}
 }
 
-void AChessBoard::ServerRPC_AfterQueen_Implementation()
+void AChessBoard::ServerRPC_AfterQueen_Implementation(const FString& Level)
 {
+	QueenLevel = Level;
 	MulticastRPC_AfterQueen();
 }
 
@@ -964,8 +965,7 @@ void AChessBoard::DestroyQueenWidget()
 
 void AChessBoard::QueenWidgetClicked(const FString& Level)
 {
-	QueenLevel = Level;
-	ServerRPC_AfterQueen();
+	ServerRPC_AfterQueen(Level);
 }
 
 void AChessBoard::OpenLevel()
