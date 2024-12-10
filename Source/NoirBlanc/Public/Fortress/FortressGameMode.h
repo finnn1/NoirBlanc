@@ -26,5 +26,10 @@ public:
 
 	int32 turnIdx = 0;
 	void ChangeTurn();
+
+	void SetWind();
+	
+	UPROPERTY(EditAnywhere)
+	float WindMaxStrength = 100.f;
 	
 };
