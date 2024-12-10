@@ -34,12 +34,17 @@ void AChessBoard::BeginPlay()
 	
 	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());;
+	StartGame();
+}
 
+
+void AChessBoard::StartGame()
+{
 	TurnUI = CreateWidget<UTurnUI>(GetWorld(), TurnUIClass);
 	FTimerHandle UITimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(UITimerHandle, [this](){TurnUI->AddToViewport();}, 1.f, false);
 	FTimerHandle TurnTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 4.f, false);
+	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 3.f, false);
 	PlaySound(BackgroundMusic);
 }
 

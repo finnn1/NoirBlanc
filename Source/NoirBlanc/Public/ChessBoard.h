@@ -209,5 +209,6 @@ public:
 	
 	void QueenEncounter();
 	void AfterQueen(AChessPiece* Selected, AChessPiece* Target);
+	void StartGame();
 private:
 };
