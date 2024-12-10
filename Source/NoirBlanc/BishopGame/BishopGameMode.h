@@ -49,7 +49,7 @@ public:
 	void UpdateTimer();
 	int32 CurrentRemainTime;
 	UPROPERTY(EditAnywhere)
-	int32 DefaultRemainTime = 5;
+	int32 DefaultRemainTime = 100;
 	
 	// TODO: 접근 제한자 올바르게 할당
 	bool CheckCommittedText(const FText& TypedText);
