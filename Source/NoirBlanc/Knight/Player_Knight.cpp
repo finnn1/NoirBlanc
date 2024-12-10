@@ -116,11 +116,11 @@ void APlayer_Knight::Tick(float DeltaTime)
 	{
 		if(TotalDistance > OtherPlayer->TotalDistance)
 		{
-			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("블랑"));
+			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("느와르"));
 		}
 		else
 		{
-			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("느와르"));
+			Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Winner = FText::FromString(TEXT("블랑"));
 		}
 		
 		MulticastRPC_UpdateDistanceUI(TotalDistance, OtherPlayer->TotalDistance);
@@ -135,16 +135,6 @@ void APlayer_Knight::Tick(float DeltaTime)
 	else
 	{
 		Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor = EPieceColor::Black;
-	}
-	
-	if(HasAuthority())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Server : %hhd"), Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Client : %hhd"), Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor);
-		//UE_LOG(LogTemp, Warning, TEXT("Client : %s"), *EnumToString(Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor));
 	}
 }
 
