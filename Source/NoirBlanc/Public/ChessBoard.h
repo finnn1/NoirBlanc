@@ -226,6 +226,12 @@ public:
 	void MulticastRPC_AfterQueen();
 	void AfterQueen(AChessPiece* Selected, AChessPiece* Target);
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_MiniGameEnd();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_MiniGameEnd();
+	void MiniGameEnd();
+	
 	void StartGame();
 private:
 };

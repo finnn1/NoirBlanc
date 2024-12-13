@@ -23,7 +23,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
-public:	
+public:
 	EPieceType GetPieceType();
 	EPieceColor GetPieceColor();
 	ABoardFloor* GetFloorBeneathPiece();
@@ -36,6 +36,9 @@ public:
 	void SetEncounterCount(int32 Count);
 	int32 GetMoveCount();
 	int32 GetEncounterCount();
+
+	void DissolveMaterial();
+	void StopTimer();
 	
 protected:
 	void SetPieceMesh();
@@ -65,4 +68,7 @@ private:
 	
 	UPROPERTY(Replicated, VisibleAnywhere,Category = "PieceInfo")
 	int32 EncounterCount = 0;
+
+	FTimerHandle DissolveTimer;
+	float DissolveCounter = 0.f;
 };
