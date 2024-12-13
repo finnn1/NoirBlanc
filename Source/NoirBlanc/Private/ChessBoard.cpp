@@ -11,6 +11,7 @@
 #include "NoirBlanc/Knight/TurnUI.h"
 #include "QueenSelectWidget.h"
 #include "NoirBlanc/Knight/BattleUI.h"
+#include "NoirBlanc/Knight/ResultUI.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -27,16 +28,16 @@ AChessBoard::AChessBoard()
 	KingArray = KingValue;
 }
 
-// Called when the game starts or when spawned
 void AChessBoard::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());;
+	
+	//need to add Condition to Start Game When Possesed 
 	StartGame();
 }
-
 
 void AChessBoard::StartGame()
 {
@@ -46,9 +47,14 @@ void AChessBoard::StartGame()
 	FTimerHandle TurnTimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 3.f, false);
 	PlaySound(BackgroundMusic);
+
+	ResultUI = Cast<UResultUI>(CreateWidget(GetWorld(), ResultUIClass));
+	ResultUI->AddToViewport();
+	ResultUI->ShowResult(EPieceType::King, EPieceColor::Black,
+						EPieceType::King, EPieceColor::White,
+						EPieceColor::Black);
 }
 
-// Called every frame
 void AChessBoard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -180,7 +186,9 @@ void AChessBoard::MovePiece()
 
 void AChessBoard::ServerRPC_PieceEncounter_Implementation()
 {
-	MulticastRPC_PieceEncounter();
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle,[this](){MulticastRPC_PieceEncounter();}, 0.3f ,false);
+	
 }
 
 void AChessBoard::MulticastRPC_PieceEncounter_Implementation()
@@ -202,7 +210,7 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 				QueenEncounter();
 			}
 			else
-			{
+			{	
 				AfterQueen(Selected, Target);
 			}
 		}
@@ -212,14 +220,44 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 
 void AChessBoard::QueenEncounter()
 {
-	ShowQueenWidget();
+	if(Turn == EPieceColor::White)
+	{
+		if(HasAuthority())
+		{
+			ShowQueenWidget();
+		}	
+	}
+	else if(Turn == EPieceColor::Black)
+	{
+		if(!HasAuthority())
+		{
+			ShowQueenWidget();
+		}
+	}
+}
+
+void AChessBoard::ServerRPC_AfterQueen_Implementation(const FString& Level)
+{
+	QueenLevel = Level;
+	MulticastRPC_AfterQueen();
+}
+
+void AChessBoard::MulticastRPC_AfterQueen_Implementation()
+{
+	AfterQueen(SelectedPiece, TargetPiece);
 }
 
 void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 {
 	DestroyQueenWidget();
 	FName LevelName;
+	EPieceType KingGame;
 	EPieceType Game = Selected->GetPieceType();
+	if(Target->GetPieceType() == EPieceType::King)
+	{
+		 KingGame = Target->GetPieceType();
+	}
+	//Save Data to GameInstance
 	GameInstance->DeffenderColor = Target->GetPieceColor();
 	GameInstance->DeffenderType = Target->GetPieceType();
 	GameInstance->AttackerColor = Selected->GetPieceColor();
@@ -235,7 +273,7 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	PlaySound(BattleSound);
 	BattleUI = CreateWidget<UBattleUI>(GetWorld(), BattleUIClass);
 	BattleUI->AddToViewport();
-	
+
 	if(HasAuthority())
 	{
 		for(int i = 0 ; i < BoardFloors.Num(); i++)
@@ -254,31 +292,36 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 				GameInstance->BoardColorData[i] = EPieceColor::Blank;
 			}
 		}
-		switch(Game)
+		if(KingGame == EPieceType::King)
 		{
-		case EPieceType::Pawn:
-			LevelName = "Pawn";
-			break;
-		case EPieceType::Knight:
-			LevelName = "Knight";
-			break;
-		case EPieceType::Bishop:
-			LevelName = "Bishop";
-			break;
-		case EPieceType::Rook:
-			LevelName = "Rook";
-			break;
-		case EPieceType::Queen:
-			LevelName = FName(*QueenLevel);
-			break;
-		case EPieceType::King:
 			LevelName = "King";
-			break;
+		}
+		else
+		{
+			switch(Game)
+			{
+			case EPieceType::Pawn:
+				LevelName = "Pawn";
+				break;
+			case EPieceType::Knight:
+				LevelName = "Knight";
+				break;
+			case EPieceType::Bishop:
+				LevelName = "Bishop";
+				break;
+			case EPieceType::Rook:
+				LevelName = "Rook";
+				break;
+			case EPieceType::Queen:
+				LevelName = FName(*QueenLevel);
+				break;
+			}
 		}
 		LevelToOpen = LevelName;
 		OpenLevel();
 	}
 }
+
 void AChessBoard::MoveEnd()
 {
 	ChangeTurn();
@@ -411,13 +454,13 @@ void AChessBoard::InitBoard()
 	{
 		Delete_Row = GameInstance->AttackerRow;
 		Delete_Col = GameInstance->AttackerCol;
-		BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor()->Destroy();
+		DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
 	}
 	else if(GameInstance->AttackerColor == Winner)
 	{
 		Delete_Col = GameInstance->DeffenderCol;
 		Delete_Row = GameInstance->DeffenderRow;
-		BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor()->Destroy();
+		DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
 
 		AChessPiece* Attacker = BoardFloors[GameInstance->AttackerRow*Chess_Num + GameInstance->AttackerCol]->GetPieceOnFloor();
 		ABoardFloor* Destination = BoardFloors[Delete_Row*Chess_Num + Delete_Col];
@@ -890,6 +933,34 @@ void AChessBoard::TurnUIChange()
 	TurnUI->ShowTurn(Turn);
 }
 
+void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
+{
+	//Material Change
+	if(DeletePiece)
+	{
+		if(DeletePiece->GetPieceType() == EPieceType::King)
+		{
+			ServerRPC_EndGame(DeletePiece->GetPieceColor());
+		}
+		DeletePiece->Destroy();
+	}
+}
+
+void AChessBoard::EndGame(EPieceColor Loser)
+{
+	
+}
+
+void AChessBoard::MulticastRPC_EndGame_Implementation(EPieceColor Loser)
+{
+	EndGame(Loser);
+}
+
+void AChessBoard::ServerRPC_EndGame_Implementation(EPieceColor Loser)
+{
+	MulticastRPC_EndGame(Loser);
+}
+
 void AChessBoard::ShowQueenWidget()
 {
 	FString Selected;
@@ -922,8 +993,7 @@ void AChessBoard::DestroyQueenWidget()
 
 void AChessBoard::QueenWidgetClicked(const FString& Level)
 {
-	QueenLevel = Level;
-	AfterQueen(SelectedPiece, TargetPiece);
+	ServerRPC_AfterQueen(Level);
 }
 
 void AChessBoard::OpenLevel()

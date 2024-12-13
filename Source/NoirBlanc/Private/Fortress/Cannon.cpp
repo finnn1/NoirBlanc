@@ -21,6 +21,10 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Fortress/Bomb.h"
+#include "Fortress/CannonBall.h"
+#include "Fortress/Missile.h"
+#include "Algo/RandomShuffle.h"
 
 // Sets default values
 ACannon::ACannon()
@@ -50,19 +54,18 @@ ACannon::ACannon()
 	MoveSpeed = 100.0f;
 	RotationSpeed = 50.0f;
 
-	VelocityBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("FireBoostWidget"));
-	VelocityBar->SetupAttachment(RootComponent);
+	ImpulseBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("FireBoostWidget"));
+	ImpulseBar->SetupAttachment(RootComponent);
 
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
-	Damage = 10.0f;
+	// Damage = 10.0f;
 
 	this->NetUpdateFrequency = 100.0f;
 
 	Muzzle->SetUsingAbsoluteLocation(true);
 
 	bIsturn = false;
-	
 }
 
 // Called when the game starts or when spawned
@@ -70,16 +73,26 @@ void ACannon::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// set velocity bar widget
-	if (VelocityBar != nullptr)
+	// does not work if it is located in constructor
+	ProjectilesEqBasedFactoryArray.Append({
+		                                      ProjectileEqBasedFactory,
+		                                      CannonBallFactory, MissileFactory, BombFactory
+	                                      });
+
+	numprojectile = ProjectilesEqBasedFactoryArray.Num();
+
+	for (int32 i = 0; i < numprojectile; i++) randomProjectileIdxArray.Add(i);
+
+	// set Impulse bar widget
+	if (ImpulseBar != nullptr)
 	{
-		UUserWidget* Widget = VelocityBar->GetWidget(); // WidgetComponent != Widget
+		UUserWidget* Widget = ImpulseBar->GetWidget(); // WidgetComponent != Widget
 		if (Widget != nullptr)
 		{
-			ProjectileVelocity = 0.0f;
+			ProjectileImpulse = 0.0f;
 			FireBoostWidget = Cast<UFireBoostWidget>(Widget);
 			if (FireBoostWidget != nullptr)
-				FireBoostWidget->Velocity = ProjectileVelocity;
+				FireBoostWidget->Impulse = ProjectileImpulse;
 		}
 	}
 
@@ -88,10 +101,9 @@ void ACannon::BeginPlay()
 	if (gm != nullptr)
 	{
 		gm->AllPlayers.Add(this);
-		if (gm->AllPlayers.Num() == 1) this->bIsturn = true;		// set the first player turn true
+		if (gm->AllPlayers.Num() == 1) this->bIsturn = true; // set the first player turn true
 	}
 }
-
 
 
 // Called to bind functionality to input
@@ -123,7 +135,7 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void ACannon::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	UE_LOG(LogTemp, Warning, TEXT("Possessed by: %s"), *GetActorNameOrLabel());
+	//UE_LOG(LogTemp, Warning, TEXT("Possessed by: %s"), *GetActorNameOrLabel());
 
 	ClientRPC_Init();
 }
@@ -134,13 +146,13 @@ void ACannon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	//BillboardFireBoost();
-	if (!bIsturn) return; 
-	
+	if (!bIsturn) return;
+
 	FVector NewLocation = GetActorLocation() + (MovementInput * MoveSpeed * DeltaTime);
 
 	// TODO: should set the limit of the rotation angle
 	FRotator NewRotation = Muzzle->GetComponentRotation() + RotationInput * RotationSpeed * DeltaTime;
-	
+
 	if (IsLocallyControlled())
 		ServerRPC_Move(NewLocation, NewRotation);
 }
@@ -168,65 +180,83 @@ void ACannon::ProjectileDir(const FInputActionValue& Value)
 void ACannon::Fire()
 {
 	if (!bIsturn) return;
-	
+
 	GetWorld()->GetTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
 
+	if (projectileIdx == 0)
+		Algo::RandomShuffle(randomProjectileIdxArray);
+
+	if (projectileIdx >= numprojectile) projectileIdx -= numprojectile;
+	//UE_LOG(LogTemp, Warning, TEXT("total num: %d"), randomProjectileIdxArray.Num());
+
+	ProjectileEqBasedClass = ProjectilesEqBasedFactoryArray[projectileIdx];
+
 	if (ProjectileEqBasedFactory)
-		ServerRPC_Fire(ProjectileVelocity);
+		ServerRPC_Fire(ProjectileImpulse, ProjectileEqBasedClass);
 
 	if (FireBoostWidget != nullptr)
-		FireBoostWidget->Velocity = 0.0f; // set velocity var in widget 0
-	
+		FireBoostWidget->Impulse = 0.0f; // set Impulse var in widget 0
+
+	projectileIdx++;
 }
 
-void ACannon::ServerRPC_Fire_Implementation(float Velocity)
+void ACannon::ServerRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass)
 {
-	MulticastRPC_Fire(Velocity);
+	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
+	// if (gm != nullptr)
+	// {
+	// 	WindForce = gm->SetWind();
+	// 	WindForceMax = gm->WindMaxStrength;
+	// 	FortressUI->SetWind(WindForce.X/WindForceMax);
+	// }
+
+	MulticastRPC_Fire(Impulse, ProjectileEqBasedSubclass);
 
 	// after firing, switch the turn and display the turn
 	// only server can access to the gamemode
-	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
 	if (gm != nullptr)
 	{
 		gm->ChangeTurn();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Cannon turnCannon %s"), *turnCannon.ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("Cannon turnCannon %s"), *turnCannon.ToString());
 }
 
-void ACannon::MulticastRPC_Fire_Implementation(float Velocity) 
+void ACannon::MulticastRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass)
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
-	this->ProjectileVelocity = Velocity;
-	
+	ProjectileImpulse = Impulse;
+
+
 	// spawn projectile
 	FVector direction = SpawnLocation->GetComponentLocation() - SpawnOrigin->GetComponentLocation();
-	ProjectileEqBased = GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedFactory,
-																   SpawnLocation->GetComponentLocation(),
-																   direction.Rotation(), SpawnParams);
+
+	GetWorld()->SpawnActor<AProjectileEqBased>(ProjectileEqBasedSubclass,
+	                                           SpawnLocation->GetComponentLocation(), direction.Rotation(),
+	                                           SpawnParams);
 }
 
 void ACannon::StartCharging(const FInputActionValue& Value)
 {
-	if (!bIsturn) return; 
-	
-	ProjectileVelocity = 0.0f;
+	if (!bIsturn) return;
+
+	ProjectileImpulse = 0.0f;
 	GetWorld()->GetTimerManager().SetTimer(SpeedIncreaseTimerHandle, this, &ACannon::ContinueCharging, 0.1f, true);
 	if (FireBoostWidget != nullptr)
 	{
-		FireBoostWidget->Velocity = ProjectileVelocity;
+		FireBoostWidget->Impulse = ProjectileImpulse;
 	}
 }
 
 void ACannon::ContinueCharging()
 {
 	if (!bIsturn) return;
-	
-	ProjectileVelocity += VelocityChange;
+
+	ProjectileImpulse += ImpulseChange;
 
 	if (FireBoostWidget != nullptr)
 	{
-		FireBoostWidget->Velocity = ProjectileVelocity;
+		FireBoostWidget->Impulse = ProjectileImpulse;
 	}
 }
 
@@ -254,11 +284,11 @@ void ACannon::Force(const FInputActionValue& Value)
 void ACannon::BillboardFireBoost()
 {
 	AActor* cam = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
-	FVector forward = -cam->GetActorForwardVector();	// - sign to face the camera
+	FVector forward = -cam->GetActorForwardVector(); // - sign to face the camera
 	FVector up = cam->GetActorUpVector();
 	FRotator rot = UKismetMathLibrary::MakeRotFromXZ(forward, up);
 
-	VelocityBar->SetWorldRotation(rot);
+	ImpulseBar->SetWorldRotation(rot);
 }
 
 void ACannon::InitMainUIWiget()
@@ -281,4 +311,13 @@ void ACannon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 void ACannon::ClientRPC_Init_Implementation()
 {
 	InitMainUIWiget();
+}
+
+void ACannon::MulticastRPC_SetWindForce_Implementation(FVector NewWindForce, float NewWindForceMax)
+{
+	WindForce = NewWindForce;
+	if (IsLocallyControlled())
+	{
+		FortressUI->SetWindBar(WindForce.X / NewWindForceMax);
+	}
 }

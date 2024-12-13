@@ -33,6 +33,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Transient, meta = (BindWidgetAnim))
 	class UWidgetAnimation* Anim_Noir;
 	
+	UPROPERTY(BlueprintReadOnly, Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* Anim_Start;
+	
 	FTimerHandle Handle;
 
 public:

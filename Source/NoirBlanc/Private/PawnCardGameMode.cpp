@@ -132,7 +132,7 @@ bool APawnCardGameMode::CheckRemainCards()
 	{
 		GameSet();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("RemainNum : %d"), PawnCards.Num());
+	//UE_LOG(LogTemp, Warning, TEXT("RemainNum : %d"), PawnCards.Num());
 	return (PawnCards.Num() == 0);
 }
 
@@ -183,7 +183,7 @@ void APawnCardGameMode::StartPost()
 // TODO Spawner의 변수를 바로 Remove 안 하게 수정
 void APawnCardGameMode::DeleteCardFromMap(APawnCard* SelectedCard)
 {
-	if(CardSpawner)
+	if(CardSpawner && CardSpawner->MapUseStr.Contains(SelectedCard))
 	{
 		GetWorldTimerManager().ClearTimer(CardSpawner->MapUseStr[SelectedCard].TimerHandle);
 		CardSpawner->MapUseStr.Remove(SelectedCard);

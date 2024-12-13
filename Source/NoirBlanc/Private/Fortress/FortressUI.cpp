@@ -62,13 +62,13 @@ void UFortressUI::ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player)
 	if (damagedCannon == player)
 	{
 		Player1Percentage = percentage;
-		UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
+		//UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
 	}
 	else
 	{
 		// Player2pg->SetPercent(percentage);	// not working
 		Player2Percentage = percentage;
-		UE_LOG(LogTemp, Warning, TEXT("Player2Percentage: %f"), Player2Percentage);
+		//UE_LOG(LogTemp, Warning, TEXT("Player2Percentage: %f"), Player2Percentage);
 	}
 }
 
@@ -90,7 +90,7 @@ void UFortressUI::SetTurnWidgetVisible()
 	// set widget visible to know whose turn is it
 	if (playerCannon) // server doesn't have playerCannon
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UI turnCannon %s"), *playerCannon->turnCannon.ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("UI turnCannon %s"), *playerCannon->turnCannon.ToString());
 		text_Turn->SetText(playerCannon->turnCannon);
 	}
 		
@@ -102,6 +102,21 @@ void UFortressUI::SetTurnWidgetVisible()
 
 void UFortressUI::SetTurnWidgetHidden()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Turn WidgetHidden"));
 	horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 }
+
+void UFortressUI::SetWindBar(float percent)
+{
+	if (percent >= 0)
+	{
+		windForcePlus->SetPercent(percent);
+		windForceMinus->SetPercent(0);
+	}
+	else
+	{
+		windForcePlus->SetPercent(0);
+		windForceMinus->SetPercent(-percent);
+	}
+}
+
+

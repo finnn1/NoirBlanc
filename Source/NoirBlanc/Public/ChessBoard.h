@@ -87,7 +87,11 @@ protected:
 	TSubclassOf<class UTurnUI> TurnUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UTurnUI* TurnUI;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UResultUI> ResultUIClass;
+	UResultUI* ResultUI;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class UQueenSelectWidget> QueenSelectUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
@@ -199,6 +203,14 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_TurnUIChange();
 
+	void DeletePiece(AChessPiece* DeletePiece);
+	
+	UFUNCTION()
+	void EndGame(EPieceColor Loser);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_EndGame(EPieceColor Loser);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_EndGame(EPieceColor Loser);
 public:
 	UFUNCTION()
 	void ShowQueenWidget();
@@ -208,7 +220,12 @@ public:
 	void QueenWidgetClicked(const FString& Level);
 	
 	void QueenEncounter();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_AfterQueen(const FString& Level);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_AfterQueen();
 	void AfterQueen(AChessPiece* Selected, AChessPiece* Target);
+
 	void StartGame();
 private:
 };
