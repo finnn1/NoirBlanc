@@ -454,13 +454,13 @@ void AChessBoard::InitBoard()
 	{
 		Delete_Row = GameInstance->AttackerRow;
 		Delete_Col = GameInstance->AttackerCol;
-		BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor()->Destroy();
+		DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
 	}
 	else if(GameInstance->AttackerColor == Winner)
 	{
 		Delete_Col = GameInstance->DeffenderCol;
 		Delete_Row = GameInstance->DeffenderRow;
-		BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor()->Destroy();
+		DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
 
 		AChessPiece* Attacker = BoardFloors[GameInstance->AttackerRow*Chess_Num + GameInstance->AttackerCol]->GetPieceOnFloor();
 		ABoardFloor* Destination = BoardFloors[Delete_Row*Chess_Num + Delete_Col];
@@ -931,6 +931,34 @@ void AChessBoard::PlaySound(USoundBase* Sound)
 void AChessBoard::TurnUIChange()
 {
 	TurnUI->ShowTurn(Turn);
+}
+
+void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
+{
+	//Material Change
+	if(DeletePiece)
+	{
+		if(DeletePiece->GetPieceType() == EPieceType::King)
+		{
+			ServerRPC_EndGame(DeletePiece->GetPieceColor());
+		}
+		DeletePiece->Destroy();
+	}
+}
+
+void AChessBoard::EndGame(EPieceColor Loser)
+{
+	
+}
+
+void AChessBoard::MulticastRPC_EndGame_Implementation(EPieceColor Loser)
+{
+	EndGame(Loser);
+}
+
+void AChessBoard::ServerRPC_EndGame_Implementation(EPieceColor Loser)
+{
+	MulticastRPC_EndGame(Loser);
 }
 
 void AChessBoard::ShowQueenWidget()

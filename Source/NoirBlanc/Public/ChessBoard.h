@@ -203,6 +203,14 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_TurnUIChange();
 
+	void DeletePiece(AChessPiece* DeletePiece);
+	
+	UFUNCTION()
+	void EndGame(EPieceColor Loser);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_EndGame(EPieceColor Loser);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_EndGame(EPieceColor Loser);
 public:
 	UFUNCTION()
 	void ShowQueenWidget();
