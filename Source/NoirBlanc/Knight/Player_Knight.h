@@ -5,6 +5,7 @@
 #include "InputMappingContext.h"
 #include "CoreMinimal.h"
 #include "Road.h"
+#include "WaitingUI.h"
 #include "GameFramework/Character.h"
 #include "Player_Knight.generated.h"
 
@@ -23,6 +24,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UWaitingUI> WaitingUIFactory;
+	UWaitingUI* WaitingUI;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_DestroyWaiting();
 
 
 	// --------------------------------------------------------------------------------
