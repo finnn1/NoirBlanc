@@ -37,7 +37,7 @@ public:
 	class USphereComponent* SpawnLocation;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UWidgetComponent* VelocityBar;
+	class UWidgetComponent* ImpulseBar;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UFireBoostWidget* FireBoostWidget;
@@ -67,9 +67,9 @@ protected:
 
 	void Fire();
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_Fire(float Velocity);
+	void ServerRPC_Fire(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass);
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_Fire(float Velocity);
+	void MulticastRPC_Fire(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass);
 	
 	void StartCharging(const FInputActionValue& Value);
 
@@ -89,17 +89,14 @@ public:
 	float MoveSpeed;
 	float RotationSpeed;
 
-	// timer for setting projectile velocity
+	// timer for setting projectile impulse
 	FTimerHandle SpeedIncreaseTimerHandle;
 
 	UPROPERTY(EditAnywhere)
-	float ProjectileVelocity;
+	float ProjectileImpulse;
 	
 	UPROPERTY(EditAnywhere)
-	float VelocityChange = 100.0f;
-	
-	const float MaxSpeed = 1000.0f;
-	const float SpeedIncreaseRate = 50.0f;
+	float ImpulseChange = 100.0f;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -120,8 +117,24 @@ public:
 	TSubclassOf<AProjectileEqBased> ProjectileEqBasedFactory;		// class
 
 	UPROPERTY(EditAnywhere)
-	AProjectileEqBased* ProjectileEqBased;	// object
+	TSubclassOf<class ACannonBall> CannonBallFactory;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AMissile> MissileFactory;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ABomb> BombFactory;
+	
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<AProjectileEqBased>>ProjectilesEqBasedFactoryArray;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AProjectileEqBased> ProjectileEqBasedClass;	// object
+
+	TArray<int32> randomProjectileIdxArray;
+	int32 numprojectile;
+	int32 projectileIdx = 0;
+	
 public:
 	// Health and Damage
 	UPROPERTY(EditAnywhere)
@@ -130,8 +143,8 @@ public:
 
 	float Health;
 
-	UPROPERTY(EditAnywhere)
-	float Damage;
+	// UPROPERTY(EditAnywhere)
+	// float Damage;
 
 public:
 	UPROPERTY(EditAnywhere)
@@ -149,6 +162,11 @@ public:
 	bool bIsturn;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	FVector WindForce;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SetWindForce(FVector NewWindForce, float NewWindForceMax);
 };
 
 

@@ -87,11 +87,20 @@ protected:
 	TSubclassOf<class UTurnUI> TurnUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UTurnUI* TurnUI;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UResultUI> ResultUIClass;
+	UResultUI* ResultUI;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class UQueenSelectWidget> QueenSelectUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UQueenSelectWidget* QueenSelectUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UBattleUI> BattleUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UBattleUI* BattleUI;
 	
 private:
 	const int32 Chess_Num  = 8;
@@ -114,6 +123,10 @@ private:
 	//bool bIsSamePieceClicked = false;
 
 	bool bIsGoingToAnotherLevel = false;
+
+	FName LevelToOpen;
+
+	FString QueenLevel;
 //////////////////////////////////////////
 /////FUNCTION
 public:
@@ -146,6 +159,9 @@ public:
 	void InitFloor();
 
 	void SetPieceData(int32 num, EPieceType type, EPieceColor color);
+	
+	UFUNCTION()
+	void OpenLevel();
 protected:
 	UFUNCTION()
 	void ChangeTurn();
@@ -187,9 +203,21 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_TurnUIChange();
 
+public:
 	UFUNCTION()
-	FName ShowQueenWidget();
+	void ShowQueenWidget();
 	UFUNCTION()
 	void DestroyQueenWidget();
+	UFUNCTION()
+	void QueenWidgetClicked(const FString& Level);
+	
+	void QueenEncounter();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_AfterQueen(const FString& Level);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_AfterQueen();
+	void AfterQueen(AChessPiece* Selected, AChessPiece* Target);
+
+	void StartGame();
 private:
 };

@@ -10,6 +10,8 @@
 #include "Net/UnrealNetwork.h"
 #include "NoirBlanc/Knight/TurnUI.h"
 #include "QueenSelectWidget.h"
+#include "NoirBlanc/Knight/BattleUI.h"
+#include "NoirBlanc/Knight/ResultUI.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -26,23 +28,33 @@ AChessBoard::AChessBoard()
 	KingArray = KingValue;
 }
 
-// Called when the game starts or when spawned
 void AChessBoard::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());;
+	
+	//need to add Condition to Start Game When Possesed 
+	StartGame();
+}
 
+void AChessBoard::StartGame()
+{
 	TurnUI = CreateWidget<UTurnUI>(GetWorld(), TurnUIClass);
 	FTimerHandle UITimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(UITimerHandle, [this](){TurnUI->AddToViewport();}, 1.f, false);
 	FTimerHandle TurnTimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 3.f, false);
 	PlaySound(BackgroundMusic);
+
+	ResultUI = Cast<UResultUI>(CreateWidget(GetWorld(), ResultUIClass));
+	ResultUI->AddToViewport();
+	ResultUI->ShowResult(EPieceType::King, EPieceColor::Black,
+						EPieceType::King, EPieceColor::White,
+						EPieceColor::Black);
 }
 
-// Called every frame
 void AChessBoard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -174,7 +186,9 @@ void AChessBoard::MovePiece()
 
 void AChessBoard::ServerRPC_PieceEncounter_Implementation()
 {
-	MulticastRPC_PieceEncounter();
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle,[this](){MulticastRPC_PieceEncounter();}, 0.3f ,false);
+	
 }
 
 void AChessBoard::MulticastRPC_PieceEncounter_Implementation()
@@ -189,77 +203,122 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 	{
 		if(Floor->GetPieceOnFloor() == Target)
 		{
-			FName LevelName;
-			FName QueenLevel;
-			EPieceType Game = Selected->GetPieceType();
 			Selected->IncreaseEncounterCount();
 			Target->IncreaseEncounterCount();
 			if(Selected->GetPieceType() == EPieceType::Queen)
 			{
-				QueenLevel = ShowQueenWidget();
+				QueenEncounter();
 			}
-			GameInstance->DeffenderColor = Target->GetPieceColor();
-			GameInstance->DeffenderType = Target->GetPieceType();
-			GameInstance->AttackerColor = Selected->GetPieceColor();
-			GameInstance->AttackerType = Target->GetPieceType();
-			GameInstance->AttackerRow = SelectedFloor->GetRow();
-			GameInstance->AttackerCol = SelectedFloor->GetCol();
-			GameInstance->DeffenderRow = TargetFloor->GetRow();
-			GameInstance->DeffenderCol = TargetFloor->GetCol();
-			bIsGoingToAnotherLevel = true;
-			MoveEnd();
-			GameInstance->Saved_Turn = Turn;
-			PlaySound(BattleSound);
-			if(HasAuthority())
-			{
-				for(int i = 0 ; i < BoardFloors.Num(); i++)
-				{
-					//search through the board and save data
-					if(BoardFloors[i]->GetPieceOnFloor())
-					{
-						GameInstance->BoardTypeData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceType();
-						GameInstance->BoardColorData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceColor();
-						GameInstance->EncounterCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetEncounterCount();
-						GameInstance->MoveCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetMoveCount();
-					}
-					else
-					{
-						GameInstance->BoardTypeData[i] = EPieceType::Blank;
-						GameInstance->BoardColorData[i] = EPieceColor::Blank;
-					}
-				}
-				switch(Game)
-				{
-				case EPieceType::Pawn:
-					LevelName = "Pawn";
-					break;
-				case EPieceType::Knight:
-					LevelName = "Knight";
-					break;
-				case EPieceType::Bishop:
-					LevelName = "Bishop";
-					break;
-				case EPieceType::Rook:
-					LevelName = "Rook";
-					break;
-				case EPieceType::Queen:
-					LevelName = QueenLevel;
-					break;
-				case EPieceType::King:
-					LevelName = "King";
-					break;
-				}
-				FString ServerURL = *GameLevelMap.Find(LevelName);
-				ServerURL += TEXT("?listen");
-				
-				FTimerHandle LevelTimerHandle;
-				GetWorld()->GetTimerManager().SetTimer(LevelTimerHandle, [this, ServerURL](){
-					if (ServerURL.IsEmpty() == false)
-					{
-						Controller->ServerRPC_LevelTravel(ServerURL);
-					}}, 2.f, false);
+			else
+			{	
+				AfterQueen(Selected, Target);
 			}
 		}
+	}
+}
+
+
+void AChessBoard::QueenEncounter()
+{
+	if(Turn == EPieceColor::White)
+	{
+		if(HasAuthority())
+		{
+			ShowQueenWidget();
+		}	
+	}
+	else if(Turn == EPieceColor::Black)
+	{
+		if(!HasAuthority())
+		{
+			ShowQueenWidget();
+		}
+	}
+}
+
+void AChessBoard::ServerRPC_AfterQueen_Implementation(const FString& Level)
+{
+	QueenLevel = Level;
+	MulticastRPC_AfterQueen();
+}
+
+void AChessBoard::MulticastRPC_AfterQueen_Implementation()
+{
+	AfterQueen(SelectedPiece, TargetPiece);
+}
+
+void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
+{
+	DestroyQueenWidget();
+	FName LevelName;
+	EPieceType KingGame;
+	EPieceType Game = Selected->GetPieceType();
+	if(Target->GetPieceType() == EPieceType::King)
+	{
+		 KingGame = Target->GetPieceType();
+	}
+	//Save Data to GameInstance
+	GameInstance->DeffenderColor = Target->GetPieceColor();
+	GameInstance->DeffenderType = Target->GetPieceType();
+	GameInstance->AttackerColor = Selected->GetPieceColor();
+	GameInstance->AttackerType = Target->GetPieceType();
+	GameInstance->AttackerRow = SelectedFloor->GetRow();
+	GameInstance->AttackerCol = SelectedFloor->GetCol();
+	GameInstance->DeffenderRow = TargetFloor->GetRow();
+	GameInstance->DeffenderCol = TargetFloor->GetCol();
+	bIsGoingToAnotherLevel = true;
+	MoveEnd();
+	GameInstance->Saved_Turn = Turn;
+	//Contact Begin
+	PlaySound(BattleSound);
+	BattleUI = CreateWidget<UBattleUI>(GetWorld(), BattleUIClass);
+	BattleUI->AddToViewport();
+
+	if(HasAuthority())
+	{
+		for(int i = 0 ; i < BoardFloors.Num(); i++)
+		{
+			//search through the board and save data
+			if(BoardFloors[i]->GetPieceOnFloor())
+			{
+				GameInstance->BoardTypeData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceType();
+				GameInstance->BoardColorData[i] = BoardFloors[i]->GetPieceOnFloor()->GetPieceColor();
+				GameInstance->EncounterCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetEncounterCount();
+				GameInstance->MoveCountData[i] = BoardFloors[i]->GetPieceOnFloor()->GetMoveCount();
+			}
+			else
+			{
+				GameInstance->BoardTypeData[i] = EPieceType::Blank;
+				GameInstance->BoardColorData[i] = EPieceColor::Blank;
+			}
+		}
+		if(KingGame == EPieceType::King)
+		{
+			LevelName = "King";
+		}
+		else
+		{
+			switch(Game)
+			{
+			case EPieceType::Pawn:
+				LevelName = "Pawn";
+				break;
+			case EPieceType::Knight:
+				LevelName = "Knight";
+				break;
+			case EPieceType::Bishop:
+				LevelName = "Bishop";
+				break;
+			case EPieceType::Rook:
+				LevelName = "Rook";
+				break;
+			case EPieceType::Queen:
+				LevelName = FName(*QueenLevel);
+				break;
+			}
+		}
+		LevelToOpen = LevelName;
+		OpenLevel();
 	}
 }
 
@@ -874,19 +933,20 @@ void AChessBoard::TurnUIChange()
 	TurnUI->ShowTurn(Turn);
 }
 
-FName AChessBoard::ShowQueenWidget()
+void AChessBoard::ShowQueenWidget()
 {
-	FName Selected;
+	FString Selected;
 	if (Controller)
 	{
 		QueenSelectUI = CreateWidget<UQueenSelectWidget>(GetWorld(), QueenSelectUIClass);
-		if (QueenSelectUI) // PauseMenuClass는 UUserWidget 서브클래스
+		if (QueenSelectUI) 
 		{
-
+			QueenSelectUI->AddToViewport();
+	        FInputModeUIOnly InputMode;
+	        Controller->SetInputMode(InputMode);
+			UGameplayStatics::SetGamePaused(GetWorld(), true);
 		}
 	}
-	DestroyQueenWidget();
-	return Selected;
 }
 
 void AChessBoard::DestroyQueenWidget()
@@ -895,7 +955,30 @@ void AChessBoard::DestroyQueenWidget()
 	{
 		QueenSelectUI->RemoveFromParent();
 		QueenSelectUI = nullptr;
+		if (Controller)
+		{
+			FInputModeGameOnly InputMode;
+			Controller->SetInputMode(InputMode);
+		}
 	}
+}
+
+void AChessBoard::QueenWidgetClicked(const FString& Level)
+{
+	ServerRPC_AfterQueen(Level);
+}
+
+void AChessBoard::OpenLevel()
+{
+	FString ServerURL = *GameLevelMap.Find(LevelToOpen);
+	ServerURL += TEXT("?listen");
+				
+	FTimerHandle LevelTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(LevelTimerHandle, [this, ServerURL](){
+		if (ServerURL.IsEmpty() == false)
+		{
+			Controller->ServerRPC_LevelTravel(ServerURL);
+		}}, 2.f, false);
 }
 
 void AChessBoard::ServerRPC_TurnUIChange_Implementation()

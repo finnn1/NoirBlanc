@@ -22,8 +22,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(Replicated)
-	FVector InitVelocity;
+	//UPROPERTY(Replicated)
+	//FVector InitImpulse;
 	
 	FVector WindForce;
 	float Gravity;
@@ -31,6 +31,9 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	float WindResistance;
+
+	UPROPERTY(EditAnywhere)
+	float Damage;
 	
 public:	
 	// Called every frame
@@ -38,7 +41,7 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
-	float Speed;
+	float Impulse;
 
 	class ACannon* OwnerCannon;
 
@@ -46,8 +49,8 @@ public:
 
 	class UFortressUI *playerUI;
 	
-	UPROPERTY(EditAnywhere)
-	float Mass;
+	// UPROPERTY(EditAnywhere)
+	// float Mass;
 	
 	UPROPERTY(EditAnywhere)
 	float Force;
@@ -55,8 +58,8 @@ public:
 	void SetWindResistance(FVector WindDirection, float Resistance);
 
 	void SetSpeedAddImpuse(FVector Direction);
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_SetSpeedAddImpuse(FVector Direction);
+	// UFUNCTION(Server, Reliable)
+	// void ServerRPC_SetSpeedAddImpuse(FVector Direction);
 	
 	// UFUNCTION()
 	// void OnProjectileOverlap(
@@ -88,6 +91,12 @@ public:
 	void MulticastRPC_PlayBombEffect(const FHitResult& Hit);
 
 	void SetTurnWidgetHidden();
+
+	// UFUNCTION(Server, Reliable)
+	// void ServerRPC_Init();
+	
+	float WindForceMax;
+	
 };
 
 

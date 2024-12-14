@@ -14,11 +14,17 @@ void UPawnCardDataAsset::InitMeshMaterial(UStaticMeshComponent* StaticMeshComp)
 	}
 }
 
-void UPawnCardDataAsset::SetMatchingMaterial(UStaticMeshComponent* StaticMeshComp)
+void UPawnCardDataAsset::SetMatchingMaterial(UStaticMeshComponent* StaticMeshComp, float Alpha)
 {
-	if(StaticMeshComp)
+	if (StaticMeshComp)
 	{
-		StaticMeshComp->SetMaterial(0, GetMatchCompleteMat());
-		StaticMeshComp->SetMaterial(4, GetMatchCompleteMat());
+		// 머티리얼 인스턴스 동적 생성
+		UMaterialInstanceDynamic* MaterialInstance1 = StaticMeshComp->CreateAndSetMaterialInstanceDynamic(0);
+		UMaterialInstanceDynamic* MaterialInstance2 = StaticMeshComp->CreateAndSetMaterialInstanceDynamic(4);
+		
+		
+		// Alpha 파라미터 값 설정
+		MaterialInstance1->SetScalarParameterValue(FName("Alpha"), Alpha);
+		MaterialInstance2->SetScalarParameterValue(FName("Alpha"), Alpha);
 	}
 }

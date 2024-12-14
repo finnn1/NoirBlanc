@@ -16,8 +16,11 @@ class NOIRBLANC_API UFireBoostWidget : public UUserWidget
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Velocity;
+	float Impulse;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxVelocity = 4000;
+	
 	UFUNCTION(BlueprintCallable)
 	float ChargeVelocity();
 };

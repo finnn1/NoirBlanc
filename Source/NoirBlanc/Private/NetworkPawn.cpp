@@ -96,14 +96,20 @@ void ANetworkPawn::Tick(float DeltaTime)
 	FString IsTurn = (GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
 
 	int32 Score = (GetPlayerState() ? GetPlayerState()->GetScore() : -1);
+
+	const UEnum* EnumPtr = StaticEnum<EPieceColor>();
+	FString EnumName = EnumPtr->GetNameByValue(static_cast<int64>(PawnPieceColor)).ToString();
+
+	FString IsPlaying = (Timeline->IsPlaying() ? TEXT("Playing") : TEXT("Not Playing"));
 	
-	FString LogStr = FString::Printf(TEXT("Connection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nNowScore: %d"),
-		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, Score);
+	FString LogStr = FString::Printf(TEXT("Connection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nIsPlaying : %s"),
+		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, *IsPlaying);
 	
-	FVector TestLoc = FVector(500,500,300);
+	FVector TestLoc = GetActorLocation();
+	TestLoc.Y += -200;
 	if(IsLocallyControlled())
 	{
-		TestLoc += FVector(500,500,500);
+		TestLoc.X += -100;
 	}
 
 	//TextBaseActor를 this를 넣는지 여부는 상대좌표, 월드좌표?
@@ -140,7 +146,6 @@ void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(EPieceColor Win
 
 	NB_GM->WinnerColor = WinnerColor;
 	FString ColorStr = StaticEnum<EPieceColor>()->GetDisplayNameTextByValue(static_cast<int64>(WinnerColor)).ToString();
-	UE_LOG(LogTemp, Warning, TEXT("Winner Color is %s"), *ColorStr);
 
 	if(HasAuthority())
 	{
@@ -158,7 +163,7 @@ void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ANetworkPawn, IsTurnPlayer);
-//	DOREPLIFETIME(ANetworkPawn, CurColor);
+	DOREPLIFETIME(ANetworkPawn, PawnPieceColor);
 }
 
 void ANetworkPawn::MulticastRPC_GameStart_Implementation()
@@ -202,7 +207,7 @@ void ANetworkPawn::MulticastRPC_ShuffleStart_Implementation()
 void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 {
 	if(!GetIsTurnPlayer()) return;
-
+	
 	FHitResult Hit;
 	if(PawnCardContr)
 	{
@@ -219,6 +224,7 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 		
 		if(SelectedCard)
 		{
+			// 카드 회전 중 다른 카드 선택 막음
 			ServerRPC_SelectCard(SelectedCard);
 		}
 	}	
@@ -226,7 +232,23 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 
 void ANetworkPawn::ServerRPC_SelectCard_Implementation(APawnCard* SelectedCard)
 {
-	MulticastRPC_SelectCard(SelectedCard);
+	//MulticastRPC_SelectCard(SelectedCard);
+	if(Timeline->IsPlaying()) return;
+	
+	TargetCard = SelectedCard;
+	if(FirstSelectedCard.IsValid())
+	{
+		//이미 첫 번째 카드를 선택했으면 체크
+		SecondSelectedCard = TargetCard;
+	}
+	else
+	{
+		//아무 것도 선택 안 했으면 FirstSelectCard에 할당
+		FirstSelectedCard = TargetCard;
+	}
+	
+	//앞면으로 오픈
+	Timeline->PlayFromStart();
 }
 
 void ANetworkPawn::MulticastRPC_SelectCard_Implementation(APawnCard* SelectedCard)
@@ -309,8 +331,8 @@ void ANetworkPawn::ServerRPC_DestroyPawnCard_Implementation(APawnCard* FirstTarg
 
 	FirstTargetCard->Destroy();
 	SecondTargetCard->Destroy();
-	/*FirstTargetCard->MatchingSuccess();
-	SecondTargetCard->MatchingSuccess();*/
+	
+	//MulticastRPT_Test(FirstTargetCard, SecondTargetCard);
 
 	// 남은 카드 체크
 	GameMode->CheckRemainCards();
@@ -363,6 +385,7 @@ void ANetworkPawn::StartTurnLerp(float value)
 void ANetworkPawn::EndTurnLerp()
 {
 	TargetCard->ChangeFrontBackState();
+	
 	if(SecondSelectedCard.IsValid())
 	{
 		if(IsCheckCardMatch())
@@ -372,7 +395,8 @@ void ANetworkPawn::EndTurnLerp()
 		}
 		else
 		{
-			// 1초 동안 확인
+			SetIsTurnPlayer(false);
+			// 잠시 확인
 			FTimerHandle TermTimerHandle;
 			GetWorldTimerManager().SetTimer(TermTimerHandle, [this]()
 			{
@@ -385,7 +409,7 @@ void ANetworkPawn::EndTurnLerp()
 				{
 					this->ServerRPC_ChangeTurn(this);
 				}
-			}, 0.5f, false);
+			}, 0.3f, false);
 		}
 	}
 	else
@@ -422,12 +446,16 @@ void ANetworkPawn::CheckLog(ANetworkPawn* TargetPawn)
 	//내 것인지
 	FString IsMine = TargetPawn->IsLocallyControlled() ? TEXT("LocalControl") : TEXT("No Control");
 
-	FString IsUI = (TargetPawn->PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
+	//FString IsUI = (TargetPawn->PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
+	FString IsUI = (TargetPawn->TurnUI ? TEXT("Has UI") : TEXT("No UI"));
 
 	FString IsTurn = (TargetPawn->GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
 
-	UE_LOG(LogTemp, Warning, TEXT("CheckLog -\nConnection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s"),
-		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn)
+	const UEnum* EnumPtr = StaticEnum<EPieceColor>();
+	FString EnumName = EnumPtr->GetNameByValue(static_cast<int64>(PawnPieceColor)).ToString();
+
+	UE_LOG(LogTemp, Warning, TEXT("CheckLog -\nConnection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nColor : %s"),
+		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, *EnumName)
 }
 
 void ANetworkPawn::ChangePlayerTurn(ANetworkPawn* StartPlayer)
@@ -447,30 +475,59 @@ void ANetworkPawn::PossessedBy(AController* NewController)
 		{
 			gm->AddPlayer(this);
 		}
+
+		// 서버는 무조건 White
+		if(IsLocallyControlled())
+		{
+			PawnPieceColor = EPieceColor::White;	
+		}
+		else
+		{
+			PawnPieceColor = EPieceColor::Black;		
+		}
 	}
+}
+
+void ANetworkPawn::DtyCard(APawnCard* DestroyCard)
+{
+	DestroyCard->Destroy();
+}
+
+void ANetworkPawn::MulticastRPT_Test_Implementation(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard)
+{
+	//FirstTargetCard->MatchingSuccess();
+	//SecondTargetCard->MatchingSuccess();
 }
 
 void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* StartPlayer)
 {
 	// 다음 턴 플레이어가 로컬의 첫 번째 플레이어와 같으면 자신 턴
+	EPieceColor TurnPlayerColor = StartPlayer->PawnPieceColor;
 	if(StartPlayer->IsLocallyControlled())
 	{
-		StartPlayer->PlayerUI->ShowTurnStart();
+		//초기화
+		StartPlayer->PlayerUI->HideTurnStart();
+		StartPlayer->PlayerUI->HideEnmTurnStart();
 
+		//My Turn UI
+		StartPlayer->PlayerUI->ShowTurnStart();
 		
 		/*Turn UI */
-		// 임의로 흰색 넣음
-		StartPlayer->TurnUI->ShowTurn(EPieceColor::White);
+		StartPlayer->TurnUI->ShowTurn(TurnPlayerColor);
 	}
 	else
 	{
 		ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
 
+		//초기화
+		LocalNetPawn->PlayerUI->HideTurnStart();
+		LocalNetPawn->PlayerUI->HideEnmTurnStart();
+
+		//Enemy Turn UI
+		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
 		
 		/*Turn UI */
-		// 임의로 흰색 넣음
-		LocalNetPawn->TurnUI->ShowTurn(EPieceColor::White);
+		LocalNetPawn->TurnUI->ShowTurn(TurnPlayerColor);
 	}
 }
 

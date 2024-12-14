@@ -17,25 +17,25 @@ void UPlayerUI::NativeConstruct()
 void UPlayerUI::ShowTurnStart()
 {
 	TurnStartText->SetVisibility(ESlateVisibility::Visible);
-	GetWorld()->GetTimerManager().SetTimer(StartTimeHandler, this, &UPlayerUI::HideTurnStart, 1.f, false);
+	//GetWorld()->GetTimerManager().SetTimer(StartTimeHandler, this, &UPlayerUI::HideTurnStart, 1.f, false);
 }
 
 void UPlayerUI::HideTurnStart()
 {
 	TurnStartText->SetVisibility(ESlateVisibility::Hidden);
-	GetWorld()->GetTimerManager().ClearTimer(StartTimeHandler);
+	//GetWorld()->GetTimerManager().ClearTimer(StartTimeHandler);
 }
 
 void UPlayerUI::ShowEnmTurnStart()
 {
 	EnmTurnStartText->SetVisibility(ESlateVisibility::Visible);
-	GetWorld()->GetTimerManager().SetTimer(EnmStartTimeHandler, this, &UPlayerUI::HideEnmTurnStart, 1.f, false);
+	//GetWorld()->GetTimerManager().SetTimer(EnmStartTimeHandler, this, &UPlayerUI::HideEnmTurnStart, 1.f, false);
 }
 
 void UPlayerUI::HideEnmTurnStart()
 {
 	EnmTurnStartText->SetVisibility(ESlateVisibility::Hidden);
-	GetWorld()->GetTimerManager().ClearTimer(EnmStartTimeHandler);
+	//GetWorld()->GetTimerManager().ClearTimer(EnmStartTimeHandler);
 }
 
 

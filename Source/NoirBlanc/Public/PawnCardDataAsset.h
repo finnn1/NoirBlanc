@@ -9,12 +9,31 @@
 /**
  * 
  */
+UENUM(BlueprintType)
+enum class PawnCardType : uint8
+{
+	NoLuck,
+	PawnRed,
+	RookRed,
+	KnightRed,
+	BishopRed,
+	QueenRed,
+	KingRed,
+	PawnBlue,
+	RookBlue,
+	KnightBlue,
+	BishopBlue,
+	QueenBlue,
+	KingBlue
+};
 UCLASS()
 class NOIRBLANC_API UPawnCardDataAsset : public UDefaultCardDataAsset
 {
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere)
+	PawnCardType PawnCardType;
 
 	UPROPERTY(EditAnywhere)
 	int32 TotalNum;
@@ -26,5 +45,5 @@ public:
 	void InitMeshMaterial(UStaticMeshComponent* StaticMeshComp);
 
 	UFUNCTION()
-	void SetMatchingMaterial(UStaticMeshComponent* StaticMeshComp);
+	void SetMatchingMaterial(UStaticMeshComponent* StaticMeshComp, float Alpha);
 };

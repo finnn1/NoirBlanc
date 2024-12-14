@@ -9,6 +9,8 @@
 /**
  * 
  */
+DECLARE_DELEGATE_OneParam(FButtonDelegate, const FString&);
+
 UCLASS()
 class NOIRBLANC_API UQueenSelectWidget : public UUserWidget
 {
@@ -17,13 +19,24 @@ public:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UButton* Btn_Pawn;
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	class UButton* Btn_Knight;
+	UButton* Btn_Knight;
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	class UButton* Btn_Rook;
+	UButton* Btn_Rook;
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	class UButton* Btn_Bishop;
+	UButton* Btn_Bishop;
 	
 	virtual void NativeConstruct() override;
-
-//	FName ChooseLevel();
+	
+	UFUNCTION()
+	void OnPawnClicked();
+	UFUNCTION()
+	void OnKnightClicked();
+	UFUNCTION()
+	void OnRookClicked();
+	UFUNCTION()
+	void OnBishopClicked();
+	
+	FButtonDelegate OnBtnClicked;
+private:
+	FString SelectedLevel = TEXT("Pawn");
 };

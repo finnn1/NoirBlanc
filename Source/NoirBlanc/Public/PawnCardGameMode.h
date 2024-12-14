@@ -28,8 +28,6 @@ public:
 
 	virtual void BeginPlay() override;
 	FTimerHandle TimerHandle;
-	UPROPERTY(EditDefaultsOnly)
-	ANetworkPawn* TurnNetPlayer;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<APawnCardSpawner> TSubCardSpawner;
