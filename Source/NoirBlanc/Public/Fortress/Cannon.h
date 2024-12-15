@@ -40,6 +40,12 @@ public:
 	class UWidgetComponent* ImpulseBar;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UWidgetComponent*  AngleWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UAngleWidget* AngleWidget;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UFireBoostWidget* FireBoostWidget;
 	
 protected:
@@ -167,6 +173,32 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_SetWindForce(FVector NewWindForce, float NewWindForceMax);
+
+	class AFortressGameMode* gm;
+
+public:
+	FTimerHandle CountdownTimer;
+	
+	void StartCountdown();
+	
+	int32 CountdownTime=0;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_UpdateCountdown();
+	
+public:
+	// make a limit for the movement
+	float DistanceRange = 100.0f;
+
+	FVector StartLocation;
+
+	// limit for the angle of the muzzle
+	float AngleRange = 40.0f;
+
+	FRotator StartRotation;
+	
 };
+
+
 
 

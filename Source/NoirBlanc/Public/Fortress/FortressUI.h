@@ -22,22 +22,23 @@ class NOIRBLANC_API UFortressUI : public UUserWidget
 	virtual void NativeConstruct() override;
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-
-	UPROPERTY(meta = (BindWidget))
-	class UWidgetSwitcher* WidgetSwitcher;
 	
 	// Start UI
 public:
+	UPROPERTY(meta = (BindWidget))
+	class UWidgetSwitcher* WidgetSwitcher;
+	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* text_GameStart;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* text_Countdown;
 
-	FTimerHandle CountdownTimer;
+	void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	// FTimerHandle CountdownTimer;
 	
-	int32 CountdownTime;
-	void UpdateCountdown();
+	// int32 CountdownTime;
+	// void UpdateCountdown();
 
 	// Main UI
 public:

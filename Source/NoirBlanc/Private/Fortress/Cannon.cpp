@@ -12,6 +12,7 @@
 #include "Fortress/Projectile.h"
 #include "Fortress/ProjectileEqBased.h"
 #include "TimerManager.h"
+#include "VectorTypes.h"
 #include "Components/HorizontalBox.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
@@ -25,6 +26,10 @@
 #include "Fortress/CannonBall.h"
 #include "Fortress/Missile.h"
 #include "Algo/RandomShuffle.h"
+#include "Components/WidgetSwitcher.h"
+#include "Fortress/AngleWidget.h"
+#include "Math/UnitConversion.h"
+#include "Components/RadialSlider.h"
 
 // Sets default values
 ACannon::ACannon()
@@ -57,6 +62,9 @@ ACannon::ACannon()
 	ImpulseBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("FireBoostWidget"));
 	ImpulseBar->SetupAttachment(RootComponent);
 
+	AngleWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("AngleWidgetComponent"));
+	AngleWidgetComponent->SetupAttachment(RootComponent);
+	
 	MaxHealth = 100.0f;
 	Health = MaxHealth;
 	// Damage = 10.0f;
@@ -72,7 +80,11 @@ ACannon::ACannon()
 void ACannon::BeginPlay()
 {
 	Super::BeginPlay();
+	UE_LOG(LogTemp, Display, TEXT("ACannon::BeginPlay"));
 
+	StartLocation = GetActorLocation();
+	StartRotation = Muzzle->GetComponentRotation();
+	
 	// does not work if it is located in constructor
 	ProjectilesEqBasedFactoryArray.Append({
 		                                      ProjectileEqBasedFactory,
@@ -96,13 +108,18 @@ void ACannon::BeginPlay()
 		}
 	}
 
+	// set angle widget
+	if (AngleWidgetComponent != nullptr)
+		AngleWidget = Cast<UAngleWidget>(AngleWidgetComponent->GetWidget());
+	
 	// add players in the array
-	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
 	if (gm != nullptr)
 	{
 		gm->AllPlayers.Add(this);
 		if (gm->AllPlayers.Num() == 1) this->bIsturn = true; // set the first player turn true
 	}
+	
+	ClientRPC_Init();
 }
 
 
@@ -135,9 +152,12 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void ACannon::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	//UE_LOG(LogTemp, Warning, TEXT("Possessed by: %s"), *GetActorNameOrLabel());
+	UE_LOG(LogTemp, Warning, TEXT("Possessed by: %s"), *GetActorNameOrLabel());
 
-	ClientRPC_Init();
+	if (HasAuthority())
+		gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
+
+	//ClientRPC_Init();
 }
 
 // Called every frame
@@ -149,18 +169,26 @@ void ACannon::Tick(float DeltaTime)
 	if (!bIsturn) return;
 
 	FVector NewLocation = GetActorLocation() + (MovementInput * MoveSpeed * DeltaTime);
-
+	
 	// TODO: should set the limit of the rotation angle
 	FRotator NewRotation = Muzzle->GetComponentRotation() + RotationInput * RotationSpeed * DeltaTime;
-
+	
 	if (IsLocallyControlled())
 		ServerRPC_Move(NewLocation, NewRotation);
 }
 
 void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation)
 {
-	SetActorLocation(NewLocation);
-	Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
+	float distance = FMath::Abs(FVector::Dist(StartLocation, NewLocation));
+	if (distance < DistanceRange)
+		SetActorLocation(NewLocation);
+
+	float angle = NewRotation.Roll - StartRotation.Roll;
+	if (angle < AngleRange && angle > -AngleRange)
+	{
+		Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
+		AngleWidget->RadialSlider->SetValue(.5 + angle/AngleRange);
+	}
 }
 
 void ACannon::Move(const FInputActionValue& Value)
@@ -202,7 +230,6 @@ void ACannon::Fire()
 
 void ACannon::ServerRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass)
 {
-	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
 	// if (gm != nullptr)
 	// {
 	// 	WindForce = gm->SetWind();
@@ -215,10 +242,7 @@ void ACannon::ServerRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjecti
 	// after firing, switch the turn and display the turn
 	// only server can access to the gamemode
 	if (gm != nullptr)
-	{
 		gm->ChangeTurn();
-	}
-	// UE_LOG(LogTemp, Warning, TEXT("Cannon turnCannon %s"), *turnCannon.ToString());
 }
 
 void ACannon::MulticastRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass)
@@ -291,6 +315,12 @@ void ACannon::BillboardFireBoost()
 	ImpulseBar->SetWorldRotation(rot);
 }
 
+void ACannon::StartCountdown()
+{
+	GetWorld()->GetTimerManager().SetTimer(CountdownTimer,
+			this, &ACannon::MulticastRPC_UpdateCountdown, 1.0f, true);
+}
+
 void ACannon::InitMainUIWiget()
 {
 	if (IsLocallyControlled() == false) return;
@@ -298,6 +328,13 @@ void ACannon::InitMainUIWiget()
 	FortressUI = CreateWidget<UFortressUI>(GetWorld(), FortressUIFactory);
 	if (FortressUI != nullptr)
 		FortressUI->AddToViewport();
+	
+	if (HasAuthority())
+	{
+		// gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
+		// gm->StartCountdown();
+		StartCountdown();
+	}
 }
 
 void ACannon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -306,6 +343,22 @@ void ACannon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 
 	DOREPLIFETIME(ACannon, bIsturn);
 	DOREPLIFETIME(ACannon, turnCannon);
+}
+
+void ACannon::MulticastRPC_UpdateCountdown_Implementation()
+{
+	ACannon* player = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if (CountdownTime <= 3)
+		player->FortressUI->text_Countdown->SetText(FText::FromString(FString::FromInt(3-CountdownTime)));
+	++CountdownTime;
+	if (CountdownTime > 3)
+	{
+		player->FortressUI->WidgetSwitcher->SetActiveWidgetIndex(1);
+		// if (gm!=nullptr)
+		// 	GetWorld()->GetTimerManager().ClearTimer(gm->CountdownTimer);
+	}
+	if (CountdownTime > 5)
+		GetWorld()->GetTimerManager().ClearTimer(CountdownTimer);
 }
 
 void ACannon::ClientRPC_Init_Implementation()

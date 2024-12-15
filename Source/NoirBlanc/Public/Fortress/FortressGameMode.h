@@ -31,5 +31,8 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	float WindMaxStrength = 100.f;
-	
+
+	FTimerHandle CountdownTimer;
+
+	void StartCountdown();
 };

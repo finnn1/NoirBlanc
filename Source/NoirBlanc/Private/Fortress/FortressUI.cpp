@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/WidgetSwitcher.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 void UFortressUI::NativeConstruct()
@@ -23,36 +24,18 @@ void UFortressUI::NativeConstruct()
 	Player2Percentage = 1.0f;
 
 	horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
-
-	// APlayerController* pc = GetWorld()->GetFirstPlayerController();
-	// if (pc)
-	// 	playerCannon->DisableInput(pc);
-	//playerCannon->GetMovementComponent()->Deactivate();
-	CountdownTime = 0;
-	GetWorld()->GetTimerManager().SetTimer(CountdownTimer, this, &UFortressUI::UpdateCountdown, 1.0f, true);
-}
-
-void UFortressUI::UpdateCountdown()
-{	
-	text_Countdown->SetText(FText::FromString(FString::FromInt(3-CountdownTime)));
-	++CountdownTime;
-	if (CountdownTime > 3)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(CountdownTimer);
-		WidgetSwitcher->SetActiveWidgetIndex(1);
-		//playerCannon->GetMovementComponent()->Activate();
-		// APlayerController* pc = GetWorld()->GetFirstPlayerController();
-		// if (pc)
-		// 	playerCannon->EnableInput(pc);
-	}
-
-	// MulticastRPC -> UI 업데이트 해라!!
-	
 }
 
 void UFortressUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
+}
+
+void UFortressUI::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UFortressUI, text_Countdown);
 }
 
 void UFortressUI::ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player)

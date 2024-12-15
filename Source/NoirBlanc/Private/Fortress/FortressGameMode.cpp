@@ -2,7 +2,10 @@
 
 
 #include "Fortress/FortressGameMode.h"
+
+#include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
+#include "Components/WidgetSwitcher.h"
 #include "Fortress/Cannon.h"
 #include "Fortress/FortressUI.h"
 #include "Kismet/GameplayStatics.h"
@@ -71,13 +74,8 @@ void AFortressGameMode::ChangeTurn()
 		// announce turn by widget
 		if (turnIdx == 0)
 			AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Change")));
-			//AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Blanc")));
 		else
 			AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Change")));
-		//AllPlayers[i]->turnCannon = FText::FromString(FString(TEXT("Noir")));
-		// UE_LOG(LogTemp, Warning, TEXT("turnCannon %s"), *AllPlayers[i]->turnCannon.ToString());
-		// UE_LOG(LogTemp, Warning, TEXT("turn idx %d"), turnIdx);
-		// UE_LOG(LogTemp, Warning, TEXT("") );
 	}
 }
 
@@ -90,6 +88,14 @@ void AFortressGameMode::SetWind()
 	{
 		AllPlayers[i]->MulticastRPC_SetWindForce(windForce, WindMaxStrength);
 	}
-	
 }
 
+void AFortressGameMode::StartCountdown()
+{
+	ACannon* player = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if (player != nullptr)
+	{
+		GetWorld()->GetTimerManager().SetTimer(CountdownTimer,
+			player, &ACannon::MulticastRPC_UpdateCountdown, 1.0f, true);
+	}
+}
