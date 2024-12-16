@@ -19,6 +19,7 @@ public class NoirBlanc : ModuleRules
 			"UMG",
 			"OnlineSubsystem",
 			"OnlineSubsystemSteam",
+			"GeometryCollectionEngine",
              "AdvancedWidgets"
 		});
 
