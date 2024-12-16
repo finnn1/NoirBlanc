@@ -171,7 +171,7 @@ void AKingCharacter::MulticastRPC_UpdateStartCountdownUI_Implementation(const FT
 	
 	if (IsLocallyControlled())
 	{
-		CountDownUI->Txt_Count->SetText(NewText);
+		CountDownUI->UpdateCountDown(NewText);
 	}
 }
 

@@ -215,8 +215,8 @@ void AKingGameMode::StartCountTimer()
 				{
 					IKingUIUpdatable::Execute_MulticastRPC_UpdateStartCountdownUI
 						(
-						 JoinedPlayers[i]->GetPawn(),
-						 FText::FromString(TEXT("GO!"))
+						 JoinedPlayers[i]->GetPawn(),	
+						 FText::FromString(TEXT("시작!"))
 						);
 				}
 			}

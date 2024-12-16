@@ -209,7 +209,7 @@ void AKingCatcherPawn::MulticastRPC_UpdateStartCountdownUI_Implementation(const 
 
 	if (IsLocallyControlled())
 	{
-		CountDownUI->Txt_Count->SetText(NewText);
+		CountDownUI->UpdateCountDown(NewText);
 	}
 }
 
