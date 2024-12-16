@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FortressGameMode.h"
 #include "GameFramework/Pawn.h"
 #include "Cannon.generated.h"
 
@@ -82,6 +83,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_Move(FVector NewLocation, FRotator NewRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Move(FVector NewLocation, FRotator NewRotation);
 	
 	void BillboardFireBoost();
 	
@@ -103,8 +107,6 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual void PossessedBy(AController* NewController) override;
 
 public:
 	// UPROPERTY(EditAnywhere)
@@ -151,10 +153,6 @@ public:
 	TSubclassOf<UUserWidget> FortressUIFactory;
 	class UFortressUI* FortressUI;
 	
-	void InitMainUIWiget();
-	UFUNCTION(Client, Reliable)
-	void ClientRPC_Init();
-
 	UPROPERTY(Replicated, VisibleAnywhere)
 	FText turnCannon;
 	
@@ -167,6 +165,46 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_SetWindForce(FVector NewWindForce, float NewWindForceMax);
+
+public:
+	AFortressGameMode* gm;
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_NewPlayerJoined();
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_EnableInput(bool enable);
+	
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_AddToViewport();
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_SwitchWidget(int32 index);
+	
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_UpdateCountdownUI(const FText& text);
+
+public:
+	// make a limit for the movement
+	float DistanceRange = 100.0f;
+	
+	FVector StartLocation;
+
+	// limit for the angle of the muzzle
+	float AngleRange = 40.0f;
+
+	FRotator StartRotation;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UWidgetComponent*  AngleWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UAngleWidget* AngleWidget;
+	
 };
+
+
+
 
 

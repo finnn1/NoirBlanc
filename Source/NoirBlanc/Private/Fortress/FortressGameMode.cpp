@@ -3,6 +3,7 @@
 
 #include "Fortress/FortressGameMode.h"
 #include "Components/WidgetComponent.h"
+#include "Components/WidgetSwitcher.h"
 #include "Fortress/Cannon.h"
 #include "Fortress/FortressUI.h"
 #include "Kismet/GameplayStatics.h"
@@ -59,6 +60,33 @@ void AFortressGameMode::PostLogin(APlayerController* NewPlayer)
 	}
 }
 
+void AFortressGameMode::NewPlayerJoined(ACannon* NewPlayer)
+{
+	AllPlayers.Add(NewPlayer);
+
+	if (AllPlayers.Num() >= 2)
+	{
+		AllPlayers[0]->ClientRPC_SwitchWidget(1);
+		NewPlayer->ClientRPC_EnableInput(false);
+		NewPlayer->ClientRPC_AddToViewport();
+		NewPlayer->ClientRPC_SwitchWidget(1);
+
+		// countdown and start the game
+		GetWorld()->GetTimerManager().SetTimer(
+			CountdownTimer,
+			this,
+			&AFortressGameMode::StartCountdown,
+			1.0f,
+			true
+			);
+	}
+	else
+	{
+		NewPlayer->ClientRPC_EnableInput(false);
+		NewPlayer->ClientRPC_AddToViewport();
+	}
+}
+
 void AFortressGameMode::ChangeTurn()
 {
 	AllPlayers[turnIdx]->bIsturn = false;
@@ -91,5 +119,31 @@ void AFortressGameMode::SetWind()
 		AllPlayers[i]->MulticastRPC_SetWindForce(windForce, WindMaxStrength);
 	}
 	
+}
+
+void AFortressGameMode::StartCountdown()
+{
+	--CountdownLeft;
+
+	if (CountdownLeft < 0)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CountdownTimer);
+
+		for (int32 i = 0; i < AllPlayers.Num(); i++)
+		{
+			AllPlayers[i]->ClientRPC_EnableInput(true);
+			AllPlayers[i]->ClientRPC_SwitchWidget(2);
+		}
+	}
+	
+	for (int32 i = 0; i < AllPlayers.Num(); i++)
+	{
+		if (CountdownLeft > 0)
+			AllPlayers[i]->ClientRPC_UpdateCountdownUI(FText::AsNumber(CountdownLeft));
+		else if (CountdownLeft == 0)
+			AllPlayers[i]->ClientRPC_UpdateCountdownUI(FText::FromString(TEXT("시작")));
+	}
+	
+				
 }
 
