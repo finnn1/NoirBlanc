@@ -20,7 +20,7 @@ public:
 	EPieceColor PieceColor = EPieceColor::Blank;
 	
 	UPROPERTY(Replicated)
-	bool bIsAttaker = true;
+	bool bIsAttaker;
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
