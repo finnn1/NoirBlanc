@@ -14,6 +14,7 @@ class UInputAction;
 class APawnCard;
 class APawnCardGameMode;
 class UPlayerUI;
+class UDecalComponent;
 UCLASS()
 class NOIRBLANC_API ANetworkPawn : public APawn
 {
@@ -84,6 +85,21 @@ public:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_SetWinnerInstance(EPieceColor WinnerColor);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Card Decal")
+	UDecalComponent* BlackDecalCompo;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Card Decal")
+	UDecalComponent* WhiteDecalCompo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Card Decal")
+	UMaterial* MatWhiteDecal;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Card Decal")
+	UMaterial* MatBlackDecal;
+
+	// 데칼 그리기
+	void DrawDecalActor(FVector Location, EPieceColor ContrColor);
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -129,10 +145,11 @@ protected:
 	
 	FOnTimelineFloat StartTurnFloat;
 	FOnTimelineEvent EndTurnEvent;
-	
+
+	// Timeline Tick Function
 	UFUNCTION()
 	void StartTurnLerp(float value);
-
+	// End Timeline Function
 	UFUNCTION()
 	void EndTurnLerp();
 
@@ -142,8 +159,7 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPT_Test(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard);
-
+	void MulticastRPT_FractureCard(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard);
 
 private:
 	UPROPERTY(Replicated)
@@ -158,7 +174,4 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	EPieceColor PawnPieceColor;
-
-	UFUNCTION()
-	void DtyCard(APawnCard* DestroyCard);
 };

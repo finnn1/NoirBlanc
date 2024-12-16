@@ -2,7 +2,7 @@
 
 
 #include "NetworkPawn.h"
-
+#include "Components/DecalComponent.h"
 #include "ControllerUI.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -14,6 +14,7 @@
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "NoirBlancGameInstance.h"
+#include "Engine/DecalActor.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 // Sets default values
@@ -25,6 +26,22 @@ ANetworkPawn::ANetworkPawn()
 	Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 	StartTurnFloat.BindUFunction(this, FName("StartTurnLerp"));
 	EndTurnEvent.BindUFunction(this, FName("EndTurnLerp"));
+
+	/*WhiteDecalCompo = CreateDefaultSubobject<UDecalComponent>(TEXT("WhiteDecalCompo"));
+	BlackDecalCompo = CreateDefaultSubobject<UDecalComponent>(TEXT("BlackDecalCompo"));
+
+	WhiteDecalCompo->SetupAttachment(RootComponent);
+	BlackDecalCompo->SetupAttachment(RootComponent);
+
+	if(MatWhiteDecal)
+	{
+		WhiteDecalCompo->SetDecalMaterial(MatWhiteDecal);	
+	}
+
+	if(MatBlackDecal)
+	{
+		BlackDecalCompo->SetDecalMaterial(MatBlackDecal);	
+	}*/
 	
 	SetReplicates(true);
 }
@@ -158,6 +175,26 @@ void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(EPieceColor Win
 	}
 }
 
+void ANetworkPawn::DrawDecalActor(FVector DecalLocation, EPieceColor ContrColor)
+{
+	FVector ReLoatedLocation = DecalLocation;
+	ReLoatedLocation.Y += -20;
+	ReLoatedLocation.Z += 30;
+	
+	ADecalActor* DecalActor = GetWorld()->SpawnActor<ADecalActor>(ReLoatedLocation, FRotator::ZeroRotator);
+	if(ContrColor == EPieceColor::White && MatWhiteDecal)
+	{
+		DecalActor->SetDecalMaterial(MatWhiteDecal);
+	}
+	else if(ContrColor == EPieceColor::Black && MatBlackDecal)
+	{
+		DecalActor->SetDecalMaterial(MatBlackDecal);
+	}
+	
+	DecalActor->SetActorRotation(FRotator(-3.f,-98.f, 100.f));
+	DecalActor->SetActorScale3D(FVector(0.15f,0.2f,0.15f));
+}
+
 void ANetworkPawn::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -289,7 +326,6 @@ bool ANetworkPawn::IsCheckCardMatch()
 			IsSubtract = true;
 		}
 		
-		// 점수 증가
 		IncreaseScore(IsSubtract);
 	}
 
@@ -329,10 +365,10 @@ void ANetworkPawn::ServerRPC_DestroyPawnCard_Implementation(APawnCard* FirstTarg
 	GameMode->DeleteCardFromMap(FirstTargetCard);
 	GameMode->DeleteCardFromMap(SecondTargetCard);
 
-	FirstTargetCard->Destroy();
-	SecondTargetCard->Destroy();
+	//FirstTargetCard->Destroy();
+	//SecondTargetCard->Destroy();
 	
-	//MulticastRPT_Test(FirstTargetCard, SecondTargetCard);
+	MulticastRPT_FractureCard(FirstTargetCard, SecondTargetCard);
 
 	// 남은 카드 체크
 	GameMode->CheckRemainCards();
@@ -369,7 +405,8 @@ void ANetworkPawn::StartTurnLerp(float value)
 		//뒷면으로
 		TargetCard->SetActorRotation(FRotator(0, FMath::Lerp(TargetCard->GetActorRotation().Yaw, BackRotation.Yaw, value),0));
 		SecondSelectedCard = nullptr;
-		
+
+		//첫 번째 선택한 카드도 뒷면으로
 		if(FirstSelectedCard.IsValid() && FirstSelectedCard.Get()->FrontBackState == CardState::Front)
 		{
 			FirstSelectedCard.Get()->SetActorRotation(FRotator(0, FMath::Lerp(TargetCard->GetActorRotation().Yaw, BackRotation.Yaw, value),0));
@@ -388,6 +425,7 @@ void ANetworkPawn::EndTurnLerp()
 	
 	if(SecondSelectedCard.IsValid())
 	{
+		// 매칭 성공 여부
 		if(IsCheckCardMatch())
 		{
 			// 매칭에 성공했으면 PawnCard 삭제
@@ -488,15 +526,23 @@ void ANetworkPawn::PossessedBy(AController* NewController)
 	}
 }
 
-void ANetworkPawn::DtyCard(APawnCard* DestroyCard)
+void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard)
 {
-	DestroyCard->Destroy();
-}
+	FirstTargetCard->MatchingSuccess();
+	SecondTargetCard->MatchingSuccess();
+	
+	FirstTargetCard->StartPhyicsSimul();
+	SecondTargetCard->StartPhyicsSimul();
 
-void ANetworkPawn::MulticastRPT_Test_Implementation(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard)
-{
-	//FirstTargetCard->MatchingSuccess();
-	//SecondTargetCard->MatchingSuccess();
+	// 꽝 카드면 데칼 그리기 X
+	if(FirstTargetCard->PawnCardData->PawnCardType != PawnCardType::NoLuck && SecondTargetCard->PawnCardData->PawnCardType != PawnCardType::NoLuck)
+	{
+		DrawDecalActor(FirstTargetCard->GetActorLocation(), PawnPieceColor);
+		DrawDecalActor(SecondTargetCard->GetActorLocation(), PawnPieceColor);	
+	}
+
+	FirstSelectedCard = nullptr;
+	SecondSelectedCard = nullptr;
 }
 
 void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* StartPlayer)

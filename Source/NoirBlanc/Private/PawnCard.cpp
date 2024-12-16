@@ -2,9 +2,8 @@
 
 
 #include "PawnCard.h"
-
-#include "NetworkPawn.h"
 #include "PawnCardDataAsset.h"
+#include "GeometryCollection/GeometryCollectionComponent.h"
 
 // Sets default values
 APawnCard::APawnCard()
@@ -14,6 +13,13 @@ APawnCard::APawnCard()
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PawnCard StaticMesh"));
 	SetRootComponent(StaticMeshComp);
+	// (X=466.000000,Y=6.000000,Z=263.000000)
+	GeometryCollectionComp = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("Shatter StaticMesh"));
+	GeometryCollectionComp->SetupAttachment(StaticMeshComp);
+	GeometryCollectionComp->SetRelativeLocation(FVector(0, 20, 0));
+	GeometryCollectionComp->SetSimulatePhysics(false);
+	GeometryCollectionComp->SetVisibility(false);
+	GeometryCollectionComp->SetEnableGravity(false);
 	
 	bIsSelectable = false;
 
@@ -47,6 +53,7 @@ void APawnCard::SetLerpMaterial()
 		if(CurrentLerpTime > 1)
 		{
 			GetWorldTimerManager().ClearTimer(LerpTimer);
+			StaticMeshComp->SetVisibility(false, false);
 			OnFinishSetMat.Broadcast(this);	
 		}
 	}, LerpCycle, true);
@@ -77,6 +84,7 @@ int32 APawnCard::MatchingSuccess()
 	{
 		return PawnCardData->Score;
 	}
+	
 	return 1;
 }
 
