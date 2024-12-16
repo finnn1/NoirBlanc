@@ -3,13 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "KingGameMainUI.h"
+#include "KingUIUpdatable.h"
 #include "GameFramework/Character.h"
+#include "NoirBlanc/BishopGame/WaitingOtherPlayerUI.h"
+#include "NoirBlanc/Knight/CountDownUI.h"
+#include "NoirBlanc/Knight/WaitingUI.h"
 #include "KingCharacter.generated.h"
 
 struct FInputActionValue;
 
 UCLASS()
-class NOIRBLANC_API AKingCharacter : public ACharacter
+class NOIRBLANC_API AKingCharacter : public ACharacter, public IKingUIUpdatable
 {
 	GENERATED_BODY()
 
@@ -21,29 +26,63 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
-
-	// MappingContext
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* KingMappingContext;
-
-	// Move Input Action
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
-
-	// Look Input Action
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
 protected:
 	virtual void BeginPlay() override;
-
-public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	// Called for movement input
-	void Move(const FInputActionValue& Value);
 
-	// Called for looking input
+public:
+	// Input
+	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+
+	// About Join
+	// UPROPERTY(EditAnywhere)
+	// TSubclassOf<UWaitingOtherPlayerUI> UWaitingOtherPlayerUIClass;
+	// UWaitingOtherPlayerUI* WaitingOtherPlayerUI;
+	// 서버에게 들어왔다고 알려주기
+	void Joined(APlayerController* NewPlayer);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Joined(APlayerController* JoinedPlayer);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_ShowWaitingUI(APlayerController* JoinedPlayer);
+
+	/// UIUpdatble Interface ///
+	virtual EPieceColor GetPieceColor_Implementation() override;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_UpdateStartCountdownUI(const FText& NewText) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_SetInput(bool bIsEnable) override;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UKingGameMainUI> KingGameMainUIClass;
+	UKingGameMainUI* KingGameMainUI;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UWaitingUI> WaitingUIClass;
+	UWaitingUI* WaitingUI;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UCountDownUI> CountDownUIClass;
+	UCountDownUI* CountDownUI;
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_InitializeMainGameUI() override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_UpdateMainTimerUI(const FText& NewText) override;
+
+	// Set GameInstance
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_SetWinner(EPieceColor WinnerColor) override;
+	
 };
