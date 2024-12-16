@@ -28,13 +28,14 @@ void UFortressUI::NativeConstruct()
 	// if (pc)
 	// 	playerCannon->DisableInput(pc);
 	//playerCannon->GetMovementComponent()->Deactivate();
-	CountdownTime = 0;
-	GetWorld()->GetTimerManager().SetTimer(CountdownTimer, this, &UFortressUI::UpdateCountdown, 1.0f, true);
+
+	// CountdownTime = 0;
+	// GetWorld()->GetTimerManager().SetTimer(CountdownTimer, this, &UFortressUI::UpdateCountdown, 1.0f, true);
 }
 
 void UFortressUI::UpdateCountdown()
 {	
-	text_Countdown->SetText(FText::FromString(FString::FromInt(3-CountdownTime)));
+	//text_Countdown->SetText(FText::FromString(FString::FromInt(3-CountdownTime)));
 	++CountdownTime;
 	if (CountdownTime > 3)
 	{
@@ -45,9 +46,7 @@ void UFortressUI::UpdateCountdown()
 		// if (pc)
 		// 	playerCannon->EnableInput(pc);
 	}
-
 	// MulticastRPC -> UI 업데이트 해라!!
-	
 }
 
 void UFortressUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

@@ -25,6 +25,9 @@
 #include "Fortress/CannonBall.h"
 #include "Fortress/Missile.h"
 #include "Algo/RandomShuffle.h"
+#include "Components/WidgetSwitcher.h"
+#include "Fortress/AngleWidget.h"
+#include "Runtime/AdvancedWidgets/Public/Components/RadialSlider.h"
 
 // Sets default values
 ACannon::ACannon()
@@ -66,6 +69,9 @@ ACannon::ACannon()
 	Muzzle->SetUsingAbsoluteLocation(true);
 
 	bIsturn = false;
+
+	AngleWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("AngleWidgetComponent"));
+	AngleWidgetComponent->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -73,6 +79,13 @@ void ACannon::BeginPlay()
 {
 	Super::BeginPlay();
 
+	gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
+	if (gm != nullptr)
+		UE_LOG(LogTemp, Warning, TEXT("GameMode Created"));
+
+	StartLocation = GetActorLocation();
+	StartRotation = Muzzle->GetComponentRotation();
+	
 	// does not work if it is located in constructor
 	ProjectilesEqBasedFactoryArray.Append({
 		                                      ProjectileEqBasedFactory,
@@ -96,15 +109,22 @@ void ACannon::BeginPlay()
 		}
 	}
 
+	if (AngleWidgetComponent != nullptr)
+		AngleWidget = Cast<UAngleWidget>(AngleWidgetComponent->GetWidget());
+	
 	// add players in the array
-	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
-	if (gm != nullptr)
+	if (IsLocallyControlled())
 	{
-		gm->AllPlayers.Add(this);
-		if (gm->AllPlayers.Num() == 1) this->bIsturn = true; // set the first player turn true
+		FortressUI = CreateWidget<UFortressUI>(GetWorld(), FortressUIFactory);
+		ServerRPC_NewPlayerJoined();
+		if (HasAuthority()) this->bIsturn = true; // set the first player turn true
 	}
 }
 
+void ACannon::ServerRPC_NewPlayerJoined_Implementation()
+{
+	gm->NewPlayerJoined(this);
+}
 
 // Called to bind functionality to input
 void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -132,14 +152,6 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	}
 }
 
-void ACannon::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-	//UE_LOG(LogTemp, Warning, TEXT("Possessed by: %s"), *GetActorNameOrLabel());
-
-	ClientRPC_Init();
-}
-
 // Called every frame
 void ACannon::Tick(float DeltaTime)
 {
@@ -159,8 +171,38 @@ void ACannon::Tick(float DeltaTime)
 
 void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation)
 {
-	SetActorLocation(NewLocation);
-	Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
+	MulticastRPC_Move_Implementation(NewLocation, NewRotation);
+}
+
+void ACannon::MulticastRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation)
+{
+	float distance = FMath::Abs(FVector::Dist(StartLocation, NewLocation));
+	if (distance < DistanceRange)
+		SetActorLocation(NewLocation);
+	
+	float angle = NewRotation.Roll - StartRotation.Roll;
+	if (IsLocallyControlled())
+	{
+		if (angle < AngleRange && angle > -AngleRange)
+		{
+			Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
+			if (AngleWidget) AngleWidget->RadialSlider->SetValue(0.5f + angle/AngleRange);
+		}
+	}
+	else
+	{
+		if (angle < AngleRange && angle > 0.0f)
+		{
+			Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
+			if (AngleWidget) AngleWidget->RadialSlider->SetValue(0.5f + angle/AngleRange);
+		}
+		else if (angle > 360.0f-AngleRange && angle < 360.0f)
+		{
+			angle -= 360.0f;
+			Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
+			if (AngleWidget) AngleWidget->RadialSlider->SetValue(0.5f + angle/AngleRange);
+		}
+	}
 }
 
 void ACannon::Move(const FInputActionValue& Value)
@@ -202,23 +244,12 @@ void ACannon::Fire()
 
 void ACannon::ServerRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass)
 {
-	AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
-	// if (gm != nullptr)
-	// {
-	// 	WindForce = gm->SetWind();
-	// 	WindForceMax = gm->WindMaxStrength;
-	// 	FortressUI->SetWind(WindForce.X/WindForceMax);
-	// }
-
 	MulticastRPC_Fire(Impulse, ProjectileEqBasedSubclass);
 
-	// after firing, switch the turn and display the turn
-	// only server can access to the gamemode
+	// after firing, switch the turn and display the turn, only server can access to the gamemode
 	if (gm != nullptr)
-	{
 		gm->ChangeTurn();
-	}
-	// UE_LOG(LogTemp, Warning, TEXT("Cannon turnCannon %s"), *turnCannon.ToString());
+	
 }
 
 void ACannon::MulticastRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass)
@@ -291,15 +322,6 @@ void ACannon::BillboardFireBoost()
 	ImpulseBar->SetWorldRotation(rot);
 }
 
-void ACannon::InitMainUIWiget()
-{
-	if (IsLocallyControlled() == false) return;
-
-	FortressUI = CreateWidget<UFortressUI>(GetWorld(), FortressUIFactory);
-	if (FortressUI != nullptr)
-		FortressUI->AddToViewport();
-}
-
 void ACannon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -308,9 +330,10 @@ void ACannon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	DOREPLIFETIME(ACannon, turnCannon);
 }
 
-void ACannon::ClientRPC_Init_Implementation()
+void ACannon::ClientRPC_UpdateCountdownUI_Implementation(const FText& text)
 {
-	InitMainUIWiget();
+	if (FortressUI && FortressUI->WBP_CountDownUI)
+		FortressUI->WBP_CountDownUI->UpdateCountDown(text);
 }
 
 void ACannon::MulticastRPC_SetWindForce_Implementation(FVector NewWindForce, float NewWindForceMax)
@@ -321,3 +344,22 @@ void ACannon::MulticastRPC_SetWindForce_Implementation(FVector NewWindForce, flo
 		FortressUI->SetWindBar(WindForce.X / NewWindForceMax);
 	}
 }
+
+void ACannon::ClientRPC_SwitchWidget_Implementation(int32 index)
+{
+	FortressUI->WidgetSwitcher->SetActiveWidgetIndex(index);
+}
+
+void ACannon::ClientRPC_AddToViewport_Implementation()
+{
+	FortressUI->AddToViewport();
+}
+
+void ACannon::ClientRPC_EnableInput_Implementation(bool enable)
+{
+	if (enable)
+		EnableInput(GetWorld()->GetFirstPlayerController());
+	else
+		DisableInput(GetWorld()->GetFirstPlayerController());
+}
+

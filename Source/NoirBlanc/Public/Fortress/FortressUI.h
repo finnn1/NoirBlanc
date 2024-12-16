@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Cannon.h"
 #include "Blueprint/UserWidget.h"
+#include "NoirBlanc/Knight/CountDownUI.h"
+#include "NoirBlanc/Knight/WaitingUI.h"
 #include "FortressUI.generated.h"
 
 
@@ -23,16 +25,19 @@ class NOIRBLANC_API UFortressUI : public UUserWidget
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
+public:
 	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* WidgetSwitcher;
+
+	// Waiting UI
+public:
+	UPROPERTY(meta = (BindWidget))
+	UWaitingUI* WBP_WaitingUI;
 	
 	// Start UI
 public:
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* text_GameStart;
-
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* text_Countdown;
+	UCountDownUI* WBP_CountDownUI; 
 
 	FTimerHandle CountdownTimer;
 	

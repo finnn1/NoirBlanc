@@ -18,7 +18,8 @@ public class NoirBlanc : ModuleRules
 			"EnhancedInput",
 			"UMG",
 			"OnlineSubsystem",
-			"OnlineSubsystemSteam"
+			"OnlineSubsystemSteam",
+             "AdvancedWidgets"
 		});
 
 		// Uncomment if you are using Slate UI
