@@ -379,8 +379,6 @@ void AChessBoard::MiniGameEnd()
 			PlaySound(PiecePutSounds[index]);
 		}, 6.5f, false);
 	}
-	FTimerHandle DeleteTimer;
-	GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this](){DeletePiece(BoardFloors[4]->GetPieceOnFloor());}, 0.5f, false);
 }
 
 void AChessBoard::MoveEnd()
