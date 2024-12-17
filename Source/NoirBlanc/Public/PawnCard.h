@@ -14,6 +14,7 @@ enum class CardState : uint8
 	Back
 };
 class UPawnCardDataAsset;
+class UGeometryCollectionComponent;
 
 UCLASS()
 class NOIRBLANC_API APawnCard : public AActor
@@ -33,6 +34,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
 	UStaticMeshComponent* StaticMeshComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
+	UGeometryCollectionComponent* GeometryCollectionComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Data")
 	UPawnCardDataAsset* PawnCardData;
@@ -66,4 +70,7 @@ public:
 	
 	//매칭 취소 함수
 	void CancelMatching();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartPhyicsSimul();
 };

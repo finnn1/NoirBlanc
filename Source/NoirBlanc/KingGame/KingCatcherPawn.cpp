@@ -11,9 +11,12 @@
 #include "KingCatcherUI.h"
 #include "KingCharacter.h"
 #include "KingGameMode.h"
+#include "NoirBlancGameInstance.h"
 #include "SpawnLocation.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
+#include "NoirBlanc/BishopGame/NoirBlancPlayerState.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 
@@ -38,6 +41,11 @@ AKingCatcherPawn::AKingCatcherPawn()
 
 void AKingCatcherPawn::OnConfirmButtonClicked()
 {
+	ServerRPC_OnConfirmButtonClicked();
+}
+
+void AKingCatcherPawn::ServerRPC_OnConfirmButtonClicked_Implementation()
+{
 	// TODO: 서버에게 클릭한 SpawnLocation 보내서 처리하도록 하기
 	// 1. 클라이언트 Pawn 쪽에서 클릭 했다는 사실을 서버 Pawn에게 알림
 	// 2. 서버 Pawn에서 클릭 트레이싱을 해서 FHitResult를 구한다.
@@ -46,41 +54,42 @@ void AKingCatcherPawn::OnConfirmButtonClicked()
 
 	// 화면의 Go! 버튼을 누르면 해당 위치에서 레이저 발사!
 	// 서버 Pawn 쪽에서 갯수 4개가 차면 서버 KingGameMode로 보내서 처리하도록 하기!
-	
-	ServerRPC_OnConfirmButtonClicked();
-}
 
-void AKingCatcherPawn::ServerRPC_OnConfirmButtonClicked_Implementation()
-{
+	// if (SelectedSpawnLocations.Num() < 4) return;
 	for (class ASpawnLocation* SelectedSpawnLocation : SelectedSpawnLocations)
 	{
 		MulticastRPC_SelectForAll(SelectedSpawnLocation);
 	}
-	
+
+	MulticastRPC_SetInput(false);
 	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(
-		TimerHandle,
-		FTimerDelegate::CreateLambda([this]()
-		{
-			UE_LOG(LogTemp, Warning, TEXT("1초 지남!"));
-			for (class ASpawnLocation* SelectedSpawnLocation : this->SelectedSpawnLocations)
-			{
-				this->MulticastRPC_DeselectForAll(SelectedSpawnLocation);
-			}
+	GetWorld()->GetTimerManager().SetTimer
+		(
+		 TimerHandle,
+		 FTimerDelegate::CreateLambda
+		 (
+		  [this]()
+		  {
+			  UE_LOG(LogTemp, Warning, TEXT("1초 지남!"));
+			  for (class ASpawnLocation* SelectedSpawnLocation : this->SelectedSpawnLocations)
+			  {
+				  this->MulticastRPC_DeselectForAll(SelectedSpawnLocation);
+			  }
 
-			if (SelectedSpawnLocations.Num() < 4) return;
-			AKingGameMode* KingGameMode = Cast<AKingGameMode>(GetWorld()->GetAuthGameMode());
-			if (KingGameMode)
-			{
-				// TODO: 게임모드에서 로직 처리
-				KingGameMode->FireAt(SelectedSpawnLocations);
-			}
+			  AKingGameMode* KingGameMode = Cast<AKingGameMode>(GetWorld()->GetAuthGameMode());
+			  if (KingGameMode)
+			  {
+				  // TODO: 게임모드에서 로직 처리
+				  KingGameMode->FireAt(SelectedSpawnLocations);
+			  }
 
-			SelectedSpawnLocations.Empty();
-		}),
-		1.f,
-		false
-	);
+			  SelectedSpawnLocations.Empty();
+			  MulticastRPC_SetInput(true);
+		  }
+		 ),
+		 1.f,
+		 false
+		);
 }
 
 void AKingCatcherPawn::BeginPlay()
@@ -89,31 +98,22 @@ void AKingCatcherPawn::BeginPlay()
 
 	if (HasAuthority())
 	{
-		// 모든 SpawnLocation Owner 등록
-		TArray<AActor*> _FoundActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnLocation::StaticClass(), _FoundActors);
-		for (AActor* Actor : _FoundActors)
-		{
-			Actor->SetOwner(this);
-		}
+		SetReplicates(true);
 	}
 
+	// 로컬컨트롤 하고 있는 애라면? --> 클라니까 서버한테 Join 했다고 알려주자.
 	if (IsLocallyControlled())
 	{
-		// Catcher 플레이어에게 타이핑 UI 띄우기
-		if (CatcherUIClass == nullptr) return;
-		CatcherUI = CreateWidget<UKingCatcherUI>(GetWorld()->GetFirstPlayerController(), CatcherUIClass);
-		if (CatcherUI == nullptr) return;
-		CatcherUI->AddToViewport();
-		CatcherUI->ConfirmButton->OnClicked.AddDynamic(this, &AKingCatcherPawn::OnConfirmButtonClicked);
-
-		APlayerController* _PlayerController = GetWorld()->GetFirstPlayerController();
-		if (_PlayerController)
+		APlayerController* NewPlayerController = Cast<APlayerController>(GetController());
+		if (NewPlayerController)
 		{
-			_PlayerController->SetShowMouseCursor(true);
+			Joined(NewPlayerController);
+			UE_LOG(LogTemp, Warning, TEXT("Tagger Character Possed : %s"), *GetActorNameOrLabel());
 		}
-
-		// TODO: 비즈니스 로직은 서버에서 해줘야 함
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Tagger Character PlayerController is NULL!!"));
+		}
 	}
 }
 
@@ -139,14 +139,141 @@ void AKingCatcherPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 	else
 	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT("'%s'Failed to find an Enhanced Input component! "
-				"This template is built to use the Enhanced Input system. "
-				"If you intend to use the legacy system, then you will need to update this C++ file."),
-			*GetNameSafe(this)
+		UE_LOG
+		(
+		 LogTemp,
+		 Error,
+		 TEXT("'%s'Failed to find an Enhanced Input component! "
+			 "This template is built to use the Enhanced Input system. "
+			 "If you intend to use the legacy system, then you will need to update this C++ file."),
+		 *GetNameSafe(this)
 		);
+	}
+}
+
+void AKingCatcherPawn::Joined(APlayerController* NewPlayer)
+{
+	ServerRPC_Joined(NewPlayer);
+}
+
+void AKingCatcherPawn::ServerRPC_Joined_Implementation(APlayerController* JoinedPlayer)
+{
+	// 지금 들어온 플레이어 입력 방지
+	MulticastRPC_SetInput(false);
+	MulticastRPC_ShowWaitingUI(JoinedPlayer);
+
+	// 게임모드 JoinedPlayers 배열에 플레이어 추가
+	AKingGameMode* _KingGameMode = GetWorld()->GetAuthGameMode<AKingGameMode>();
+	if (_KingGameMode)
+	{
+		_KingGameMode->NotifyJoined(JoinedPlayer);
+	}
+}
+
+void AKingCatcherPawn::MulticastRPC_ShowWaitingUI_Implementation(APlayerController* JoinedPlayer)
+{
+	// Waiting For Player UI 띄우기
+	if (IsLocallyControlled())
+	{
+		WaitingUI = CreateWidget<UWaitingUI>
+			(
+			 JoinedPlayer,
+			 WaitingUIClass
+			);
+		if (WaitingUI)
+		{
+			WaitingUI->AddToViewport();
+		}
+
+		CountDownUI = CreateWidget<UCountDownUI>
+			(
+			 JoinedPlayer,
+			 CountDownUIClass
+			);
+		if (CountDownUI)
+		{
+			CountDownUI->AddToViewport();
+			CountDownUI->Txt_Count->SetText(FText());
+		}
+	}
+}
+
+EPieceColor AKingCatcherPawn::GetPieceColor_Implementation()
+{
+	return GetPlayerState<ANoirBlancPlayerState>()->PieceColor;
+}
+
+void AKingCatcherPawn::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
+{
+	if (WaitingUI) WaitingUI->RemoveFromParent();
+
+	if (IsLocallyControlled())
+	{
+		CountDownUI->UpdateCountDown(NewText);
+	}
+}
+
+void AKingCatcherPawn::MulticastRPC_SetInput_Implementation(bool bIsEnable)
+{
+	if (IsLocallyControlled())
+	{
+		if (bIsEnable)
+		{
+			EnableInput(GetWorld()->GetFirstPlayerController());
+		}
+		else
+		{
+			DisableInput(GetWorld()->GetFirstPlayerController());
+		}
+	}
+}
+
+void AKingCatcherPawn::MulticastRPC_InitializeMainGameUI_Implementation()
+{
+	if (IsLocallyControlled())
+	{
+		// Main UI 띄우기
+		if (KingGameMainUIClass == nullptr) return;
+		KingGameMainUI = CreateWidget<UKingGameMainUI>(GetWorld()->GetFirstPlayerController(), KingGameMainUIClass);
+		if (KingGameMainUI == nullptr) return;
+		KingGameMainUI->AddToViewport();
+
+		// Catcher 플레이어에게 UI 띄우기
+		if (CatcherUIClass == nullptr) return;
+		CatcherUI = CreateWidget<UKingCatcherUI>(GetWorld()->GetFirstPlayerController(), CatcherUIClass);
+		if (CatcherUI == nullptr) return;
+		CatcherUI->AddToViewport();
+		CatcherUI->ConfirmButton->OnClicked.AddDynamic(this, &AKingCatcherPawn::OnConfirmButtonClicked);
+
+		APlayerController* _PlayerController = GetWorld()->GetFirstPlayerController();
+		if (_PlayerController)
+		{
+			_PlayerController->SetShowMouseCursor(true);
+		}
+	}
+}
+
+void AKingCatcherPawn::MulticastRPC_UpdateMainTimerUI_Implementation(const FText& NewText)
+{
+	if (IsLocallyControlled())
+	{
+		if (KingGameMainUI)
+		{
+			KingGameMainUI->Text_Timer->SetText(NewText);
+		}
+	}
+}
+
+void AKingCatcherPawn::MulticastRPC_SetWinner_Implementation(EPieceColor WinnerColor)
+{
+	if (IsLocallyControlled())
+	{
+		UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
+		if (_NoirBlancGameInstance)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Bishop :: Winner : %d"), WinnerColor);
+			_NoirBlancGameInstance->WinnerColor = WinnerColor;
+		}
 	}
 }
 
@@ -195,12 +322,14 @@ void AKingCatcherPawn::ServerRPC_Click_Implementation(FVector WorldLocation, FVe
 
 	float TraceDistance = 10000.0f;
 	ECollisionChannel TraceChannel = ECollisionChannel::ECC_WorldDynamic;
-	if (GetWorld()->LineTraceSingleByChannel(
-		HitResult,
-		WorldLocation,
-		WorldLocation + (WorldDirection * TraceDistance),
-		TraceChannel,
-		QueryParams))
+	if (GetWorld()->LineTraceSingleByChannel
+		(
+		 HitResult,
+		 WorldLocation,
+		 WorldLocation + (WorldDirection * TraceDistance),
+		 TraceChannel,
+		 QueryParams
+		))
 	{
 		// 히트 결과 처리
 		UE_LOG(LogTemp, Warning, TEXT("Clicked object : %s"), *HitResult.GetActor()->GetActorNameOrLabel());
@@ -208,8 +337,13 @@ void AKingCatcherPawn::ServerRPC_Click_Implementation(FVector WorldLocation, FVe
 
 	for (int32 i = 0; i < SelectedSpawnLocations.Num(); i++)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Selected SpawnLocation : %s"),
-		       *SelectedSpawnLocations[i]->GetActorNameOrLabel());
+		UE_LOG
+		(
+		 LogTemp,
+		 Warning,
+		 TEXT("Selected SpawnLocation : %s"),
+		 *SelectedSpawnLocations[i]->GetActorNameOrLabel()
+		);
 	}
 
 	ASpawnLocation* SpawnLocation = Cast<ASpawnLocation>(HitResult.GetActor());
