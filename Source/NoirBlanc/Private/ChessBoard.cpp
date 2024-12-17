@@ -11,6 +11,7 @@
 #include "Net/UnrealNetwork.h"
 #include "NoirBlanc/Knight/TurnUI.h"
 #include "QueenSelectWidget.h"
+#include "RestartUI.h"
 #include "NoirBlanc/Knight/BattleUI.h"
 #include "NoirBlanc/Knight/ResultUI.h"
 
@@ -979,7 +980,17 @@ void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
 	{
 		if(DeletePiece->GetPieceType() == EPieceType::King)
 		{
-			ServerRPC_EndGame(DeletePiece->GetPieceColor());
+			EPieceColor Loser = DeletePiece->GetPieceColor();
+			if(Loser == EPieceColor::Black)
+			{
+				GameWinner = FText::FromString(TEXT("블랑"));
+			}
+			else if(Loser == EPieceColor::White)
+			{
+				GameWinner = FText::FromString(TEXT("느와르"));
+			}
+			FTimerHandle EndGameTimer;
+			GetWorld()->GetTimerManager().SetTimer(EndGameTimer, this, &AChessBoard::EndGame, 3.5f, false);
 		}
 
 		DeletePiece->DissolveMaterial();
@@ -998,29 +1009,17 @@ void AChessBoard::EndGame()
 	EndGameUI = Cast<UGameEndUI>(CreateWidget(GetWorld(),GameEndUIClass));
 	EndGameUI->AddToViewport();
 	EndGameUI->UpdateWinnerText(GameWinner);
-
-	//Game Restart Logic Needs to be Added
-	bIsClickEnabled = false;
-}
-
-void AChessBoard::MulticastRPC_EndGame_Implementation()
-{
-	FTimerHandle EndGameTimer;
-	GetWorld()->GetTimerManager().SetTimer(EndGameTimer, this, &AChessBoard::EndGame, 2.f, false);
-}
-
-void AChessBoard::ServerRPC_EndGame_Implementation(EPieceColor Loser)
-{
-	if(Loser == EPieceColor::Black)
-	{
-		GameWinner = FText::FromString(TEXT("블랑"));
-	}
-	else if(Loser == EPieceColor::White)
-	{
-		GameWinner = FText::FromString(TEXT("느와르"));
-	}
 	
-	MulticastRPC_EndGame();
+	//Game Restart Logic Needs to be Added
+	FTimerHandle RestartTimer;
+	GetWorld()->GetTimerManager().SetTimer(RestartTimer, [this]()
+		{
+			RestartUI = Cast<URestartUI>(CreateWidget(GetWorld(), RestartUIClass));
+			RestartUI->AddToViewport();
+			FInputModeUIOnly InputMode;
+			Controller->SetInputMode(InputMode);
+		},
+		4.f, false);
 }
 
 void AChessBoard::ShowQueenWidget()

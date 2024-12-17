@@ -24,4 +24,10 @@ public:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_LevelTravel(const FString& LevelName);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Quit();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_Quit();
+	void Quit();
 };

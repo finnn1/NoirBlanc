@@ -14,10 +14,12 @@ void UNoirBlancGameInstance::Init()
 	BoardTypeData = InitTypeValue;
 	BoardColorData = InitColorValue;
 
+	EncounterCountData.SetNum(64);
+	MoveCountData.SetNum(64);
 	for(int i = 0 ; i < 64; i++)
 	{
-		EncounterCountData.Add(0);
-		MoveCountData.Add(0);
+		EncounterCountData[i] = 0;;
+		MoveCountData[i] = 0;
 	}
 
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();

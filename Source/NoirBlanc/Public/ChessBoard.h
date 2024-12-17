@@ -107,6 +107,11 @@ protected:
 	TSubclassOf<class UGameEndUI> GameEndUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UGameEndUI* EndGameUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class URestartUI> RestartUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	URestartUI* RestartUI;
 	
 private:
 	const int32 Chess_Num  = 8;
@@ -217,10 +222,10 @@ protected:
 	
 	UFUNCTION()
 	void EndGame();
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_EndGame();
-	UFUNCTION(Server, Reliable)
-	void ServerRPC_EndGame(EPieceColor Loser);
+	// UFUNCTION(NetMulticast, Reliable)
+	// void MulticastRPC_EndGame();
+	// UFUNCTION(Server, Reliable)
+	// void ServerRPC_EndGame(EPieceColor Loser);
 public:
 	UFUNCTION()
 	void ShowQueenWidget();
