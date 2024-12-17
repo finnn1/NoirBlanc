@@ -62,6 +62,21 @@ AActor* AChessPlayerController::TraceForActor()
 	return nullptr;
 }
 
+void AChessPlayerController::ServerRPC_Quit_Implementation()
+{
+	MulticastRPC_Quit();
+}
+
+void AChessPlayerController::MulticastRPC_Quit_Implementation()
+{
+	Quit();
+}
+
+void AChessPlayerController::Quit()
+{
+	ConsoleCommand("quit");
+}
+
 void AChessPlayerController::ServerRPC_LevelTravel_Implementation(const FString& LevelName)
 {
 	GetWorld()->ServerTravel(LevelName, true);
