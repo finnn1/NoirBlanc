@@ -3,6 +3,7 @@
 #include "BoardFloor.h"
 #include "ChessPiece.h"
 #include "ChessPlayerController.h"
+#include "GameEndUI.h"
 #include "NoirBlancGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -34,13 +35,11 @@ void AChessBoard::BeginPlay()
 	
 	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());;
-	
-	//need to add Condition to Start Game When Possesed 
-	StartGame();
 }
 
 void AChessBoard::StartGame()
 {
+	bIsClickEnabled = true;
 	TurnUI = CreateWidget<UTurnUI>(GetWorld(), TurnUIClass);
 	FTimerHandle UITimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(UITimerHandle, [this](){TurnUI->AddToViewport();}, 1.f, false);
@@ -55,6 +54,16 @@ void AChessBoard::StartGame()
 	ResultUI->ShowResult(EPieceType::King, EPieceColor::Black,
 						EPieceType::King, EPieceColor::White,
 						EPieceColor::Black);
+}
+
+void AChessBoard::ServerRPC_StartGame_Implementation()
+{
+	MulticastRPC_StartGame();
+}
+
+void AChessBoard::MulticastRPC_StartGame_Implementation()
+{
+	StartGame();
 }
 
 void AChessBoard::Tick(float DeltaTime)
@@ -74,10 +83,12 @@ void AChessBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(AChessBoard, TargetPiece);
 	DOREPLIFETIME(AChessBoard, TargetFloor);
 	DOREPLIFETIME(AChessBoard, Turn);
+	DOREPLIFETIME(AChessBoard, GameWinner);
 }
 
 void AChessBoard::ClickFloor()
 {
+	if(!bIsClickEnabled) return;
 	AActor* HitActor = Controller->TraceForActor();
 	if(!bIsClickedOnce)
 	{
@@ -367,6 +378,8 @@ void AChessBoard::MiniGameEnd()
 			PlaySound(PiecePutSounds[index]);
 		}, 6.5f, false);
 	}
+	FTimerHandle DeleteTimer;
+	GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this](){DeletePiece(BoardFloors[4]->GetPieceOnFloor());}, 0.5f, false);
 }
 
 void AChessBoard::MoveEnd()
@@ -979,19 +992,35 @@ void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
 	}
 }
 
-void AChessBoard::EndGame(EPieceColor Loser)
+void AChessBoard::EndGame()
 {
-	
+	TurnUI->RemoveFromParent();
+	EndGameUI = Cast<UGameEndUI>(CreateWidget(GetWorld(),GameEndUIClass));
+	EndGameUI->AddToViewport();
+	EndGameUI->UpdateWinnerText(GameWinner);
+
+	//Game Restart Logic Needs to be Added
+	bIsClickEnabled = false;
 }
 
-void AChessBoard::MulticastRPC_EndGame_Implementation(EPieceColor Loser)
+void AChessBoard::MulticastRPC_EndGame_Implementation()
 {
-	EndGame(Loser);
+	FTimerHandle EndGameTimer;
+	GetWorld()->GetTimerManager().SetTimer(EndGameTimer, this, &AChessBoard::EndGame, 2.f, false);
 }
 
 void AChessBoard::ServerRPC_EndGame_Implementation(EPieceColor Loser)
 {
-	MulticastRPC_EndGame(Loser);
+	if(Loser == EPieceColor::Black)
+	{
+		GameWinner = FText::FromString(TEXT("블랑"));
+	}
+	else if(Loser == EPieceColor::White)
+	{
+		GameWinner = FText::FromString(TEXT("느와르"));
+	}
+	
+	MulticastRPC_EndGame();
 }
 
 void AChessBoard::ShowQueenWidget()

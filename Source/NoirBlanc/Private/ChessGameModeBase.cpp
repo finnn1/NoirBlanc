@@ -10,9 +10,27 @@
 
 AChessGameModeBase::AChessGameModeBase()
 {
-	//ConnectedPlayers = 0;
+	
 }
-//
+
+void AChessGameModeBase::AddPlayer(class AChessPlayerPawn* Player)
+{
+	Players.Add(Player);
+	
+	if(PlayerNum <= Players.Num())
+	{
+		FTimerHandle StartHandle;
+		GetWorldTimerManager().SetTimer(StartHandle, this, &AChessGameModeBase::StartGameWhenReady, 2.0, false);
+	}
+}
+void AChessGameModeBase::StartGameWhenReady()
+{
+	UE_LOG(LogTemp, Warning, TEXT("All players are connected. Starting the game..."));
+	AActor* Board = UGameplayStatics::GetActorOfClass(GetWorld(), AChessBoard::StaticClass());
+	AChessBoard* ChessBoard = Cast<AChessBoard>(Board);
+	ChessBoard->ServerRPC_StartGame();
+}
+
 // void AChessGameModeBase::StartPlay()
 // {
 // 	Super::StartPlay();
@@ -20,10 +38,6 @@ AChessGameModeBase::AChessGameModeBase()
 // 	// 게임 대기 상태 시작
 // 	UE_LOG(LogTemp, Warning, TEXT("Waiting for players to join..."));
 //
-// 	// 일정 간격으로 플레이어 상태를 체크
-// 	GetWorldTimerManager().SetTimerForNextTick([this]() {
-// 		CheckPlayersReady();
-// 	});
 // }
 //
 // void AChessGameModeBase::CheckPlayersReady()
@@ -47,10 +61,4 @@ AChessGameModeBase::AChessGameModeBase()
 // 	}
 // }
 //
-// void AChessGameModeBase::StartGameWhenReady()
-// {
-// 	UE_LOG(LogTemp, Warning, TEXT("All players are connected. Starting the game..."));
-// 	AActor* Board = UGameplayStatics::GetActorOfClass(GetWorld(), AChessBoard::StaticClass());
-// 	AChessBoard* ChessBoard = Cast<AChessBoard>(Board);
-// 	ChessBoard->StartGame();
-// }
+

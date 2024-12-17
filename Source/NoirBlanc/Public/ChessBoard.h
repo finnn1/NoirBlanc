@@ -90,6 +90,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class UResultUI> ResultUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UResultUI* ResultUI;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
@@ -101,9 +102,15 @@ protected:
 	TSubclassOf<class UBattleUI> BattleUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UBattleUI* BattleUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UGameEndUI> GameEndUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UGameEndUI* EndGameUI;
 	
 private:
 	const int32 Chess_Num  = 8;
+	bool bIsClickEnabled = false;
 	bool bIsClickedOnce = false;
 	bool bIsClickedTwice = false;
 	
@@ -127,6 +134,9 @@ private:
 	FName LevelToOpen;
 
 	FString QueenLevel;
+
+	UPROPERTY(Replicated)
+	FText GameWinner;
 //////////////////////////////////////////
 /////FUNCTION
 public:
@@ -206,9 +216,9 @@ protected:
 	void DeletePiece(AChessPiece* DeletePiece);
 	
 	UFUNCTION()
-	void EndGame(EPieceColor Loser);
+	void EndGame();
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_EndGame(EPieceColor Loser);
+	void MulticastRPC_EndGame();
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_EndGame(EPieceColor Loser);
 public:
@@ -231,7 +241,11 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_MiniGameEnd();
 	void MiniGameEnd();
-	
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StartGame();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_StartGame();
 	void StartGame();
 private:
 };
