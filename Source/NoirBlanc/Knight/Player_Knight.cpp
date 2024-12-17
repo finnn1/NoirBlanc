@@ -14,24 +14,69 @@
 #include "TravelPlayerController.h"
 #include "Net/UnrealNetwork.h"
 
-//DEFINE_ENUM_TO_STRING(EPieceColor);
-
 // Sets default values
 APlayer_Knight::APlayer_Knight()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
-}		
+}
+
+void APlayer_Knight::BeginPlay()
+{
+	Super::BeginPlay();
+	/*
+	if(HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Connected Players : %d"),  Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->ConnectedPlayers);
+	}
+
+	if(IsLocallyControlled())
+	{
+		if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->ConnectedPlayers == 1)
+		{
+			WaitingUI = Cast<UWaitingUI>(CreateWidget(GetWorld(),WaitingUIFactory));
+			WaitingUI->AddToViewport();
+		}
+	}
+
+	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->ConnectedPlayers == 2)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Server : begin play"));
+		MulticastRPC_DestroyWaiting();
+	}
+	*/
+}
+
+void APlayer_Knight::MulticastRPC_DestroyWaiting_Implementation()
+{
+	if(HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Server : Destory"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Client : Destory"));
+	}
+
+	if(WaitingUI)
+	{
+		WaitingUI->RemoveFromParent();
+	}
+}
 
 // 서버에서만 실행됨
 void APlayer_Knight::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+
 	
 	Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->ConnectedPlayers += 1;
+	//UE_LOG(LogTemp, Warning, TEXT("Connected Players : %d"),  Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->ConnectedPlayers);
 	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->ConnectedPlayers == 2)
 	{
+		MulticastRPC_DestroyWaiting();
+		
 		/* Create Client UI */
 		ClientRPC_CreateUI();
 		
@@ -139,7 +184,6 @@ void APlayer_Knight::Tick(float DeltaTime)
 		Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance())->WinnerColor = EPieceColor::Black;
 	}
 }
-
 
 // ----------------------------------------------------------------------------------------
 //
