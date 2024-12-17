@@ -85,13 +85,7 @@ public:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_SetWinnerInstance(EPieceColor WinnerColor);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Card Decal")
-	UDecalComponent* BlackDecalCompo;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Card Decal")
-	UDecalComponent* WhiteDecalCompo;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Card Decal")
 	UMaterial* MatWhiteDecal;
 
@@ -116,7 +110,7 @@ protected:
 
 	// 매칭 된 카드 파괴
 	UFUNCTION(Server, reliable)
-	void ServerRPC_DestroyPawnCard(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard);
+	void ServerRPC_StartDestroyProcess(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard);
 
 	// 점수 반영
 	UFUNCTION(Server, reliable)
@@ -174,4 +168,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	EPieceColor PawnPieceColor;
+
+	UFUNCTION()
+	void DestroyCardAndCheck(APawnCard* PawnCard);
 };

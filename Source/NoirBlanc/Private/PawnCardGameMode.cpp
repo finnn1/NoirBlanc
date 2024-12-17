@@ -5,7 +5,6 @@
 #include "NetworkPawn.h"
 #include "PawnCardSpawner.h"
 #include "PawnCard.h"
-#include "PawnCardController.h"
 #include "NoirBlancGameInstance.h"
 #include "PawnCardDataAsset.h"
 #include "GameFramework/PlayerState.h"
@@ -106,7 +105,7 @@ void APawnCardGameMode::AddPlayer(ANetworkPawn* Player)
 	if(PlayerNum <= Players.Num())
 	{
 		FTimerHandle StartHandle;
-		GetWorldTimerManager().SetTimer(StartHandle, this, &APawnCardGameMode::StartPost, 2.0f, false);
+		GetWorldTimerManager().SetTimer(StartHandle, this, &APawnCardGameMode::StartPost, 2.f, false);
 	}
 }
 
@@ -132,7 +131,7 @@ bool APawnCardGameMode::CheckRemainCards()
 	{
 		GameSet();
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("RemainNum : %d"), PawnCards.Num());
+	
 	return (PawnCards.Num() == 0);
 }
 

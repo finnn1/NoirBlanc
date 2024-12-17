@@ -26,22 +26,6 @@ ANetworkPawn::ANetworkPawn()
 	Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 	StartTurnFloat.BindUFunction(this, FName("StartTurnLerp"));
 	EndTurnEvent.BindUFunction(this, FName("EndTurnLerp"));
-
-	/*WhiteDecalCompo = CreateDefaultSubobject<UDecalComponent>(TEXT("WhiteDecalCompo"));
-	BlackDecalCompo = CreateDefaultSubobject<UDecalComponent>(TEXT("BlackDecalCompo"));
-
-	WhiteDecalCompo->SetupAttachment(RootComponent);
-	BlackDecalCompo->SetupAttachment(RootComponent);
-
-	if(MatWhiteDecal)
-	{
-		WhiteDecalCompo->SetDecalMaterial(MatWhiteDecal);	
-	}
-
-	if(MatBlackDecal)
-	{
-		BlackDecalCompo->SetDecalMaterial(MatBlackDecal);	
-	}*/
 	
 	SetReplicates(true);
 }
@@ -167,11 +151,6 @@ void ANetworkPawn::MulticastRPC_SetWinnerInstance_Implementation(EPieceColor Win
 	if(HasAuthority())
 	{
 		Cast<APawnCardController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChessBoard();
-		/*FTimerHandle WinnerHandle;
-		GetWorldTimerManager().SetTimer(WinnerHandle, [this]()
-		{
-			Cast<APawnCardController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChessBoard();
-		}, 1.5f, false);*/
 	}
 }
 
@@ -358,20 +337,19 @@ void ANetworkPawn::IncreaseScore(bool IsNoLuck)
 	ServerRPC_IncreaseScore(this, IsNoLuck);
 }
 
-void ANetworkPawn::ServerRPC_DestroyPawnCard_Implementation(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard)
+void ANetworkPawn::ServerRPC_StartDestroyProcess_Implementation(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard)
 {
 	if(!IsValid(FirstTargetCard) || !IsValid(SecondTargetCard)) return;
-	
+
+	// GameMode의 Timer 관리 TMap에서 삭제
 	GameMode->DeleteCardFromMap(FirstTargetCard);
 	GameMode->DeleteCardFromMap(SecondTargetCard);
-
-	//FirstTargetCard->Destroy();
-	//SecondTargetCard->Destroy();
 	
+	// 카드 사라지는 연출
 	MulticastRPT_FractureCard(FirstTargetCard, SecondTargetCard);
 
-	// 남은 카드 체크
-	GameMode->CheckRemainCards();
+	/*// 남은 카드 체크
+	GameMode->CheckRemainCards();*/
 }
 
 void ANetworkPawn::MulticastRPC_GameEnd_Implementation(ANetworkPawn* WinnerPlayer)
@@ -429,7 +407,7 @@ void ANetworkPawn::EndTurnLerp()
 		if(IsCheckCardMatch())
 		{
 			// 매칭에 성공했으면 PawnCard 삭제
-			ServerRPC_DestroyPawnCard(FirstSelectedCard.Get(), SecondSelectedCard.Get());
+			ServerRPC_StartDestroyProcess(FirstSelectedCard.Get(), SecondSelectedCard.Get());
 		}
 		else
 		{
@@ -530,9 +508,9 @@ void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTarg
 {
 	FirstTargetCard->MatchingSuccess();
 	SecondTargetCard->MatchingSuccess();
-	
-	FirstTargetCard->StartPhyicsSimul();
-	SecondTargetCard->StartPhyicsSimul();
+
+	FirstTargetCard->OnFinishSetMat.AddUObject(this, &ANetworkPawn::DestroyCardAndCheck);
+	SecondTargetCard->OnFinishSetMat.AddUObject(this, &ANetworkPawn::DestroyCardAndCheck);
 
 	// 꽝 카드면 데칼 그리기 X
 	if(FirstTargetCard->PawnCardData->PawnCardType != PawnCardType::NoLuck && SecondTargetCard->PawnCardData->PawnCardType != PawnCardType::NoLuck)
@@ -544,6 +522,16 @@ void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTarg
 	FirstSelectedCard = nullptr;
 	SecondSelectedCard = nullptr;
 }
+
+void ANetworkPawn::DestroyCardAndCheck(APawnCard* PawnCard)
+{
+	PawnCard->Destroy();
+	if(GameMode)
+	{
+		GameMode->CheckRemainCards();
+	}
+}
+
 
 void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* StartPlayer)
 {
