@@ -45,9 +45,9 @@ void AChessBoard::StartGame()
 	FTimerHandle UITimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(UITimerHandle, [this](){TurnUI->AddToViewport();}, 1.f, false);
 	FTimerHandle TurnTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 3.f, false);
+	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::TurnUIChange, 3.f, false);
 	FTimerHandle MiniGameTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(MiniGameTimerHandle, this, &AChessBoard::ServerRPC_MiniGameEnd, 4.f, false);
+	GetWorld()->GetTimerManager().SetTimer(MiniGameTimerHandle, this, &AChessBoard::MiniGameEnd, 3.f, false);
 	PlaySound(BackgroundMusic);
 
 	ResultUI = Cast<UResultUI>(CreateWidget(GetWorld(), ResultUIClass));
@@ -331,36 +331,41 @@ void AChessBoard::ServerRPC_MiniGameEnd_Implementation()
 
 void AChessBoard::MulticastRPC_MiniGameEnd_Implementation()
 {
-	MiniGameEnd();
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle,this, &AChessBoard::MiniGameEnd, 2.f, false);
 }
 
 void AChessBoard::MiniGameEnd()
 {
 	EPieceColor Winner = GameInstance->WinnerColor;
 	int32 Delete_Row;
-	int32 Delete_Col;)
+	int32 Delete_Col;
 	
 	if(GameInstance->DeffenderColor == Winner)
 	{
 		Delete_Row = GameInstance->AttackerRow;
 		Delete_Col = GameInstance->AttackerCol;
-		DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
+		FTimerHandle DeleteTimer;
+		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col](){DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());}, 0.5f, false);
 	}
 	else if(GameInstance->AttackerColor == Winner)
 	{
 		Delete_Col = GameInstance->DeffenderCol;
 		Delete_Row = GameInstance->DeffenderRow;
-		DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
+		FTimerHandle DeleteTimer;
+		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col](){DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());}, 0.5f, false);
 
 		AChessPiece* Attacker = BoardFloors[GameInstance->AttackerRow*Chess_Num + GameInstance->AttackerCol]->GetPieceOnFloor();
 		ABoardFloor* Destination = BoardFloors[Delete_Row*Chess_Num + Delete_Col];
-		Attacker->SetFloorBeneathPiece(Destination);
-		Destination->SetPieceOnFloor(Attacker);
+	
 		FTimerHandle Timer;
 		GetWorld()->GetTimerManager().SetTimer(Timer, [Attacker, Destination, this](){
-			Attacker->SetActorLocation(Destination->GetActorLocation() + FVector(0.f, 0.f, SpawnHeight);
-		int32 index = FMath::RandRange(0, PiecePutSounds.Num()-1);
-		PlaySound(PiecePutSounds[index]);}, 1.5f, false);
+			Attacker->SetActorLocation(Destination->GetActorLocation() + FVector(0.f, 0.f, SpawnHeight));
+			Attacker->SetFloorBeneathPiece(Destination);
+			Destination->SetPieceOnFloor(Attacker);
+			int32 index = FMath::RandRange(0, PiecePutSounds.Num()-1);
+			PlaySound(PiecePutSounds[index]);
+		}, 6.5f, false);
 	}
 }
 
@@ -962,13 +967,15 @@ void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
 		if(DeletePiece->GetPieceType() == EPieceType::King)
 		{
 			ServerRPC_EndGame(DeletePiece->GetPieceColor());
-
 		}
 
 		DeletePiece->DissolveMaterial();
 
-		FTimerHandle DeleteTimer;
-		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [DeletePiece](){DeletePiece->Destroy();}, 2.15f, false);
+		if(HasAuthority())
+		{
+			FTimerHandle DeleteTimer;
+			GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [DeletePiece](){DeletePiece->Destroy();}, 4.15f, false);
+		}
 	}
 }
 

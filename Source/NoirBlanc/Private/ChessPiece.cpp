@@ -104,17 +104,20 @@ void AChessPiece::DissolveMaterial()
 	UMaterialInterface* Material = CompMesh->GetMaterial(0); // 0은 첫 번째 Material Slot
 	if (Material)
 	{
+		if(HasAuthority())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("1111"));
+		}
 		// Material Instance Dynamic 생성
-		UMaterialInstanceDynamic* Dynamic = UMaterialInstanceDynamic::Create(Material, this);
-        
+		Dynamic = UMaterialInstanceDynamic::Create(Material, this);
+//        TSharedPtr<UMaterialInstanceDynamic> dyn = MakeShareable(Dynamic);
 		// Material Instance Dynamic을 StaticMeshComponent에 설정
 		CompMesh->SetMaterial(0, Dynamic);
 
 		// Scalar Parameter 값 설정 (예: "MyScalarParam" 이름의 Scalar 파라미터)
 		if (Dynamic)
 		{
-			
-			GetWorld()->GetTimerManager().SetTimer(DissolveTimer, [this,Dynamic]()
+			GetWorld()->GetTimerManager().SetTimer(DissolveTimer, [this]()
 				{
 					float DeltaTime = GetWorld()->DeltaTimeSeconds;
 					float StartValue = -0.4f;
@@ -123,7 +126,7 @@ void AChessPiece::DissolveMaterial()
 					float Value = FMath::Lerp(StartValue, EndValue, DissolveCounter *InterpSpeed);
 					DissolveCounter += DeltaTime;
 					Dynamic->SetScalarParameterValue(TEXT("Dissolve"), Value);
-					if(DissolveCounter >= 1.f)
+					if(DissolveCounter / InterpSpeed >= 1.f)
 					{
 						StopTimer();
 					}

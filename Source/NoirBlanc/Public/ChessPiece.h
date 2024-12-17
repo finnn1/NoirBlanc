@@ -71,4 +71,7 @@ private:
 
 	FTimerHandle DissolveTimer;
 	float DissolveCounter = 0.f;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* Dynamic;
 };
