@@ -14,10 +14,12 @@ class NOIRBLANC_API AKingGameMode : public AGameModeBase
 public:
 	AKingGameMode();
 
+	TArray<APlayerController*> JoinedPlayers;
+	
 	// 클릭 가능한 모든 위치
 	TArray<class ASpawnLocation*> AllSpawnLocations;
 
-	TArray<AActor*> AllStartPoints;
+	TArray<APlayerStart*> AllStartPoints;
 	int StartPointOrder = -1;
 
 	UPROPERTY(EditAnywhere)
@@ -36,5 +38,20 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	FTimerHandle StartCountDownTimerHandle;
+	void NotifyJoined(APlayerController* JoinedPlayer);
+	void StartCountTimer();
+	int32 CountdownNumber = 4;
+
+	FTimerHandle MainTimerHandle;
+	void UpdateTimer();
+	int32 CurrentRemainTime;
+	UPROPERTY(EditAnywhere)
+	int32 DefaultRemainTime = 100;
+	
 	void FireAt(TArray<class ASpawnLocation*> SpawnLocations);
+
+	void OnKingCharacterOverlapped(AActor* OtherActor);
+	
+	void GameOver(APawn* Winner);
 };

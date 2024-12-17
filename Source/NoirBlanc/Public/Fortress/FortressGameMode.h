@@ -17,6 +17,7 @@ class NOIRBLANC_API AFortressGameMode : public AGameMode
 
 	AFortressGameMode();
 	virtual void BeginPlay() override;
+	
 	// bind player controller to each pawn
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
@@ -24,6 +25,8 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<class ACannon*> AllPlayers;
 
+	void NewPlayerJoined(ACannon* NewPlayer);
+	
 	int32 turnIdx = 0;
 	void ChangeTurn();
 
@@ -31,5 +34,13 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	float WindMaxStrength = 100.f;
+
+public:
+	FTimerHandle CountdownTimer;
+
+	int32 CountdownLeft = 3;
+	
+	void StartCountdown();
+
 	
 };

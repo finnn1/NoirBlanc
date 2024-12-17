@@ -2,6 +2,7 @@
 #include "ChessPlayerPawn.h"
 
 #include "ChessBoard.h"
+#include "ChessGameModeBase.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputAction.h"
@@ -104,6 +105,20 @@ void AChessPlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AChessPlayerPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if(HasAuthority())
+	{
+		AChessGameModeBase* gm = Cast<AChessGameModeBase>(GetWorld()->GetAuthGameMode());
+		if(gm)
+		{
+			gm->AddPlayer(this);
+		}
+	}
 }
 
 // Called to bind functionality to input

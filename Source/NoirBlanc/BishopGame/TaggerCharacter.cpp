@@ -127,11 +127,11 @@ void ATaggerCharacter::MulticastRPC_SetWinner_Implementation(EPieceColor WinnerC
 {
 	if (IsLocallyControlled())
 	{
-		UNoirBlancGameInstance* _NoirBlanc = GetGameInstance<UNoirBlancGameInstance>();
-		if (_NoirBlanc)
+		UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
+		if (_NoirBlancGameInstance)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Tagger :: Winner : %d"), WinnerColor);
-			_NoirBlanc->WinnerColor = WinnerColor;
+			_NoirBlancGameInstance->WinnerColor = WinnerColor;
 		}
 	}
 }

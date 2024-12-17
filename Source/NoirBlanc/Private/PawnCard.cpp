@@ -2,9 +2,8 @@
 
 
 #include "PawnCard.h"
-
-#include "NetworkPawn.h"
 #include "PawnCardDataAsset.h"
+#include "GeometryCollection/GeometryCollectionComponent.h"
 
 // Sets default values
 APawnCard::APawnCard()
@@ -14,6 +13,13 @@ APawnCard::APawnCard()
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PawnCard StaticMesh"));
 	SetRootComponent(StaticMeshComp);
+	
+	GeometryCollectionComp = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("Shatter StaticMesh"));
+	GeometryCollectionComp->SetupAttachment(StaticMeshComp);
+	GeometryCollectionComp->SetRelativeLocation(FVector(0, 20, 0));
+	GeometryCollectionComp->SetSimulatePhysics(false);
+	GeometryCollectionComp->SetVisibility(false);
+	GeometryCollectionComp->SetEnableGravity(false);
 	
 	bIsSelectable = false;
 
@@ -35,20 +41,24 @@ void APawnCard::BeginPlay()
 	}
 }
 
-void APawnCard::SetLerpMaterial()
+void APawnCard::StartLerpMaterial()
 {
 	if(!PawnCardData) return;
 	GetWorldTimerManager().SetTimer(LerpTimer, [this]()
 	{
 		if(!StaticMeshComp) return;
 		CurrentLerpTime += LerpCycle;
-		PawnCardData->SetMatchingMaterial(StaticMeshComp, CurrentLerpTime);
-		
-		if(CurrentLerpTime > 1)
+
+		if(CurrentLerpTime >= 1)
 		{
+			StaticMeshComp->SetVisibility(false, false);
+			StartPhyicsSimul();
 			GetWorldTimerManager().ClearTimer(LerpTimer);
-			OnFinishSetMat.Broadcast(this);	
+			return;
 		}
+		
+		PawnCardData->SetMatchingMat_ChaosDest(StaticMeshComp, CurrentLerpTime);	
+		
 	}, LerpCycle, true);
 }
 
@@ -72,11 +82,12 @@ void APawnCard::InitCard()
 
 int32 APawnCard::MatchingSuccess()
 {
-	SetLerpMaterial();
-	if(PawnCardData)
+	DissolvePawnCardMat();
+	/*if(PawnCardData)
 	{
 		return PawnCardData->Score;
-	}
+	}*/
+	
 	return 1;
 }
 
@@ -84,4 +95,31 @@ void APawnCard::CancelMatching()
 {
 	bIsSelectable = true;
 	OwnerPlayerState = nullptr;
+}
+
+// 블루프린트에서 호출
+void APawnCard::BroadcastEndDestruction()
+{
+	OnFinishSetMat.Broadcast(this);
+}
+
+void APawnCard::DissolvePawnCardMat()
+{
+	CurrentLerpTime = -0.4;
+	if(!PawnCardData) return;
+	GetWorldTimerManager().SetTimer(LerpTimer, [this]()
+	{
+		if(!StaticMeshComp) return;
+		CurrentLerpTime += LerpCycle;
+
+		if(CurrentLerpTime >= 0.7)
+		{
+			GetWorldTimerManager().ClearTimer(LerpTimer);
+			OnFinishSetMat.Broadcast(this);
+			return;
+		}
+		
+		PawnCardData->SetMatchingMat_Dissolve(StaticMeshComp, CurrentLerpTime);	
+		
+	}, LerpCycle, true);	
 }

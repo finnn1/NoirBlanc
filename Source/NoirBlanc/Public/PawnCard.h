@@ -14,6 +14,7 @@ enum class CardState : uint8
 	Back
 };
 class UPawnCardDataAsset;
+class UGeometryCollectionComponent;
 
 UCLASS()
 class NOIRBLANC_API APawnCard : public AActor
@@ -34,6 +35,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
 	UStaticMeshComponent* StaticMeshComp;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
+	UGeometryCollectionComponent* GeometryCollectionComp;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Data")
 	UPawnCardDataAsset* PawnCardData;
 
@@ -47,12 +51,12 @@ private:
 	UPROPERTY()
 	bool bIsSelectable;
 
-	void SetLerpMaterial();
+	void StartLerpMaterial();
 	
 	FTimerHandle LerpTimer;
 
 	float CurrentLerpTime;
-	float LerpCycle = 0.08;
+	float LerpCycle = 0.02;
 
 public:
 	//카드 앞뒷면 상태 변화
@@ -66,4 +70,15 @@ public:
 	
 	//매칭 취소 함수
 	void CancelMatching();
+
+	//Chaos Distruction
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartPhyicsSimul();
+
+	//Destroy Delegate
+	UFUNCTION(BlueprintCallable)
+	void BroadcastEndDestruction();
+
+	//Material Dissolve
+	void DissolvePawnCardMat();
 };

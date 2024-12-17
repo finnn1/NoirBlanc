@@ -147,11 +147,11 @@ void ABishopPawn::MulticastRPC_SetWinner_Implementation(EPieceColor WinnerColor)
 {
 	if (IsLocallyControlled())
 	{
-		UNoirBlancGameInstance* _NoirBlanc = GetGameInstance<UNoirBlancGameInstance>();
-		if (_NoirBlanc)
+		UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
+		if (_NoirBlancGameInstance)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Bishop :: Winner : %d"), WinnerColor);
-			_NoirBlanc->WinnerColor = WinnerColor;
+			_NoirBlancGameInstance->WinnerColor = WinnerColor;
 		}
 	}
 }

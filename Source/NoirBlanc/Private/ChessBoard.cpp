@@ -3,6 +3,7 @@
 #include "BoardFloor.h"
 #include "ChessPiece.h"
 #include "ChessPlayerController.h"
+#include "GameEndUI.h"
 #include "NoirBlancGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -10,6 +11,7 @@
 #include "Net/UnrealNetwork.h"
 #include "NoirBlanc/Knight/TurnUI.h"
 #include "QueenSelectWidget.h"
+#include "RestartUI.h"
 #include "NoirBlanc/Knight/BattleUI.h"
 #include "NoirBlanc/Knight/ResultUI.h"
 
@@ -34,18 +36,18 @@ void AChessBoard::BeginPlay()
 	
 	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());;
-	
-	//need to add Condition to Start Game When Possesed 
-	StartGame();
 }
 
 void AChessBoard::StartGame()
 {
+	bIsClickEnabled = true;
 	TurnUI = CreateWidget<UTurnUI>(GetWorld(), TurnUIClass);
 	FTimerHandle UITimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(UITimerHandle, [this](){TurnUI->AddToViewport();}, 1.f, false);
 	FTimerHandle TurnTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::ServerRPC_TurnUIChange, 3.f, false);
+	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AChessBoard::TurnUIChange, 3.f, false);
+	FTimerHandle MiniGameTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(MiniGameTimerHandle, this, &AChessBoard::MiniGameEnd, 3.f, false);
 	PlaySound(BackgroundMusic);
 
 	ResultUI = Cast<UResultUI>(CreateWidget(GetWorld(), ResultUIClass));
@@ -53,6 +55,16 @@ void AChessBoard::StartGame()
 	ResultUI->ShowResult(EPieceType::King, EPieceColor::Black,
 						EPieceType::King, EPieceColor::White,
 						EPieceColor::Black);
+}
+
+void AChessBoard::ServerRPC_StartGame_Implementation()
+{
+	MulticastRPC_StartGame();
+}
+
+void AChessBoard::MulticastRPC_StartGame_Implementation()
+{
+	StartGame();
 }
 
 void AChessBoard::Tick(float DeltaTime)
@@ -72,10 +84,12 @@ void AChessBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(AChessBoard, TargetPiece);
 	DOREPLIFETIME(AChessBoard, TargetFloor);
 	DOREPLIFETIME(AChessBoard, Turn);
+	DOREPLIFETIME(AChessBoard, GameWinner);
 }
 
 void AChessBoard::ClickFloor()
 {
+	if(!bIsClickEnabled) return;
 	AActor* HitActor = Controller->TraceForActor();
 	if(!bIsClickedOnce)
 	{
@@ -322,6 +336,51 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	}
 }
 
+void AChessBoard::ServerRPC_MiniGameEnd_Implementation()
+{
+	MulticastRPC_MiniGameEnd();
+}
+
+void AChessBoard::MulticastRPC_MiniGameEnd_Implementation()
+{
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle,this, &AChessBoard::MiniGameEnd, 2.f, false);
+}
+
+void AChessBoard::MiniGameEnd()
+{
+	EPieceColor Winner = GameInstance->WinnerColor;
+	int32 Delete_Row;
+	int32 Delete_Col;
+	
+	if(GameInstance->DeffenderColor == Winner)
+	{
+		Delete_Row = GameInstance->AttackerRow;
+		Delete_Col = GameInstance->AttackerCol;
+		FTimerHandle DeleteTimer;
+		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col](){DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());}, 0.5f, false);
+	}
+	else if(GameInstance->AttackerColor == Winner)
+	{
+		Delete_Col = GameInstance->DeffenderCol;
+		Delete_Row = GameInstance->DeffenderRow;
+		FTimerHandle DeleteTimer;
+		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col](){DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());}, 0.5f, false);
+
+		AChessPiece* Attacker = BoardFloors[GameInstance->AttackerRow*Chess_Num + GameInstance->AttackerCol]->GetPieceOnFloor();
+		ABoardFloor* Destination = BoardFloors[Delete_Row*Chess_Num + Delete_Col];
+	
+		FTimerHandle Timer;
+		GetWorld()->GetTimerManager().SetTimer(Timer, [Attacker, Destination, this](){
+			Attacker->SetActorLocation(Destination->GetActorLocation() + FVector(0.f, 0.f, SpawnHeight));
+			Attacker->SetFloorBeneathPiece(Destination);
+			Destination->SetPieceOnFloor(Attacker);
+			int32 index = FMath::RandRange(0, PiecePutSounds.Num()-1);
+			PlaySound(PiecePutSounds[index]);
+		}, 6.5f, false);
+	}
+}
+
 void AChessBoard::MoveEnd()
 {
 	ChangeTurn();
@@ -432,9 +491,6 @@ void AChessBoard::InitBoard()
 	EPieceType Type;
 	EPieceColor Color;
 	Turn = GameInstance->Saved_Turn;
-	EPieceColor Winner = GameInstance->WinnerColor;
-	int32 Delete_Row;
-	int32 Delete_Col;
 	
 	for(int i = 0 ; i < Chess_Num; i++)
 	{
@@ -449,24 +505,6 @@ void AChessBoard::InitBoard()
 				InitPiece(i*Chess_Num + j, Type, Color);
 			}
 		}
-	}
-	if(GameInstance->DeffenderColor == Winner)
-	{
-		Delete_Row = GameInstance->AttackerRow;
-		Delete_Col = GameInstance->AttackerCol;
-		BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor()->Destroy();
-	}
-	else if(GameInstance->AttackerColor == Winner)
-	{
-		Delete_Col = GameInstance->DeffenderCol;
-		Delete_Row = GameInstance->DeffenderRow;
-		BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor()->Destroy();
-
-		AChessPiece* Attacker = BoardFloors[GameInstance->AttackerRow*Chess_Num + GameInstance->AttackerCol]->GetPieceOnFloor();
-		ABoardFloor* Destination = BoardFloors[Delete_Row*Chess_Num + Delete_Col];
-		Attacker->SetFloorBeneathPiece(Destination);
-		Destination->SetPieceOnFloor(Attacker);
-		Attacker->SetActorLocation(Destination->GetActorLocation() + FVector(0.f, 0.f, SpawnHeight));
 	}
 }
 
@@ -931,6 +969,55 @@ void AChessBoard::PlaySound(USoundBase* Sound)
 void AChessBoard::TurnUIChange()
 {
 	TurnUI->ShowTurn(Turn);
+}
+
+void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
+{
+	//Material Change
+	if(DeletePiece)
+	{
+		if(DeletePiece->GetPieceType() == EPieceType::King)
+		{
+			EPieceColor Loser = DeletePiece->GetPieceColor();
+			if(Loser == EPieceColor::Black)
+			{
+				GameWinner = FText::FromString(TEXT("블랑"));
+			}
+			else if(Loser == EPieceColor::White)
+			{
+				GameWinner = FText::FromString(TEXT("느와르"));
+			}
+			FTimerHandle EndGameTimer;
+			GetWorld()->GetTimerManager().SetTimer(EndGameTimer, this, &AChessBoard::EndGame, 3.5f, false);
+		}
+
+		DeletePiece->DissolveMaterial();
+
+		if(HasAuthority())
+		{
+			FTimerHandle DeleteTimer;
+			GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [DeletePiece](){DeletePiece->Destroy();}, 4.15f, false);
+		}
+	}
+}
+
+void AChessBoard::EndGame()
+{
+	TurnUI->RemoveFromParent();
+	EndGameUI = Cast<UGameEndUI>(CreateWidget(GetWorld(),GameEndUIClass));
+	EndGameUI->AddToViewport();
+	EndGameUI->UpdateWinnerText(GameWinner);
+	
+	//Game Restart Logic Needs to be Added
+	FTimerHandle RestartTimer;
+	GetWorld()->GetTimerManager().SetTimer(RestartTimer, [this]()
+		{
+			RestartUI = Cast<URestartUI>(CreateWidget(GetWorld(), RestartUIClass));
+			RestartUI->AddToViewport();
+			FInputModeUIOnly InputMode;
+			Controller->SetInputMode(InputMode);
+		},
+		4.f, false);
 }
 
 void AChessBoard::ShowQueenWidget()

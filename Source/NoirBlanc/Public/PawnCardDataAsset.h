@@ -44,6 +44,11 @@ public:
 	UFUNCTION()
 	void InitMeshMaterial(UStaticMeshComponent* StaticMeshComp);
 
+	// Chaos Destruction을 사용하여 Card 제거 
 	UFUNCTION()
-	void SetMatchingMaterial(UStaticMeshComponent* StaticMeshComp, float Alpha);
+	void SetMatchingMat_ChaosDest(UStaticMeshComponent* StaticMeshComp, float Alpha);
+
+	// Material Dissolve를 사용하여 Card 제거
+	UFUNCTION()
+	void SetMatchingMat_Dissolve(UStaticMeshComponent* StaticMeshComp, float Alpha);
 };
