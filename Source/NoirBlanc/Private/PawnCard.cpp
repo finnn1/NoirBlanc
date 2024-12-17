@@ -3,29 +3,39 @@
 
 #include "PawnCard.h"
 #include "PawnCardDataAsset.h"
-#include "GeometryCollection/GeometryCollectionComponent.h"
 
 // Sets default values
 APawnCard::APawnCard()
 {
+	
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PawnCard StaticMesh"));
 	SetRootComponent(StaticMeshComp);
+
+	/*ConstructorHelpers::FClassFinder<AFieldSystemActor> FieldClass(TEXT("/Engine/EditorResources/FieldNodes/FS_MasterField.FS_MasterField_C"));
+	if(FieldClass.Succeeded())
+	{
+		MasterFieldActor = FieldClass.Class;
+	}*/
 	
-	GeometryCollectionComp = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("Shatter StaticMesh"));
+	/*GeometryCollectionComp = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("Shatter StaticMesh"));
 	GeometryCollectionComp->SetupAttachment(StaticMeshComp);
 	GeometryCollectionComp->SetRelativeLocation(FVector(0, 20, 0));
 	GeometryCollectionComp->SetSimulatePhysics(false);
 	GeometryCollectionComp->SetVisibility(false);
-	GeometryCollectionComp->SetEnableGravity(false);
+	GeometryCollectionComp->SetEnableGravity(false);*/
 	
 	bIsSelectable = false;
+	bReplicates = true;
 
 	FrontBackState = CardState::Back;
-	
-	bReplicates = true;
+
+	// Shake
+	ShakeTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
+	StartShakeFloat.BindUFunction(this, FName("StartShakeFunc"));
+	EndShakeEvent.BindUFunction(this, FName("EndShakeFunc"));
 }
 
 // Called when the game starts or when spawned
@@ -39,6 +49,34 @@ void APawnCard::BeginPlay()
 	{
 		PawnCardData->InitMeshMaterial(StaticMeshComp);
 	}
+
+	if (ShakingCurve)
+	{
+		ShakeTimeline->AddInterpFloat(ShakingCurve, StartShakeFloat);
+		ShakeTimeline->SetTimelineFinishedFunc(EndShakeEvent);
+		
+		ShakeTimeline->SetLooping(false);
+		ShakeTimeline->SetTimelineLength(0.2f);
+	}
+}
+
+void APawnCard::StartShakeFunc(float value)
+{
+	FVector ChangeLocation = GetActorLocation();
+	if(value >= 0.5)
+	{
+		ChangeLocation.X = FMath::Lerp(GetActorLocation().X, GetActorLocation().X-0.5f, value);
+	}
+	else
+	{
+		ChangeLocation.X = FMath::Lerp(GetActorLocation().X, GetActorLocation().X+0.5f, value);
+	}
+	SetActorLocation(ChangeLocation);
+}
+
+void APawnCard::EndShakeFunc()
+{
+	SetActorLocation(OriginLocation);
 }
 
 void APawnCard::StartLerpMaterial()
@@ -52,7 +90,7 @@ void APawnCard::StartLerpMaterial()
 		if(CurrentLerpTime >= 1)
 		{
 			StaticMeshComp->SetVisibility(false, false);
-			StartPhyicsSimul();
+			//StartPhyicsSimul();
 			GetWorldTimerManager().ClearTimer(LerpTimer);
 			return;
 		}
@@ -97,6 +135,7 @@ void APawnCard::CancelMatching()
 	OwnerPlayerState = nullptr;
 }
 
+
 // 블루프린트에서 호출
 void APawnCard::BroadcastEndDestruction()
 {
@@ -122,4 +161,13 @@ void APawnCard::DissolvePawnCardMat()
 		PawnCardData->SetMatchingMat_Dissolve(StaticMeshComp, CurrentLerpTime);	
 		
 	}, LerpCycle, true);	
+}
+
+void APawnCard::StartShakeTimeline()
+{
+	if(!ShakeTimeline->IsPlaying())
+	{
+		OriginLocation = GetActorLocation();
+		ShakeTimeline->PlayFromStart();	
+	}
 }

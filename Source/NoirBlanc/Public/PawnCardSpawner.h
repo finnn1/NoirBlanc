@@ -64,7 +64,7 @@ public:
 	
 	//카드 배치
 	void DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCards);
-	
+
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TMap<APawnCard*, FMyStruct> MapUseStr;

@@ -38,11 +38,6 @@ void APawnCardGameMode::BeginPlay()
 				if(PawnCard)
 				{
 					PawnCards.Add(PawnCard);
-					/*ANetworkPawn* authPlayer = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
-					if(authPlayer)
-					{
-						PawnCard->OnFinishSetMat.AddUObject(authPlayer, &ANetworkPawn::DtyCard);	
-					}*/
 				}
 			}
 		}

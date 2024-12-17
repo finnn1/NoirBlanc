@@ -2,7 +2,6 @@
 
 
 #include "NetworkPawn.h"
-#include "Components/DecalComponent.h"
 #include "ControllerUI.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -15,6 +14,7 @@
 #include "Net/UnrealNetwork.h"
 #include "NoirBlancGameInstance.h"
 #include "Engine/DecalActor.h"
+#include "Kismet/GameplayStatics.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 // Sets default values
@@ -190,6 +190,8 @@ void ANetworkPawn::MulticastRPC_GameStart_Implementation()
 		if(Cntr && Cntr->CntrUI)
 		{
 			Cntr->CntrUI->ShowStartText();
+			//사운드
+			PlaySound(GameStartSound);
 		}
 	}
 }
@@ -219,11 +221,8 @@ void ANetworkPawn::MulticastRPC_ShuffleStart_Implementation()
 	}
 }
 
-
 void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 {
-	if(!GetIsTurnPlayer()) return;
-	
 	FHitResult Hit;
 	if(PawnCardContr)
 	{
@@ -240,7 +239,18 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 		
 		if(SelectedCard)
 		{
-			// 카드 회전 중 다른 카드 선택 막음
+			//카드 회전 중 다른 카드 선택 막음
+			if(!GetIsTurnPlayer())
+			{
+				//사운드
+				PlaySound(VibrateSound);
+				SelectedCard->StartShakeTimeline();
+				return;
+			}
+			//사운드
+			PlaySound(CardSelectSound);
+
+			//선택로직
 			ServerRPC_SelectCard(SelectedCard);
 		}
 	}	
@@ -358,10 +368,14 @@ void ANetworkPawn::MulticastRPC_GameEnd_Implementation(ANetworkPawn* WinnerPlaye
 	if(WinnerPlayer == LocalNetPawn)
 	{
 		LocalNetPawn->PlayerUI->ShowWinPlayer();
+		//사운드
+		PlaySound(WinSound);
 	}
 	else
 	{
 		LocalNetPawn->PlayerUI->ShowLosePlayer();
+		//사운드
+		PlaySound(LoseSound);
 	}
 }
 
@@ -506,6 +520,9 @@ void ANetworkPawn::PossessedBy(AController* NewController)
 
 void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTargetCard, APawnCard* SecondTargetCard)
 {
+	//사운드
+	PlaySound(CardMatchSound);
+	
 	FirstTargetCard->MatchingSuccess();
 	SecondTargetCard->MatchingSuccess();
 
@@ -516,7 +533,8 @@ void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTarg
 	if(FirstTargetCard->PawnCardData->PawnCardType != PawnCardType::NoLuck && SecondTargetCard->PawnCardData->PawnCardType != PawnCardType::NoLuck)
 	{
 		DrawDecalActor(FirstTargetCard->GetActorLocation(), PawnPieceColor);
-		DrawDecalActor(SecondTargetCard->GetActorLocation(), PawnPieceColor);	
+		DrawDecalActor(SecondTargetCard->GetActorLocation(), PawnPieceColor);
+		PlaySound(CorrectSound);
 	}
 
 	FirstSelectedCard = nullptr;
@@ -548,6 +566,9 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 		
 		/*Turn UI */
 		StartPlayer->TurnUI->ShowTurn(TurnPlayerColor);
+
+		//사운드
+		PlaySound(ChangeTurnSound);
 	}
 	else
 	{
@@ -615,5 +636,21 @@ void ANetworkPawn::MulticastRPC_IncreaseScore_Implementation(ANetworkPawn* Score
 				ServerPawn->PlayerUI->SetEnemyScore(Score);	
 			}
 		}
+	}
+}
+
+void ANetworkPawn::PlaySound(USoundBase* Sound)
+{
+	if(Sound)
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), Sound);
+	}
+}
+
+void ANetworkPawn::MulticastRPC_PlaySound_Implementation(USoundBase* Sound)
+{
+	if(Sound)
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), Sound);
 	}
 }

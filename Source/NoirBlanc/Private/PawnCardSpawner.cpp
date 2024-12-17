@@ -2,7 +2,7 @@
 
 
 #include "PawnCardSpawner.h"
-
+#include "NetworkPawn.h"
 #include "PawnCard.h"
 #include "PawnCardDataAsset.h"
 
@@ -60,7 +60,7 @@ void APawnCardSpawner::InitCardsArray()
 
 void APawnCardSpawner::DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCards)
 {
-	FVector CardLocation = FVector(0, 0, 30);
+	FVector CardLocation = FVector(30, 0, 60);
 	int32 TileHeight = 0;
 	
 	if(ShuffledCards.Num() > 0)
@@ -77,7 +77,7 @@ void APawnCardSpawner::DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCa
 			if(i != 0 && i % TileHeight == 0)
 			{
 				CardLocation.Z += CardMarginZ;
-				CardLocation.X = 0;
+				CardLocation.X = 30;
 			}
 			
 			SpawnedCard->SetActorLocation(CardLocation);
@@ -100,6 +100,7 @@ void APawnCardSpawner::DistributeCards(TArray<TSubclassOf<APawnCard>> ShuffledCa
 // 카드 2개 이동
 void APawnCardSpawner::ShuffleCard()
 {
+	ANetworkPawn* PlayerPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	for(int i = 0; i < 2; i++)
 	{
 		int32 RandomIndex1 = FMath::RandRange(0, CardsOnLevel.Num() - 1);
@@ -122,8 +123,12 @@ void APawnCardSpawner::ShuffleCard()
 
 		SetMoveTimer(RandomCard1);
 		SetMoveTimer(RandomCard2);
+
+		if(PlayerPawn)
+		{
+			PlayerPawn->MulticastRPC_PlaySound(PlayerPawn->CardMoveSound);
+		}
 	}
-	
 }
 
 void APawnCardSpawner::SetMoveTimer(APawnCard* Card)

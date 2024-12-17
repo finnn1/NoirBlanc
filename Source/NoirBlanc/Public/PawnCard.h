@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/TimelineComponent.h"
 #include "PawnCard.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnFinishSetMat, APawnCard* PawnCard);
@@ -14,7 +15,7 @@ enum class CardState : uint8
 	Back
 };
 class UPawnCardDataAsset;
-class UGeometryCollectionComponent;
+class AFieldSystemActor;
 
 UCLASS()
 class NOIRBLANC_API APawnCard : public AActor
@@ -35,8 +36,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
 	UStaticMeshComponent* StaticMeshComp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
-	UGeometryCollectionComponent* GeometryCollectionComp;
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
+	UGeometryCollectionComponent* GeometryCollectionComp;*/
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Data")
 	UPawnCardDataAsset* PawnCardData;
@@ -44,6 +45,28 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Data")
 	CardState FrontBackState;
 
+	// Actor 흔들기 - 타임라인
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
+	class UTimelineComponent* ShakeTimeline;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
+	class UCurveFloat* ShakingCurve;
+	
+	FOnTimelineFloat StartShakeFloat;
+	FOnTimelineEvent EndShakeEvent;
+
+	// Shake 시작
+	UFUNCTION()
+	void StartShakeFunc(float value);
+
+	// Shake 끝난 후 이벤트
+	UFUNCTION()
+	void EndShakeFunc();
+
+	// 셔플 후 게임 시작할 때의 원점 위치
+	UPROPERTY()
+	FVector OriginLocation;
+	
 private:
 	UPROPERTY()
 	APlayerState* OwnerPlayerState;
@@ -57,6 +80,7 @@ private:
 
 	float CurrentLerpTime;
 	float LerpCycle = 0.02;
+	
 
 public:
 	//카드 앞뒷면 상태 변화
@@ -72,6 +96,9 @@ public:
 	void CancelMatching();
 
 	//Chaos Distruction
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TSubclassOf<AFieldSystemActor> MasterFieldActor;*/
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void StartPhyicsSimul();
 
@@ -81,4 +108,6 @@ public:
 
 	//Material Dissolve
 	void DissolvePawnCardMat();
+	
+	void StartShakeTimeline();
 };

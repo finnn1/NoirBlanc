@@ -15,6 +15,8 @@ class APawnCard;
 class APawnCardGameMode;
 class UPlayerUI;
 class UDecalComponent;
+class USoundBase;
+
 UCLASS()
 class NOIRBLANC_API ANetworkPawn : public APawn
 {
@@ -58,6 +60,39 @@ public:
 
 	UPROPERTY()
 	APawnCardGameMode* GameMode;
+
+	// 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* GameStartSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* CardMoveSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* CardSelectSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* CardMatchSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* CorrectSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* WinSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* LoseSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* ChangeTurnSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* VibrateSound;
+
+	void PlaySound(USoundBase* Sound);
+
+	UFUNCTION(NetMulticast, reliable)
+	void MulticastRPC_PlaySound(USoundBase* Sound);
 
 	//카드 선택 함수
 	UFUNCTION()
