@@ -144,7 +144,7 @@ void APawnCard::BroadcastEndDestruction()
 
 void APawnCard::DissolvePawnCardMat()
 {
-	CurrentLerpTime = -0.4;
+	CurrentLerpTime = -0.1;
 	if(!PawnCardData) return;
 	GetWorldTimerManager().SetTimer(LerpTimer, [this]()
 	{

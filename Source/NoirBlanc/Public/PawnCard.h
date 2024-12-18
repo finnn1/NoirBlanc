@@ -79,7 +79,7 @@ private:
 	FTimerHandle LerpTimer;
 
 	float CurrentLerpTime;
-	float LerpCycle = 0.02;
+	float LerpCycle = 0.04;
 	
 
 public:

@@ -15,6 +15,8 @@
 #include "NoirBlancGameInstance.h"
 #include "Engine/DecalActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "NoirBlanc/Knight/FinishUI.h"
+#include "NoirBlanc/Knight/WaitingUI.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 // Sets default values
@@ -67,6 +69,7 @@ void ANetworkPawn::BeginPlay()
 	if(IsLocallyControlled())
 	{
 		InitPlayerUI();
+		PlaySound(BackgroundSound);
 	}
 }
 
@@ -187,9 +190,16 @@ void ANetworkPawn::MulticastRPC_GameStart_Implementation()
 	if(GetOwner())
 	{
 		APawnCardController* Cntr = Cast<APawnCardController>(GetOwner());
-		if(Cntr && Cntr->CntrUI)
+		ANetworkPawn* OwnerPawn = Cast<ANetworkPawn>(Cntr->GetPawn());
+		/*if(Cntr && Cntr->CntrUI)
 		{
 			Cntr->CntrUI->ShowStartText();
+			//사운드
+			PlaySound(GameStartSound);
+		}*/
+		if(OwnerPawn && OwnerPawn->WaitingUI)
+		{
+			OwnerPawn->WaitingUI->DestroyWaitingUI();
 			//사운드
 			PlaySound(GameStartSound);
 		}
@@ -335,6 +345,14 @@ void ANetworkPawn::InitPlayerUI()
 	{
 		TurnUI->AddToViewport();
 	}
+
+	/* Waiting UI */
+	WaitingUI = Cast<UWaitingUI>(CreateWidget(GetWorld(), WaitingUIFactory));
+	if(WaitingUI && !WaitingUI->IsInViewport())
+	{
+		WaitingUI->AddToViewport();
+	}
+	
 }
 
 void ANetworkPawn::IncreaseScore(bool IsNoLuck)
@@ -365,7 +383,43 @@ void ANetworkPawn::ServerRPC_StartDestroyProcess_Implementation(APawnCard* First
 void ANetworkPawn::MulticastRPC_GameEnd_Implementation(ANetworkPawn* WinnerPlayer)
 {
 	ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	
+	FText WinnerText;
+
 	if(WinnerPlayer == LocalNetPawn)
+	{
+		if(LocalNetPawn->PawnPieceColor == EPieceColor::Black)
+		{
+			WinnerText = FText::FromString(TEXT("느와르"));
+		}
+		else
+		{
+			WinnerText = FText::FromString(TEXT("블랑"));
+		}	
+	}
+	else
+	{
+		if(LocalNetPawn->PawnPieceColor == EPieceColor::Black)
+		{
+			WinnerText = FText::FromString(TEXT("블랑"));
+		}
+		else
+		{
+			WinnerText = FText::FromString(TEXT("느와르"));
+		}
+	}
+
+	/* GameEnd UI */
+	LocalNetPawn->FinishUI = Cast<UFinishUI>(CreateWidget(GetWorld(), LocalNetPawn->FinishUIFactory));
+	if(LocalNetPawn->FinishUI)
+	{
+		LocalNetPawn->FinishUI->AddToViewport();
+	}
+	LocalNetPawn->FinishUI->UpdateWinnerText(WinnerText);
+	//사운드
+	PlaySound(WinSound);
+	
+	/*if(WinnerPlayer == LocalNetPawn)
 	{
 		LocalNetPawn->PlayerUI->ShowWinPlayer();
 		//사운드
@@ -376,7 +430,7 @@ void ANetworkPawn::MulticastRPC_GameEnd_Implementation(ANetworkPawn* WinnerPlaye
 		LocalNetPawn->PlayerUI->ShowLosePlayer();
 		//사운드
 		PlaySound(LoseSound);
-	}
+	}*/
 }
 
 void ANetworkPawn::ServerRPC_ChangeTurn_Implementation(ANetworkPawn* EndPlayer)
@@ -456,38 +510,6 @@ void ANetworkPawn::EndTurnLerp()
 	}
 }
 
-
-void ANetworkPawn::CheckLog(ANetworkPawn* TargetPawn)
-{
-	FString ThisName = TargetPawn->GetName();
-	
-	//연결상태
-	FString ConnStr = (TargetPawn->GetNetConnection() != nullptr ? TEXT("Valid Connection") : TEXT("Invalid Connection"));
-
-	//Owner
-	FString OwnerStr = TargetPawn->GetOwner() ? TargetPawn->GetOwner()->GetName() : TEXT("Not Owner");
-
-	//권한
-	FString role = UEnum::GetValueAsString<ENetRole>(TargetPawn->GetLocalRole());
-	
-	//서버 권한인지 여부 체크
-	FString bIsAuthority = TargetPawn->HasAuthority() ? TEXT("Authority") : TEXT("No Authority");
-
-	//내 것인지
-	FString IsMine = TargetPawn->IsLocallyControlled() ? TEXT("LocalControl") : TEXT("No Control");
-
-	//FString IsUI = (TargetPawn->PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
-	FString IsUI = (TargetPawn->TurnUI ? TEXT("Has UI") : TEXT("No UI"));
-
-	FString IsTurn = (TargetPawn->GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
-
-	const UEnum* EnumPtr = StaticEnum<EPieceColor>();
-	FString EnumName = EnumPtr->GetNameByValue(static_cast<int64>(PawnPieceColor)).ToString();
-
-	UE_LOG(LogTemp, Warning, TEXT("CheckLog -\nConnection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nColor : %s"),
-		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, *EnumName)
-}
-
 void ANetworkPawn::ChangePlayerTurn(ANetworkPawn* StartPlayer)
 {
 	MulticastRPC_ChangePlayerTurn(StartPlayer);
@@ -529,13 +551,13 @@ void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTarg
 	FirstTargetCard->OnFinishSetMat.AddUObject(this, &ANetworkPawn::DestroyCardAndCheck);
 	SecondTargetCard->OnFinishSetMat.AddUObject(this, &ANetworkPawn::DestroyCardAndCheck);
 
-	// 꽝 카드면 데칼 그리기 X
+	/*// 꽝 카드면 데칼 그리기 X
 	if(FirstTargetCard->PawnCardData->PawnCardType != PawnCardType::NoLuck && SecondTargetCard->PawnCardData->PawnCardType != PawnCardType::NoLuck)
 	{
 		DrawDecalActor(FirstTargetCard->GetActorLocation(), PawnPieceColor);
 		DrawDecalActor(SecondTargetCard->GetActorLocation(), PawnPieceColor);
 		PlaySound(CorrectSound);
-	}
+	}*/
 
 	FirstSelectedCard = nullptr;
 	SecondSelectedCard = nullptr;
@@ -543,7 +565,15 @@ void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTarg
 
 void ANetworkPawn::DestroyCardAndCheck(APawnCard* PawnCard)
 {
-	PawnCard->Destroy();
+	PlaySound(CorrectSound);
+	
+	// 꽝 카드면 데칼 그리기 X
+	if(PawnCard->PawnCardData->PawnCardType != PawnCardType::NoLuck)
+	{
+		DrawDecalActor(PawnCard->GetActorLocation(), PawnPieceColor);
+		PawnCard->Destroy();
+	}
+	
 	if(GameMode)
 	{
 		GameMode->CheckRemainCards();
@@ -558,11 +588,11 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 	if(StartPlayer->IsLocallyControlled())
 	{
 		//초기화
-		StartPlayer->PlayerUI->HideTurnStart();
+		/*StartPlayer->PlayerUI->HideTurnStart();
 		StartPlayer->PlayerUI->HideEnmTurnStart();
 
 		//My Turn UI
-		StartPlayer->PlayerUI->ShowTurnStart();
+		StartPlayer->PlayerUI->ShowTurnStart();*/
 		
 		/*Turn UI */
 		StartPlayer->TurnUI->ShowTurn(TurnPlayerColor);
@@ -575,11 +605,11 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 		ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 
 		//초기화
-		LocalNetPawn->PlayerUI->HideTurnStart();
+		/*LocalNetPawn->PlayerUI->HideTurnStart();
 		LocalNetPawn->PlayerUI->HideEnmTurnStart();
 
 		//Enemy Turn UI
-		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
+		LocalNetPawn->PlayerUI->ShowEnmTurnStart();*/
 		
 		/*Turn UI */
 		LocalNetPawn->TurnUI->ShowTurn(TurnPlayerColor);
@@ -623,7 +653,14 @@ void ANetworkPawn::MulticastRPC_IncreaseScore_Implementation(ANetworkPawn* Score
 	{
 		if(ScorePlayer->PlayerUI)
 		{
-			ScorePlayer->PlayerUI->SetMyScore(Score);
+			if(ScorePlayer->PawnPieceColor == EPieceColor::White)
+			{
+				ScorePlayer->PlayerUI->SetEnemyScore(Score);
+			}
+			else
+			{
+				ScorePlayer->PlayerUI->SetMyScore(Score);
+			}
 		}
 	}
 	else
@@ -633,7 +670,14 @@ void ANetworkPawn::MulticastRPC_IncreaseScore_Implementation(ANetworkPawn* Score
 		{
 			if(ServerPawn->PlayerUI)
 			{
-				ServerPawn->PlayerUI->SetEnemyScore(Score);	
+				if(ServerPawn->PawnPieceColor == EPieceColor::White)
+				{
+					ServerPawn->PlayerUI->SetMyScore(Score);
+				}
+				else
+				{
+					ServerPawn->PlayerUI->SetEnemyScore(Score);
+				}
 			}
 		}
 	}

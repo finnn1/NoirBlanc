@@ -23,9 +23,11 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* EnmTurnStartText;
 
+	// Noir로 대체
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* MyPlayerScoreText;
 
+	// Blan으로 대체
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* EnemyPlayerScoreText;
 

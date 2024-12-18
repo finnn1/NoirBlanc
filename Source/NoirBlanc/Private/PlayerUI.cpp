@@ -2,6 +2,9 @@
 
 
 #include "PlayerUI.h"
+
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/CanvasPanelSlot.h"
 #include "Components/TextBlock.h"
 
 void UPlayerUI::NativeConstruct()
