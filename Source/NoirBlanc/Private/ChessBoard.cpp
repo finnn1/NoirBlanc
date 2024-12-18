@@ -287,6 +287,7 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	PlaySound(BattleSound);
 	BattleUI = CreateWidget<UBattleUI>(GetWorld(), BattleUIClass);
 	BattleUI->AddToViewport();
+	BattleUI->UpdateBattleUI(GameInstance->AttackerType);
 
 	if(HasAuthority())
 	{
