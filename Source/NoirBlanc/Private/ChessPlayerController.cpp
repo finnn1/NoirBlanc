@@ -3,6 +3,8 @@
 
 #include "ChessPlayerController.h"
 
+#include "ChessGameModeBase.h"
+
 void AChessPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -64,7 +66,11 @@ AActor* AChessPlayerController::TraceForActor()
 
 void AChessPlayerController::ServerRPC_Quit_Implementation()
 {
-	MulticastRPC_Quit();
+	AChessGameModeBase* GameMode = Cast<AChessGameModeBase>(GetWorld()->GetAuthGameMode());
+	for(auto Controller : GameMode->GetControllers())
+	{
+		Controller->MulticastRPC_Quit();
+	}
 }
 
 void AChessPlayerController::MulticastRPC_Quit_Implementation()
@@ -76,7 +82,6 @@ void AChessPlayerController::Quit()
 {
 	ConsoleCommand("quit");
 }
-
 void AChessPlayerController::ServerRPC_LevelTravel_Implementation(const FString& LevelName)
 {
 	GetWorld()->ServerTravel(LevelName, true);

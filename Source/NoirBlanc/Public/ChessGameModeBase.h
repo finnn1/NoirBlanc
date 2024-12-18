@@ -29,8 +29,13 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	TArray<class AChessPlayerPawn*> Players;
+	
+	UPROPERTY(VisibleAnywhere)
+	TArray<class AChessPlayerController*> Controllers;
 public:
 	void AddPlayer(AChessPlayerPawn* Player);
 	// 게임 시작 여부를 알리는 함수
 	void StartGameWhenReady();
+
+	TArray<AChessPlayerController*> GetControllers();
 };

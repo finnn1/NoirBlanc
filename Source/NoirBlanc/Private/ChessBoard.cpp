@@ -265,7 +265,7 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 {
 	DestroyQueenWidget();
 	FName LevelName;
-	EPieceType KingGame;
+	EPieceType KingGame = EPieceType::Blank;
 	EPieceType Game = Selected->GetPieceType();
 	if(Target->GetPieceType() == EPieceType::King)
 	{
@@ -372,6 +372,7 @@ void AChessBoard::MiniGameEnd()
 	
 		FTimerHandle Timer;
 		GetWorld()->GetTimerManager().SetTimer(Timer, [Attacker, Destination, this](){
+			Attacker->GetFloorBeneathPiece()->SetPieceOnFloor(nullptr);
 			Attacker->SetActorLocation(Destination->GetActorLocation() + FVector(0.f, 0.f, SpawnHeight));
 			Attacker->SetFloorBeneathPiece(Destination);
 			Destination->SetPieceOnFloor(Attacker);
@@ -379,6 +380,9 @@ void AChessBoard::MiniGameEnd()
 			PlaySound(PiecePutSounds[index]);
 		}, 6.5f, false);
 	}
+	// //King Delete Test
+	// FTimerHandle DeleteTimer;
+	// GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this](){DeletePiece(BoardFloors[4]->GetPieceOnFloor());}, 0.5f, false);
 }
 
 void AChessBoard::MoveEnd()
@@ -1017,7 +1021,7 @@ void AChessBoard::EndGame()
 			FInputModeUIOnly InputMode;
 			Controller->SetInputMode(InputMode);
 		},
-		4.f, false);
+		6.f, false);
 }
 
 void AChessBoard::ShowQueenWidget()

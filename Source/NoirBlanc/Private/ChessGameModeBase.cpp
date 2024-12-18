@@ -7,16 +7,18 @@
 #include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "ChessBoard.h"
+#include "ChessPlayerController.h"
+#include "ChessPlayerPawn.h"
 
 AChessGameModeBase::AChessGameModeBase()
 {
 	
 }
 
-void AChessGameModeBase::AddPlayer(class AChessPlayerPawn* Player)
+void AChessGameModeBase::AddPlayer(AChessPlayerPawn* Player)
 {
 	Players.Add(Player);
-	
+	Controllers.Add(Cast<AChessPlayerController>(Player->GetController()));
 	if(PlayerNum <= Players.Num())
 	{
 		FTimerHandle StartHandle;
@@ -29,6 +31,11 @@ void AChessGameModeBase::StartGameWhenReady()
 	AActor* Board = UGameplayStatics::GetActorOfClass(GetWorld(), AChessBoard::StaticClass());
 	AChessBoard* ChessBoard = Cast<AChessBoard>(Board);
 	ChessBoard->ServerRPC_StartGame();
+}
+
+TArray<AChessPlayerController*> AChessGameModeBase::GetControllers()
+{
+	return Controllers;
 }
 
 // void AChessGameModeBase::StartPlay()
