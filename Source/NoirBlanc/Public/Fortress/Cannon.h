@@ -201,6 +201,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UAngleWidget* AngleWidget;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* BackgroundSound;
 	
 };
 

@@ -119,6 +119,9 @@ void ACannon::BeginPlay()
 		ServerRPC_NewPlayerJoined();
 		if (HasAuthority()) this->bIsturn = true; // set the first player turn true
 	}
+
+	if (IsLocallyControlled() && BackgroundSound != nullptr)
+		UGameplayStatics::PlaySound2D(this, BackgroundSound);
 }
 
 void ACannon::ServerRPC_NewPlayerJoined_Implementation()

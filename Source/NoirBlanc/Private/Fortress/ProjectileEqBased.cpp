@@ -60,11 +60,9 @@ void AProjectileEqBased::BeginPlay()
 		// // impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
 		// Mesh->AddImpulse(InitImpulse * Mass, NAME_None, true);
 
-		// GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
-		//                                  FString::Printf(TEXT("Speed: %f"), Speed));
-		// GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
-		//                                  FString::Printf(TEXT("Velocity: %s"), *InitImpulse.ToString()));
-
+		if (ShortFireSound)
+			UGameplayStatics::PlaySoundAtLocation(this, ShortFireSound, OwnerCannon->SpawnLocation->GetComponentLocation());
+		
 		// when collision happens
 		Mesh->IgnoreActorWhenMoving(OwnerCannon, true);
 		Mesh->OnComponentHit.AddDynamic(this, &AProjectileEqBased::OnProjectileHit);
@@ -170,11 +168,9 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 				playerCannon->FortressUI->GameOver(num);
 			}
 
-			//UE_LOG(LogTemp, Warning, TEXT("%s"), *Opponent->GetName());
-			// error message: OwnerCannon->FortressUI == null
-
-			if (BombEffect)
-				PlayBombEffect(Hit);
+			// VFX, SFX
+			if (BombEffect) PlayBombEffect(Hit);
+			if (BitSound) UGameplayStatics::PlaySoundAtLocation(this, BitSound, Hit.Location);
 		}
 		Destroy();
 	}
