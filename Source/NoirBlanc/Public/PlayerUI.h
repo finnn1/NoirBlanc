@@ -26,6 +26,18 @@ public:
 	UPROPERTY(meta=(BindWidgetAnim), Transient)
 	UWidgetAnimation* BlankEnemyTurn;
 
+	UPROPERTY(meta=(BindWidgetAnim), Transient)
+	UWidgetAnimation* ShowMyTurn;
+
+	UPROPERTY(meta=(BindWidgetAnim), Transient)
+	UWidgetAnimation* HideMyTurn;
+
+	UPROPERTY(meta=(BindWidgetAnim), Transient)
+	UWidgetAnimation* ShowEnemyTurn;
+
+	UPROPERTY(meta=(BindWidgetAnim), Transient)
+	UWidgetAnimation* HideEnemyTurn;
+
 	// Noir로 대체
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* MyPlayerScoreText;
