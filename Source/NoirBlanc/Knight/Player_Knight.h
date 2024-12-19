@@ -156,4 +156,27 @@ public:
 	// Return to Chess
 	//
 	void ReturnToChessBoard();
+	// --------------------------------------------------------------------------------
+	//
+	// Sound
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* BackgroundMusic;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* CountDownSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* StartSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* FanfareSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* RunSound;
+	bool bFanfarePlayed = false;
+	
+	UPROPERTY()
+	UAudioComponent* AudioComponent = nullptr;
+	UPROPERTY()
+	UAudioComponent* BGMAudioComponent = nullptr;
+	
+	UFUNCTION()
+	void PlaySound(USoundBase* Sound);
 };
