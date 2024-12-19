@@ -71,6 +71,7 @@ void ANetworkPawn::BeginPlay()
 		InitPlayerUI();
 		PlaySound(BackgroundSound);
 	}
+	
 }
 
 // Called every frame
@@ -269,7 +270,7 @@ void ANetworkPawn::SelectCard(const FInputActionValue& Value)
 void ANetworkPawn::ServerRPC_SelectCard_Implementation(APawnCard* SelectedCard)
 {
 	//MulticastRPC_SelectCard(SelectedCard);
-	if(Timeline->IsPlaying()) return;
+	if(SelectedCard->FrontBackState == CardState::Front || Timeline->IsPlaying()) return;
 	
 	TargetCard = SelectedCard;
 	if(FirstSelectedCard.IsValid())
@@ -595,7 +596,7 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 	if(StartPlayer->IsLocallyControlled())
 	{
 		//초기화
-		StartPlayer->PlayerUI->HideTurnStart();
+		//StartPlayer->PlayerUI->HideTurnStart();
 		StartPlayer->PlayerUI->HideEnmTurnStart();
 
 		//My Turn UI
@@ -613,7 +614,7 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 
 		//초기화
 		LocalNetPawn->PlayerUI->HideTurnStart();
-		LocalNetPawn->PlayerUI->HideEnmTurnStart();
+		//LocalNetPawn->PlayerUI->HideEnmTurnStart();
 
 		//Enemy Turn UI
 		LocalNetPawn->PlayerUI->ShowEnmTurnStart();

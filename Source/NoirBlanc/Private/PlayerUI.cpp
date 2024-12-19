@@ -2,6 +2,8 @@
 
 
 #include "PlayerUI.h"
+
+#include "Animation/WidgetAnimation.h"
 #include "Components/TextBlock.h"
 
 void UPlayerUI::NativeConstruct()
@@ -44,31 +46,55 @@ void UPlayerUI::ShowTurnStart()
 {
 	TurnStartText->SetVisibility(ESlateVisibility::Visible);
 	//GetWorld()->GetTimerManager().SetTimer(StartTimeHandler, this, &UPlayerUI::HideTurnStart, 1.f, false);
+	if(ShowMyTurn)
+	{
+		PlayAnimation(ShowMyTurn);
+	}
 }
 
 void UPlayerUI::HideTurnStart()
 {
-	TurnStartText->SetVisibility(ESlateVisibility::Hidden);
 	//GetWorld()->GetTimerManager().ClearTimer(StartTimeHandler);
+	if(HideMyTurn)
+	{
+		PlayAnimation(HideMyTurn);
+
+		FTimerHandle TimerHandle;
+		float AnimTime = ShowEnemyTurn->GetEndTime();
+		
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, &TimerHandle]()
+		{
+			TurnStartText->SetVisibility(ESlateVisibility::Hidden);
+			GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+		}, AnimTime+1.f, false);
+	}
 }
 
 void UPlayerUI::ShowEnmTurnStart()
 {
 	EnmTurnStartText->SetVisibility(ESlateVisibility::Visible);
 	//GetWorld()->GetTimerManager().SetTimer(EnmStartTimeHandler, this, &UPlayerUI::HideEnmTurnStart, 1.f, false);
-	if(BlankEnemyTurn)
+	if(ShowEnemyTurn)
 	{
-		PlayAnimation(BlankEnemyTurn, 0.0f, 0);
+		PlayAnimation(ShowEnemyTurn);
 	}
 }
 
 void UPlayerUI::HideEnmTurnStart()
 {
-	EnmTurnStartText->SetVisibility(ESlateVisibility::Hidden);
 	//GetWorld()->GetTimerManager().ClearTimer(EnmStartTimeHandler);
-	if(BlankEnemyTurn)
+	if(HideEnemyTurn)
 	{
-		StopAnimation(BlankEnemyTurn);
+		PlayAnimation(HideEnemyTurn);
+		
+		FTimerHandle TimerHandle;
+		float AnimTime = ShowEnemyTurn->GetEndTime();
+		
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, &TimerHandle]()
+		{
+			EnmTurnStartText->SetVisibility(ESlateVisibility::Hidden);
+			GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+		}, AnimTime, false);
 	}
 }
 
