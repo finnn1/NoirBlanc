@@ -117,6 +117,11 @@ protected:
 	TSubclassOf<class UInfoUI> InfoUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UInfoUI* InfoUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UWaitingUI> WaitingUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UWaitingUI* WaitingUI;
 	
 private:
 	const int32 Chess_Num  = 8;

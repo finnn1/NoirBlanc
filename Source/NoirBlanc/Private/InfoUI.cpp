@@ -14,7 +14,6 @@ void UInfoUI::NativeConstruct()
 
 void UInfoUI::ShowOnHovered()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Hover!");
 	InfoTextUI = CreateWidget<UInfoTextUI>(GetWorld(), InfoTextUIClass);
 	InfoTextUI->AddToViewport();
 }

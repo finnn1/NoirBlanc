@@ -15,6 +15,7 @@
 #include "RestartUI.h"
 #include "NoirBlanc/Knight/BattleUI.h"
 #include "NoirBlanc/Knight/ResultUI.h"
+#include "NoirBlanc/Knight/WaitingUI.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -37,12 +38,22 @@ void AChessBoard::BeginPlay()
 	
 	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());;
+
+	if(HasAuthority())
+	{
+		WaitingUI = CreateWidget<UWaitingUI>(GetWorld(), WaitingUIClass);
+		WaitingUI->AddToViewport();
+	}
 }
 
 void AChessBoard::StartGame()
 {
 	bIsClickEnabled = true;
 
+	if(WaitingUI)
+	{
+		WaitingUI->RemoveFromParent();
+	}
 	FInputModeGameAndUI InputMode;
 	Controller->SetInputMode(InputMode);
 
