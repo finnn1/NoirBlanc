@@ -23,6 +23,9 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* EnmTurnStartText;
 
+	UPROPERTY(meta=(BindWidgetAnim), Transient)
+	UWidgetAnimation* BlankEnemyTurn;
+
 	// Noir로 대체
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* MyPlayerScoreText;
@@ -42,6 +45,10 @@ public:
 
 public:
 	virtual void NativeConstruct() override;
+
+	// 시작 문구 옵션 세팅
+	void SetNoirTurnText();
+	void SetBlanTurnText();
 
 	// 턴 시작 문구
 	void ShowTurnStart();

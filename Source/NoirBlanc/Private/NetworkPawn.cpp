@@ -337,6 +337,14 @@ void ANetworkPawn::InitPlayerUI()
 	if(PlayerUI && !PlayerUI->IsInViewport())
 	{
 		PlayerUI->AddToViewport();
+		if(HasAuthority())
+		{
+			PlayerUI->SetBlanTurnText();
+		}
+		else
+		{
+			PlayerUI->SetNoirTurnText();
+		}
 	}
 
 	/* Turn UI */
@@ -565,12 +573,11 @@ void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTarg
 
 void ANetworkPawn::DestroyCardAndCheck(APawnCard* PawnCard)
 {
-	PlaySound(CorrectSound);
-	
 	// 꽝 카드면 데칼 그리기 X
 	if(PawnCard->PawnCardData->PawnCardType != PawnCardType::NoLuck)
 	{
 		DrawDecalActor(PawnCard->GetActorLocation(), PawnPieceColor);
+		PlaySound(CorrectSound);
 		PawnCard->Destroy();
 	}
 	
@@ -588,11 +595,11 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 	if(StartPlayer->IsLocallyControlled())
 	{
 		//초기화
-		/*StartPlayer->PlayerUI->HideTurnStart();
+		StartPlayer->PlayerUI->HideTurnStart();
 		StartPlayer->PlayerUI->HideEnmTurnStart();
 
 		//My Turn UI
-		StartPlayer->PlayerUI->ShowTurnStart();*/
+		StartPlayer->PlayerUI->ShowTurnStart();
 		
 		/*Turn UI */
 		StartPlayer->TurnUI->ShowTurn(TurnPlayerColor);
@@ -605,11 +612,11 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 		ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 
 		//초기화
-		/*LocalNetPawn->PlayerUI->HideTurnStart();
+		LocalNetPawn->PlayerUI->HideTurnStart();
 		LocalNetPawn->PlayerUI->HideEnmTurnStart();
 
 		//Enemy Turn UI
-		LocalNetPawn->PlayerUI->ShowEnmTurnStart();*/
+		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
 		
 		/*Turn UI */
 		LocalNetPawn->TurnUI->ShowTurn(TurnPlayerColor);
