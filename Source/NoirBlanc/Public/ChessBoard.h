@@ -113,6 +113,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	URestartUI* RestartUI;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UInfoUI> InfoUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UInfoUI* InfoUI;
+	
 private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickEnabled = false;

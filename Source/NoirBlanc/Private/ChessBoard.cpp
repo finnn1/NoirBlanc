@@ -4,6 +4,7 @@
 #include "ChessPiece.h"
 #include "ChessPlayerController.h"
 #include "GameEndUI.h"
+#include "InfoUI.h"
 #include "NoirBlancGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -41,6 +42,10 @@ void AChessBoard::BeginPlay()
 void AChessBoard::StartGame()
 {
 	bIsClickEnabled = true;
+
+	FInputModeGameAndUI InputMode;
+	Controller->SetInputMode(InputMode);
+
 	TurnUI = CreateWidget<UTurnUI>(GetWorld(), TurnUIClass);
 	FTimerHandle UITimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(UITimerHandle, [this](){TurnUI->AddToViewport();}, 1.f, false);
@@ -55,6 +60,9 @@ void AChessBoard::StartGame()
 	ResultUI->ShowResult(EPieceType::King, EPieceColor::Black,
 						EPieceType::King, EPieceColor::White,
 						EPieceColor::Black);
+	
+	InfoUI = CreateWidget<UInfoUI>(GetWorld(), InfoUIClass);
+	InfoUI->AddToViewport();
 }
 
 void AChessBoard::ServerRPC_StartGame_Implementation()
