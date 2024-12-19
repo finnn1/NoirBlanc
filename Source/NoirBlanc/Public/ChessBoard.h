@@ -68,19 +68,19 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	EPieceColor Turn = EPieceColor::White;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* PiecePickSound;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TArray<USoundBase*> PiecePutSounds;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* BackgroundMusic;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* BattleSound;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* WinningSound;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
