@@ -186,13 +186,15 @@ public:
 
 public:
 	// make a limit for the movement
-	float DistanceRange = 100.0f;
-	
+	float DistanceRange = 200.0f;
+
+	UPROPERTY(VisibleAnywhere)
 	FVector StartLocation;
 
 	// limit for the angle of the muzzle
 	float AngleRange = 40.0f;
 
+	UPROPERTY(VisibleAnywhere)
 	FRotator StartRotation;
 
 public:
