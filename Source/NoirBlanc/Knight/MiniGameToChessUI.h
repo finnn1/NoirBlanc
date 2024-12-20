@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "PieceTypes.h"
 #include "MiniGameToChessUI.generated.h"
 
 /**
@@ -17,11 +18,11 @@ class NOIRBLANC_API UMiniGameToChessUI : public UUserWidget
 public:
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Txt_LoseTeam;
+	class UTextBlock* Txt_LoseTeam;
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* Txt_LosePiece;
 	
-	void UpdateMiniGameToChessUI(FText loseTeam, FText losePiece);
+	void UpdateMiniGameToChessUI(EPieceColor LoserColor, EPieceType DeletePieceType);
 
 private:
 	void DestroyUI();
