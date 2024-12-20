@@ -5,6 +5,7 @@
 #include <string>
 
 #include "KingCatcherPawn.h"
+#include "KingCatcherUI.h"
 #include "KingCatcherWeapon.h"
 #include "KingCharacter.h"
 #include "KingUIUpdatable.h"
@@ -215,7 +216,7 @@ void AKingGameMode::StartCountTimer()
 				{
 					IKingUIUpdatable::Execute_MulticastRPC_UpdateStartCountdownUI
 						(
-						 JoinedPlayers[i]->GetPawn(),	
+						 JoinedPlayers[i]->GetPawn(),
 						 FText::FromString(TEXT("시작!"))
 						);
 				}
@@ -298,6 +299,111 @@ void AKingGameMode::UpdateTimer()
 	}
 }
 
+void AKingGameMode::HandleCatcherLocationSelect(int32 ButtonIndex)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, FString::Printf(TEXT("index : %d"), ButtonIndex));
+
+	// 이미 배열에 있으면 리턴 (이미 선택한 곳이면)
+	for (int32 SelectedLocationIndex : SelectedLocationsIndex)
+	{
+		if (SelectedLocationIndex == ButtonIndex) return;
+	}
+
+	// 4개 이미 선택했으면 리턴
+	if (SelectedLocationsIndex.Num() >= 4) return;
+
+
+	// 선택한 인덱스 목록에 추가
+	SelectedLocationsIndex.Add(ButtonIndex);
+
+	// 해당 인덱스 선택했다고 CatcherPawn에게 빨간 불 들어오게 하기.
+	for (int i = 0; i < JoinedPlayers.Num(); ++i)
+	{
+		if (JoinedPlayers[i]->GetPawn()->IsA(AKingCatcherPawn::StaticClass()))
+		{
+			AKingCatcherPawn* _KingCatcherPawn = Cast<AKingCatcherPawn>(JoinedPlayers[i]->GetPawn());
+			if (_KingCatcherPawn == nullptr) continue;
+
+			_KingCatcherPawn->MulticastRPC_SetButtonColor(ButtonIndex, true);
+		}
+	}
+}
+
+void AKingGameMode::HandleCatcherFireButtonClick()
+{
+	// 클릭한 인덱스 처리
+	// TODO: 서버에게 클릭한 SpawnLocation 보내서 처리하도록 하기
+	// 1. 클라이언트 Pawn 쪽에서 클릭 했다는 사실을 서버 Pawn에게 알림
+	// 2. 서버 Pawn에서 클릭 트레이싱을 해서 FHitResult를 구한다.
+	// 3. 서버 Pawn에서 어떤 SpawnLocation이 맞았는지 배열로 쌓아놓는다.
+	// 4. 4개 이상 쌓이면 더 이상 못 쌓게 하기.
+
+	// 화면의 Go! 버튼을 누르면 해당 위치에서 레이저 발사!
+	// 서버 Pawn 쪽에서 갯수 4개가 차면 서버 KingGameMode로 보내서 처리하도록 하기!
+
+	// if (SelectedSpawnLocations.Num() < 4) return;
+
+	TArray<ASpawnLocation*> SelectedSpawnLocations;
+
+	for (class ASpawnLocation* SpawnLocation : AllSpawnLocations)
+	{
+		for (int32 SelectedLocationIndex : SelectedLocationsIndex)
+		{
+			if (SpawnLocation->Index == SelectedLocationIndex)
+			{
+				SelectedSpawnLocations.Add(SpawnLocation);
+				SpawnLocation->ColorToRed();
+			}
+		}
+	}
+
+	// Input 막기
+	AKingCatcherPawn* CatcherPawnCache = nullptr;
+	for (int i = 0; i < JoinedPlayers.Num(); ++i)
+	{
+		if (JoinedPlayers[i]->GetPawn()->IsA(AKingCatcherPawn::StaticClass()))
+		{
+			AKingCatcherPawn* _KingCatcherPawn = Cast<AKingCatcherPawn>(JoinedPlayers[i]);
+			if (_KingCatcherPawn == nullptr) continue;
+			CatcherPawnCache = _KingCatcherPawn;
+			_KingCatcherPawn->MulticastRPC_SetInput(false);
+		}
+	}
+
+	// 1초 동안 King Character에게 보여준 다음 무기 발사
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer
+		(
+		 TimerHandle,
+		 FTimerDelegate::CreateLambda
+		 (
+		  [this, SelectedSpawnLocations, CatcherPawnCache]()
+		  {
+			  for (class ASpawnLocation* SelectedSpawnLocation : SelectedSpawnLocations)
+			  {
+				  SelectedSpawnLocation->ColorToWhite();
+			  }
+
+			  AKingGameMode* _KingGameMode = Cast<AKingGameMode>(this->GetWorld()->GetAuthGameMode());
+			  if (_KingGameMode)
+			  {
+				  // TODO: 게임모드에서 로직 처리
+				  _KingGameMode->FireAt(SelectedSpawnLocations);
+			  }
+
+			  // SelectedSpawnLocations.Empty();
+
+			  if (CatcherPawnCache)
+			  {
+				  CatcherPawnCache->MulticastRPC_SetInput(true);
+			  }
+		  }
+		 ),
+		 1.f,
+		 false
+		);
+}
+
 void AKingGameMode::FireAt(TArray<ASpawnLocation*> SpawnLocations)
 {
 	for (ASpawnLocation* SpawnLocation : SpawnLocations)
@@ -306,15 +412,33 @@ void AKingGameMode::FireAt(TArray<ASpawnLocation*> SpawnLocations)
 		FVector FireLocation = SpawnLocation->FrontArrow->GetComponentLocation();
 		FRotator FireRotation = SpawnLocation->FrontArrow->GetComponentRotation();
 
-		// TODO: FireLocation에다가 무기 소환해버리기
+		// 무기 소환
 		GetWorld()->SpawnActor<AKingCatcherWeapon>(CatcherWeaponClass, FireLocation, FireRotation, SpawnParameters);
+
+		// Catcher UI 버튼 선택한거 원래 색으로
+		for (int i = 0; i < JoinedPlayers.Num(); ++i)
+		{
+			if (JoinedPlayers[i]->GetPawn()->IsA(AKingCatcherPawn::StaticClass()))
+			{
+				AKingCatcherPawn* _KingCatcherPawn = Cast<AKingCatcherPawn>(JoinedPlayers[i]->GetPawn());
+				if (_KingCatcherPawn == nullptr) continue;
+
+				for (int32 SelectedLocationIndex : SelectedLocationsIndex)
+				{
+					_KingCatcherPawn->MulticastRPC_SetButtonColor(SelectedLocationIndex, false);
+				}
+
+				// 선택한 Index 배열 초기화
+				SelectedLocationsIndex.Empty();
+			}
+		}
 	}
 }
 
 void AKingGameMode::OnKingCharacterOverlapped(AActor* OtherActor)
 {
 	const AKingCharacter* KingCharacter = Cast<AKingCharacter>(OtherActor);
-	if (KingCharacter == nullptr) return;
+	if (IsValid(KingCharacter) == false) return;
 
 	// Game Over : King Catcher Win
 	for (const APlayerController* JoinedPlayer : JoinedPlayers)
@@ -342,16 +466,20 @@ void AKingGameMode::GameOver(APawn* Winner)
 			for (int i = 0; i < JoinedPlayers.Num(); ++i)
 			{
 				// UIUpdatable 인터페이스 구현 여부 확인
-				if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
+				AKingCatcherPawn* _AKingCatcherPawn = JoinedPlayers[i]->GetPawn<AKingCatcherPawn>();
+				if (IsValid(_AKingCatcherPawn))
 				{
-					IKingUIUpdatable::Execute_MulticastRPC_SetWinner(JoinedPlayers[i]->GetPawn(), _WinnerColor);
-					//Level Travel
-					// Cast<ATravelPlayerController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChess();
-					// 승리자가 아닐 경우 Destory!
-					// if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
-					// {
-					// 	JoinedPlayers[i]->GetPawn()->Destroy();
-					// }
+					if (_AKingCatcherPawn->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
+					{
+						IKingUIUpdatable::Execute_MulticastRPC_SetWinner(_AKingCatcherPawn, _WinnerColor);
+						//Level Travel
+						// Cast<ATravelPlayerController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChess();
+						// 승리자가 아닐 경우 Destory!
+						// if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
+						// {
+						// 	JoinedPlayers[i]->GetPawn()->Destroy();
+						// }
+					}
 				}
 			}
 		}

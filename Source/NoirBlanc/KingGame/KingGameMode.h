@@ -19,6 +19,9 @@ public:
 	// 클릭 가능한 모든 위치
 	TArray<class ASpawnLocation*> AllSpawnLocations;
 
+	// 현재 클릭한 Location의 Index
+	TArray<int32> SelectedLocationsIndex;
+
 	TArray<APlayerStart*> AllStartPoints;
 	int StartPointOrder = -1;
 
@@ -34,7 +37,6 @@ public:
 protected:
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
-
 	virtual void BeginPlay() override;
 
 public:
@@ -46,9 +48,12 @@ public:
 	FTimerHandle MainTimerHandle;
 	void UpdateTimer();
 	int32 CurrentRemainTime;
+	
 	UPROPERTY(EditAnywhere)
 	int32 DefaultRemainTime = 100;
-	
+
+	void HandleCatcherLocationSelect(int32 ButtonIndex);
+	void HandleCatcherFireButtonClick();
 	void FireAt(TArray<class ASpawnLocation*> SpawnLocations);
 
 	void OnKingCharacterOverlapped(AActor* OtherActor);

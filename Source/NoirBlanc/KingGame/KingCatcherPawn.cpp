@@ -39,12 +39,22 @@ AKingCatcherPawn::AKingCatcherPawn()
 	FollowCamera->bUsePawnControlRotation = false;
 }
 
-void AKingCatcherPawn::OnConfirmButtonClicked()
+void AKingCatcherPawn::HandleFireButtonClick()
 {
-	ServerRPC_OnConfirmButtonClicked();
+	ServerRPC_HandleFireButtonClick();
 }
 
-void AKingCatcherPawn::ServerRPC_OnConfirmButtonClicked_Implementation()
+void AKingCatcherPawn::MulticastRPC_SetButtonColor_Implementation(int32 ButtonIndex, bool IsSelected)
+{
+	// UI 업데이트
+	// 선택한 버튼의 색을 빨강으로 바꾸자
+	if (IsLocallyControlled())
+	{
+		CatcherUI->SetButtonColor(ButtonIndex, IsSelected);
+	}
+}
+
+void AKingCatcherPawn::ServerRPC_HandleFireButtonClick_Implementation()
 {
 	// TODO: 서버에게 클릭한 SpawnLocation 보내서 처리하도록 하기
 	// 1. 클라이언트 Pawn 쪽에서 클릭 했다는 사실을 서버 Pawn에게 알림
@@ -55,41 +65,47 @@ void AKingCatcherPawn::ServerRPC_OnConfirmButtonClicked_Implementation()
 	// 화면의 Go! 버튼을 누르면 해당 위치에서 레이저 발사!
 	// 서버 Pawn 쪽에서 갯수 4개가 차면 서버 KingGameMode로 보내서 처리하도록 하기!
 
-	// if (SelectedSpawnLocations.Num() < 4) return;
-	for (class ASpawnLocation* SelectedSpawnLocation : SelectedSpawnLocations)
+	AKingGameMode* _AKingGameMode = GetWorld()->GetAuthGameMode<AKingGameMode>();
+	if (_AKingGameMode)
 	{
-		MulticastRPC_SelectForAll(SelectedSpawnLocation);
+		_AKingGameMode->HandleCatcherFireButtonClick();
 	}
-
-	MulticastRPC_SetInput(false);
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer
-		(
-		 TimerHandle,
-		 FTimerDelegate::CreateLambda
-		 (
-		  [this]()
-		  {
-			  UE_LOG(LogTemp, Warning, TEXT("1초 지남!"));
-			  for (class ASpawnLocation* SelectedSpawnLocation : this->SelectedSpawnLocations)
-			  {
-				  this->MulticastRPC_DeselectForAll(SelectedSpawnLocation);
-			  }
-
-			  AKingGameMode* KingGameMode = Cast<AKingGameMode>(GetWorld()->GetAuthGameMode());
-			  if (KingGameMode)
-			  {
-				  // TODO: 게임모드에서 로직 처리
-				  KingGameMode->FireAt(SelectedSpawnLocations);
-			  }
-
-			  SelectedSpawnLocations.Empty();
-			  MulticastRPC_SetInput(true);
-		  }
-		 ),
-		 1.f,
-		 false
-		);
+	
+	// // if (SelectedSpawnLocations.Num() < 4) return;
+	// for (class ASpawnLocation* SelectedSpawnLocation : SelectedSpawnLocations)
+	// {
+	// 	MulticastRPC_Select(SelectedSpawnLocation);
+	// }
+	//
+	// MulticastRPC_SetInput(false);
+	// FTimerHandle TimerHandle;
+	// GetWorld()->GetTimerManager().SetTimer
+	// 	(
+	// 	 TimerHandle,
+	// 	 FTimerDelegate::CreateLambda
+	// 	 (
+	// 	  [this]()
+	// 	  {
+	// 		  UE_LOG(LogTemp, Warning, TEXT("1초 지남!"));
+	// 		  for (class ASpawnLocation* SelectedSpawnLocation : this->SelectedSpawnLocations)
+	// 		  {
+	// 			  this->MulticastRPC_Deselect(SelectedSpawnLocation);
+	// 		  }
+	//
+	// 		  AKingGameMode* KingGameMode = Cast<AKingGameMode>(GetWorld()->GetAuthGameMode());
+	// 		  if (KingGameMode)
+	// 		  {
+	// 			  // TODO: 게임모드에서 로직 처리
+	// 			  KingGameMode->FireAt(SelectedSpawnLocations);
+	// 		  }
+	//
+	// 		  SelectedSpawnLocations.Empty();
+	// 		  MulticastRPC_SetInput(true);
+	// 	  }
+	// 	 ),
+	// 	 1.f,
+	// 	 false
+	// 	);
 }
 
 void AKingCatcherPawn::BeginPlay()
@@ -133,10 +149,11 @@ void AKingCatcherPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		}
 	}
 
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AKingCatcherPawn::Click);
-	}
+	// UI가 아닌 실제 액터를 클릭하는 경우 사용
+	// if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	// {
+		// EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AKingCatcherPawn::Click);
+	// }
 	else
 	{
 		UE_LOG
@@ -243,7 +260,7 @@ void AKingCatcherPawn::MulticastRPC_InitializeMainGameUI_Implementation()
 		CatcherUI = CreateWidget<UKingCatcherUI>(GetWorld()->GetFirstPlayerController(), CatcherUIClass);
 		if (CatcherUI == nullptr) return;
 		CatcherUI->AddToViewport();
-		CatcherUI->ConfirmButton->OnClicked.AddDynamic(this, &AKingCatcherPawn::OnConfirmButtonClicked);
+		CatcherUI->ConfirmButton->OnClicked.AddDynamic(this, &AKingCatcherPawn::HandleFireButtonClick);
 
 		APlayerController* _PlayerController = GetWorld()->GetFirstPlayerController();
 		if (_PlayerController)
@@ -277,23 +294,93 @@ void AKingCatcherPawn::MulticastRPC_SetWinner_Implementation(EPieceColor WinnerC
 	}
 }
 
-void AKingCatcherPawn::Click(const struct FInputActionValue& Value)
+// void AKingCatcherPawn::Click(const struct FInputActionValue& Value)
+// {
+// 	UE_LOG(LogTemp, Warning, TEXT("Catcher Clicked!!"));
+//
+// 	// 마우스로 클릭된 위치 가져오기
+// 	APlayerController* _PlayerContoller = Cast<APlayerController>(GetController());
+// 	if (_PlayerContoller == nullptr) return;
+//
+// 	FVector WorldLocation;
+// 	FVector WorldDirection;
+// 	bool _bIsDeprojectSuccess = _PlayerContoller->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+// 	if (_bIsDeprojectSuccess == false) return;
+//
+// 	ServerRPC_Click(WorldLocation, WorldDirection);
+// }
+
+// void AKingCatcherPawn::ServerRPC_Click_Implementation(FVector WorldLocation, FVector WorldDirection)
+// {
+// 	// 서버에서 라인 트레이스 수행
+// 	FHitResult HitResult;
+// 	FCollisionQueryParams QueryParams;
+// 	QueryParams.AddIgnoredActor(this);
+//
+// 	float TraceDistance = 10000.0f;
+// 	ECollisionChannel TraceChannel = ECollisionChannel::ECC_WorldDynamic;
+// 	if (GetWorld()->LineTraceSingleByChannel
+// 		(
+// 		 HitResult,
+// 		 WorldLocation,
+// 		 WorldLocation + (WorldDirection * TraceDistance),
+// 		 TraceChannel,
+// 		 QueryParams
+// 		))
+// 	{
+// 		// 히트 결과 처리
+// 		UE_LOG(LogTemp, Warning, TEXT("Clicked object : %s"), *HitResult.GetActor()->GetActorNameOrLabel());
+// 	}
+//
+// 	for (int32 i = 0; i < SelectedSpawnLocations.Num(); i++)
+// 	{
+// 		UE_LOG
+// 		(
+// 		 LogTemp,
+// 		 Warning,
+// 		 TEXT("Selected SpawnLocation : %s"),
+// 		 *SelectedSpawnLocations[i]->GetActorNameOrLabel()
+// 		);
+// 	}
+//
+// 	ASpawnLocation* SpawnLocation = Cast<ASpawnLocation>(HitResult.GetActor());
+// 	if (SpawnLocation)
+// 	{
+// 		if (SpawnLocation->bIsSelected == false)
+// 		{
+// 			// 4개 이상 선택하려 하면 return 시키자!
+// 			if (SelectedSpawnLocations.Num() >= 4) return;
+//
+// 			SelectedSpawnLocations.Add(SpawnLocation);
+//
+// 			// 누른 사람에게만 빨간색으로 보이게 하기!
+// 			MulticastRPC_SelectOnlyForLocallyPlayer(SpawnLocation);
+// 		}
+// 		else
+// 		{
+// 			SelectedSpawnLocations.Remove(SpawnLocation);
+// 			MulticastRPC_DeselectOnlyForLocallyPlayer(SpawnLocation);
+// 		}
+// 	}
+// }
+
+void AKingCatcherPawn::HandleButtonClick(int32 ButtonIndex)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Catcher Clicked!!"));
-
-	// 마우스로 클릭된 위치 가져오기
-	APlayerController* _PlayerContoller = Cast<APlayerController>(GetController());
-	if (_PlayerContoller == nullptr) return;
-
-	FVector WorldLocation;
-	FVector WorldDirection;
-	bool _bIsDeprojectSuccess = _PlayerContoller->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
-	if (_bIsDeprojectSuccess == false) return;
-
-	ServerRPC_Click(WorldLocation, WorldDirection);
+	// 서버한테 보내버리기
+	ServerRPC_HandleButtonClick(ButtonIndex);
 }
 
-void AKingCatcherPawn::MulticastRPC_SelectForAll_Implementation(ASpawnLocation* SpawnLocation)
+void AKingCatcherPawn::ServerRPC_HandleButtonClick_Implementation(int32 ButtonIndex)
+{
+	// UI로부터 받아온 Button Index를 GameMode로 넘겨서 로직을 처리하도록 시키기
+	AKingGameMode* _KingGameMode = GetWorld()->GetAuthGameMode<AKingGameMode>();
+	if (_KingGameMode)
+	{
+		_KingGameMode->HandleCatcherLocationSelect(ButtonIndex);
+	}
+}
+
+void AKingCatcherPawn::MulticastRPC_Select_Implementation(ASpawnLocation* SpawnLocation)
 {
 	if (HasAuthority())
 	{
@@ -303,94 +390,12 @@ void AKingCatcherPawn::MulticastRPC_SelectForAll_Implementation(ASpawnLocation* 
 	SpawnLocation->ColorToRed();
 }
 
-void AKingCatcherPawn::MulticastRPC_DeselectForAll_Implementation(ASpawnLocation* SpawnLocation)
+void AKingCatcherPawn::MulticastRPC_Deselect_Implementation(ASpawnLocation* SpawnLocation)
 {
 	if (HasAuthority())
 	{
 		SpawnLocation->bIsSelected = false;
 	}
 
-	SpawnLocation->ColorToWhite();
-}
-
-void AKingCatcherPawn::ServerRPC_Click_Implementation(FVector WorldLocation, FVector WorldDirection)
-{
-	// 서버에서 라인 트레이스 수행
-	FHitResult HitResult;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-
-	float TraceDistance = 10000.0f;
-	ECollisionChannel TraceChannel = ECollisionChannel::ECC_WorldDynamic;
-	if (GetWorld()->LineTraceSingleByChannel
-		(
-		 HitResult,
-		 WorldLocation,
-		 WorldLocation + (WorldDirection * TraceDistance),
-		 TraceChannel,
-		 QueryParams
-		))
-	{
-		// 히트 결과 처리
-		UE_LOG(LogTemp, Warning, TEXT("Clicked object : %s"), *HitResult.GetActor()->GetActorNameOrLabel());
-	}
-
-	for (int32 i = 0; i < SelectedSpawnLocations.Num(); i++)
-	{
-		UE_LOG
-		(
-		 LogTemp,
-		 Warning,
-		 TEXT("Selected SpawnLocation : %s"),
-		 *SelectedSpawnLocations[i]->GetActorNameOrLabel()
-		);
-	}
-
-	ASpawnLocation* SpawnLocation = Cast<ASpawnLocation>(HitResult.GetActor());
-	if (SpawnLocation)
-	{
-		if (SpawnLocation->bIsSelected == false)
-		{
-			// 4개 이상 선택하려 하면 return 시키자!
-			if (SelectedSpawnLocations.Num() >= 4) return;
-
-			SelectedSpawnLocations.Add(SpawnLocation);
-
-			// 누른 사람에게만 빨간색으로 보이게 하기!
-			MulticastRPC_SelectOnlyForLocallyPlayer(SpawnLocation);
-		}
-		else
-		{
-			SelectedSpawnLocations.Remove(SpawnLocation);
-			MulticastRPC_DeselectOnlyForLocallyPlayer(SpawnLocation);
-		}
-	}
-}
-
-void AKingCatcherPawn::MulticastRPC_SelectOnlyForLocallyPlayer_Implementation(ASpawnLocation* SpawnLocation)
-{
-	// 선택 됐는지 여부는 서버에 저장.
-	if (HasAuthority())
-	{
-		SpawnLocation->bIsSelected = true;
-	}
-
-	// 색상은 Local Player가 Catcher Pawn인 경우에만 변경
-	// (1p가 Catcher Pawn이라는 뜻)
-	if (IsLocallyControlled() == false) return;
-	SpawnLocation->ColorToRed();
-}
-
-void AKingCatcherPawn::MulticastRPC_DeselectOnlyForLocallyPlayer_Implementation(ASpawnLocation* SpawnLocation)
-{
-	// 선택 됐는지 여부는 서버에 저장.
-	if (HasAuthority())
-	{
-		SpawnLocation->bIsSelected = false;
-	}
-
-	// 색상은 Local Player가 Catcher Pawn인 경우에만 변경
-	// (1p가 Catcher Pawn이라는 뜻)
-	if (IsLocallyControlled() == false) return;
 	SpawnLocation->ColorToWhite();
 }

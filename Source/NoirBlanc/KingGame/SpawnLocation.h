@@ -14,6 +14,8 @@ class NOIRBLANC_API ASpawnLocation : public AActor
 public:
 	ASpawnLocation();
 
+	UPROPERTY(EditAnywhere)
+	int32 Index = -1;
 	bool bIsSelected = false;
 
 	UPROPERTY(EditAnywhere)

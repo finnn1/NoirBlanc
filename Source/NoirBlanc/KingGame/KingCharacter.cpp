@@ -167,7 +167,10 @@ EPieceColor AKingCharacter::GetPieceColor_Implementation()
 
 void AKingCharacter::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
 {
-	if (WaitingUI) WaitingUI->RemoveFromParent();
+	// if (IsValid(WaitingUI))
+	// {
+	// 	WaitingUI->RemoveFromParent();
+	// }
 	
 	if (IsLocallyControlled())
 	{
