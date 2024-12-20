@@ -294,7 +294,7 @@ bool ANetworkPawn::IsCheckCardMatch()
 
 void ANetworkPawn::InitPlayerUI()
 {
-	/*PlayerUI = Cast<UPlayerUI>(CreateWidget(GetWorld(), TSubPlayerUI));
+	PlayerUI = Cast<UPlayerUI>(CreateWidget(GetWorld(), TSubPlayerUI));
 	if(PlayerUI && !PlayerUI->IsInViewport())
 	{
 		PlayerUI->AddToViewport();
@@ -306,7 +306,7 @@ void ANetworkPawn::InitPlayerUI()
 		{
 			PlayerUI->SetNoirTurnText();
 		}
-	}*/
+	}
 
 	/* Turn UI */
 	TurnUI = Cast<UTurnUI>(CreateWidget(GetWorld(), TurnUIFactory));
@@ -608,7 +608,7 @@ void ANetworkPawn::ServerRPC_IncreaseScore_Implementation(ANetworkPawn* ScorePla
 	
 	ScorePlayer->GetPlayerState()->SetScore(CurrentScore);
 
-	//MulticastRPC_IncreaseScore(ScorePlayer, CurrentScore);
+	MulticastRPC_IncreaseScore(ScorePlayer, CurrentScore);
 }
 
 // UI의 점수 세팅 (PlayerState를 통한 Score 동기화가 느려서 매개변수로 처리)
