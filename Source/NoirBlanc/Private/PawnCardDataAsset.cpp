@@ -14,6 +14,15 @@ void UPawnCardDataAsset::InitMeshMaterial(UStaticMeshComponent* StaticMeshComp)
 	}
 }
 
+void UPawnCardDataAsset::ChangeMatToBlack(UStaticMeshComponent* StaticMeshComp, int32 ChangeIndex, UMaterialInstance* BlackMatInst)
+{
+	if(StaticMeshComp)
+	{
+		StaticMeshComp->SetMaterial(ChangeIndex, BlackMatInst);
+	}
+}
+
+
 void UPawnCardDataAsset::SetMatchingMat_ChaosDest(UStaticMeshComponent* StaticMeshComp, float Alpha)
 {
 	if (StaticMeshComp)

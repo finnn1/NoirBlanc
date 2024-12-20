@@ -125,7 +125,10 @@ void AChessPiece::DissolveMaterial()
 					float InterpSpeed = 3.f;
 					float Value = FMath::Lerp(StartValue, EndValue, DissolveCounter *InterpSpeed);
 					DissolveCounter += DeltaTime;
-					Dynamic->SetScalarParameterValue(TEXT("Dissolve"), Value);
+					if(Dynamic)
+					{
+				    	Dynamic->SetScalarParameterValue(TEXT("Dissolve"), Value);
+					}		
 					if(DissolveCounter / InterpSpeed >= 1.f)
 					{
 						StopTimer();
@@ -138,6 +141,11 @@ void AChessPiece::DissolveMaterial()
 
 void AChessPiece::StopTimer()
 {
+	if (Dynamic)
+	{
+		Dynamic = nullptr; // 참조 해제
+	}
+	DissolveCounter = 0.0f;
 	GetWorldTimerManager().ClearTimer(DissolveTimer);
 }
 

@@ -4,6 +4,7 @@
 #include "ChessPiece.h"
 #include "ChessPlayerController.h"
 #include "GameEndUI.h"
+#include "InfoUI.h"
 #include "NoirBlancGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -14,6 +15,8 @@
 #include "RestartUI.h"
 #include "NoirBlanc/Knight/BattleUI.h"
 #include "NoirBlanc/Knight/ResultUI.h"
+#include "NoirBlanc/Knight/WaitingUI.h"
+#include "NoirBlanc/Knight/MiniGameToChessUI.h"
 
 // Sets default values
 AChessBoard::AChessBoard()
@@ -36,11 +39,23 @@ void AChessBoard::BeginPlay()
 	
 	GameInstance = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());;
+
+	if(HasAuthority())
+	{
+		WaitingUI = CreateWidget<UWaitingUI>(GetWorld(), WaitingUIClass);
+		WaitingUI->AddToViewport();
+	}
 }
 
 void AChessBoard::StartGame()
 {
-	bIsClickEnabled = true;
+	if(WaitingUI)
+	{
+		WaitingUI->RemoveFromParent();
+	}
+	FInputModeGameAndUI InputMode;
+	Controller->SetInputMode(InputMode);
+
 	TurnUI = CreateWidget<UTurnUI>(GetWorld(), TurnUIClass);
 	FTimerHandle UITimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(UITimerHandle, [this](){TurnUI->AddToViewport();}, 1.f, false);
@@ -55,6 +70,9 @@ void AChessBoard::StartGame()
 	ResultUI->ShowResult(EPieceType::King, EPieceColor::Black,
 						EPieceType::King, EPieceColor::White,
 						EPieceColor::Black);
+	
+	InfoUI = CreateWidget<UInfoUI>(GetWorld(), InfoUIClass);
+	InfoUI->AddToViewport();
 }
 
 void AChessBoard::ServerRPC_StartGame_Implementation()
@@ -275,7 +293,7 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	GameInstance->DeffenderColor = Target->GetPieceColor();
 	GameInstance->DeffenderType = Target->GetPieceType();
 	GameInstance->AttackerColor = Selected->GetPieceColor();
-	GameInstance->AttackerType = Target->GetPieceType();
+	GameInstance->AttackerType = Selected->GetPieceType();
 	GameInstance->AttackerRow = SelectedFloor->GetRow();
 	GameInstance->AttackerCol = SelectedFloor->GetCol();
 	GameInstance->DeffenderRow = TargetFloor->GetRow();
@@ -287,7 +305,14 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	PlaySound(BattleSound);
 	BattleUI = CreateWidget<UBattleUI>(GetWorld(), BattleUIClass);
 	BattleUI->AddToViewport();
-	BattleUI->UpdateBattleUI(GameInstance->AttackerType);
+	if(Target->GetPieceType() != EPieceType::King)
+	{
+		BattleUI->UpdateBattleUI(GameInstance->AttackerType);
+	}
+	else
+	{
+		BattleUI->UpdateBattleUI(EPieceType::King);
+	}
 
 	if(HasAuthority())
 	{
@@ -356,13 +381,23 @@ void AChessBoard::MiniGameEnd()
 	
 	if(GameInstance->DeffenderColor == Winner)
 	{
+		MiniGameToChessUI = CreateWidget<UMiniGameToChessUI>(GetWorld(), MiniGameToChessUIClass);
+		MiniGameToChessUI->AddToViewport();
+		MiniGameToChessUI->UpdateMiniGameToChessUI(GameInstance->AttackerColor, GameInstance->AttackerType);
 		Delete_Row = GameInstance->AttackerRow;
 		Delete_Col = GameInstance->AttackerCol;
 		FTimerHandle DeleteTimer;
-		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col](){DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());}, 0.5f, false);
+		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col]()
+		{
+			DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
+			bIsClickEnabled = true;
+		}, 0.5f, false);
 	}
 	else if(GameInstance->AttackerColor == Winner)
 	{
+		MiniGameToChessUI = CreateWidget<UMiniGameToChessUI>(GetWorld(), MiniGameToChessUIClass);
+		MiniGameToChessUI->AddToViewport();
+		MiniGameToChessUI->UpdateMiniGameToChessUI(GameInstance->DeffenderColor, GameInstance->DeffenderType);
 		Delete_Col = GameInstance->DeffenderCol;
 		Delete_Row = GameInstance->DeffenderRow;
 		FTimerHandle DeleteTimer;
@@ -379,7 +414,12 @@ void AChessBoard::MiniGameEnd()
 			Destination->SetPieceOnFloor(Attacker);
 			int32 index = FMath::RandRange(0, PiecePutSounds.Num()-1);
 			PlaySound(PiecePutSounds[index]);
+			bIsClickEnabled = true;
 		}, 6.5f, false);
+	}
+	else
+	{
+		bIsClickEnabled = true;
 	}
 	// //King Delete Test
 	// FTimerHandle DeleteTimer;

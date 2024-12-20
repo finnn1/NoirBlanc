@@ -68,19 +68,19 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ChessBoard")
 	EPieceColor Turn = EPieceColor::White;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* PiecePickSound;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TArray<USoundBase*> PiecePutSounds;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* BackgroundMusic;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* BattleSound;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* WinningSound;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
@@ -113,6 +113,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	URestartUI* RestartUI;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UInfoUI> InfoUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UInfoUI* InfoUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UWaitingUI> WaitingUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UWaitingUI* WaitingUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UMiniGameToChessUI> MiniGameToChessUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UMiniGameToChessUI* MiniGameToChessUI;
 private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickEnabled = false;

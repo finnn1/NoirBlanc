@@ -4,6 +4,7 @@
 #include "PawnCardController.h"
 #include "ControllerUI.h"
 #include "Blueprint/UserWidget.h"
+#include "AsyncLoadingScreenLibrary.h"
 
 APawnCardController::APawnCardController()
 {
@@ -47,5 +48,6 @@ void APawnCardController::HideShuffleText()
 
 void APawnCardController::ServerRPC_LevelTravelToChessBoard_Implementation()
 {
+	//UAsyncLoadingScreenLibrary::SetDisplayBackgroundIndex(0);
 	GetWorld()->ServerTravel(TEXT("/Game/Level/Lv_ChessBoard?listen"), true);
 }

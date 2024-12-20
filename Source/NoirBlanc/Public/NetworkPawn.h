@@ -8,6 +8,8 @@
 #include "NoirBlanc/Knight/TurnUI.h"
 #include "NetworkPawn.generated.h"
 
+class UFinishUI;
+class UWaitingUI;
 class APawnCardController;
 class UInputMappingContext;
 class UInputAction;
@@ -53,15 +55,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	UInputAction* CardClickAction;
 
-	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Widget")
-	TSubclassOf<UPlayerUI> TSubPlayerUI;
-	UPROPERTY()
-	UPlayerUI* PlayerUI;
-
 	UPROPERTY()
 	APawnCardGameMode* GameMode;
 
 	// 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* BackgroundSound;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* GameStartSound;
 	
@@ -109,8 +109,6 @@ public:
 	//void SetScore(bool IsMine);
 	void SetIsTurnPlayer(bool IsTurn);
 	bool GetIsTurnPlayer();
-
-	void CheckLog(ANetworkPawn* TargetPawn);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_SelectCard(APawnCard* SelectedCard);
@@ -195,15 +193,35 @@ private:
 	bool IsTurnPlayer = false;
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UTurnUI> TurnUIFactory;
-
-	UPROPERTY()
-	UTurnUI* TurnUI;
-
 	UPROPERTY(VisibleAnywhere, Replicated)
 	EPieceColor PawnPieceColor;
 
 	UFUNCTION()
 	void DestroyCardAndCheck(APawnCard* PawnCard);
+
+public:
+	//UI 관련
+	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UPlayerUI> TSubPlayerUI;
+	
+	UPROPERTY()
+	UPlayerUI* PlayerUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UTurnUI> TurnUIFactory;
+
+	UPROPERTY()
+	UTurnUI* TurnUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UWaitingUI> WaitingUIFactory;
+
+	UPROPERTY()
+	UWaitingUI* WaitingUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UFinishUI> FinishUIFactory;
+
+	UPROPERTY()
+	UFinishUI* FinishUI;
 };

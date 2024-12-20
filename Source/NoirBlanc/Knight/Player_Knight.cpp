@@ -12,6 +12,7 @@
 #include "FinishUI.h"
 #include "NoirBlancGameInstance.h"
 #include "TravelPlayerController.h"
+#include "Components/AudioComponent.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -25,6 +26,11 @@ APlayer_Knight::APlayer_Knight()
 void APlayer_Knight::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AudioComponent = NewObject<UAudioComponent>(this);
+	AudioComponent->RegisterComponent();
+	BGMAudioComponent = NewObject<UAudioComponent>(this);
+	BGMAudioComponent->RegisterComponent();
 	/*
 	if(HasAuthority())
 	{
@@ -101,6 +107,7 @@ void APlayer_Knight::PossessedBy(AController* NewController)
 		}
 
 		/* Start CountDown */
+		PlaySound(CountDownSound);
 		GetWorldTimerManager().SetTimer(Handle, this, &APlayer_Knight::CountDown, 1, true);
 	}
 }
@@ -119,6 +126,24 @@ void APlayer_Knight::Tick(float DeltaTime)
 	/* Finished */
 	if(Cast<AGameStateBase_Knight>(GetWorld()->GetGameState())->Finished)
 	{
+		if(!bFanfarePlayed)
+		{
+			PlaySound(FanfareSound);
+			bFanfarePlayed = true;
+		}
+		if(AudioComponent->IsPlaying())
+		{
+			AudioComponent->Stop();
+		}
+		if(BGMAudioComponent->IsPlaying())
+		{
+			BGMAudioComponent->Stop();
+		}
+
+
+
+
+		
 		if(Main != nullptr)
 		{
 			Main->PlayerDisappear();
@@ -201,6 +226,7 @@ void APlayer_Knight::ClientRPC_CreateUI_Implementation()
 		CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
 		CountDownUI->AddToViewport();
 		CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
+		PlaySound(CountDownSound);
 	}
 }
 
@@ -223,10 +249,22 @@ void APlayer_Knight::CountDown()
 	{
 		if(CountDownLeft == 0)
 		{
+			PlaySound(StartSound);
+			
 			CountDownUI->UpdateCountDown(FText::FromString(TEXT("시작!")));
+			
+			AudioComponent->SetSound(RunSound);
+			BGMAudioComponent->SetSound(BackgroundMusic);
+			FTimerHandle TimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+			{
+				BGMAudioComponent->Play();
+				AudioComponent->Play();
+			}, 0.5f, false);
 		}
 		else
 		{
+			PlaySound(CountDownSound);
 			CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
 		}
 	}
@@ -236,6 +274,8 @@ void APlayer_Knight::OnRep_CountDownLeft()
 {
 	if(IsLocallyControlled())
 	{
+
+		
 		if(CountDownLeft < 0)
 		{
 			CountDownUI->RemoveFromParent();
@@ -247,10 +287,22 @@ void APlayer_Knight::OnRep_CountDownLeft()
 		{
 			if(CountDownLeft == 0)
 			{
+				PlaySound(StartSound);
+				AudioComponent->SetSound(RunSound);
+				BGMAudioComponent->SetSound(BackgroundMusic);
+				FTimerHandle TimerHandle;
+				GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+				{
+					BGMAudioComponent->Play();
+					AudioComponent->Play();
+				}, 0.5f, false);
+				
 				CountDownUI->UpdateCountDown(FText::FromString(TEXT("시작!")));
 			}
 			else
 			{
+				PlaySound(CountDownSound);
+				
 				CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
 			}
 		}
@@ -276,6 +328,14 @@ void APlayer_Knight::StartTimer()
 void APlayer_Knight::ReturnToChessBoard()
 {
 	Cast<ATravelPlayerController>(GetController())->ServerRPC_LevelTravelToChess();
+}
+
+void APlayer_Knight::PlaySound(USoundBase* Sound)
+{
+	if (Sound)
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), Sound);
+	}
 }
 
 void APlayer_Knight::MulticastRPC_UpdateTimerUI_Implementation()

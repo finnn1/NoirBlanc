@@ -20,7 +20,8 @@ public class NoirBlanc : ModuleRules
 			"OnlineSubsystem",
 			"OnlineSubsystemSteam",
 			"GeometryCollectionEngine",
-             "AdvancedWidgets"
+			"AdvancedWidgets",
+            "AsyncLoadingScreen"
 		});
 
 		// Uncomment if you are using Slate UI
