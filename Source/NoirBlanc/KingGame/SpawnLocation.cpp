@@ -46,12 +46,18 @@ void ASpawnLocation::Tick(float DeltaTime)
 
 void ASpawnLocation::ColorToRed()
 {
-	DynamicMaterial->SetVectorParameterValue("BaseColor", FLinearColor(1.f, 0.f, 0.f, 1.f));
+	if (DynamicMaterial)
+	{
+		DynamicMaterial->SetVectorParameterValue("BaseColor", FLinearColor(1.f, 0.f, 0.f, 1.f));
+	}
 }
 
 void ASpawnLocation::ColorToWhite()
 {
-	DynamicMaterial->SetVectorParameterValue("BaseColor", FLinearColor(1.f, 1.f, 1.f, 1.f));
+	if (DynamicMaterial)
+	{
+		DynamicMaterial->SetVectorParameterValue("BaseColor", FLinearColor(1.f, 1.f, 1.f, 1.f));
+	}
 }
 
 void ASpawnLocation::Select()

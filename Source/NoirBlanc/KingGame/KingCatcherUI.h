@@ -17,4 +17,13 @@ class NOIRBLANC_API UKingCatcherUI : public UUserWidget
 public:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* ConfirmButton;
+
+	UPROPERTY(meta = (BindWidget))
+	class UCanvasPanel* Panel_Buttons;
+
+	TArray<class UKingCatcherFireButtonUI*> AllSpawnLocationButtons;
+
+	void SetButtonColor(int32 ButtonIndex, bool IsSelected);
+protected:
+	virtual void NativeConstruct() override;
 };
