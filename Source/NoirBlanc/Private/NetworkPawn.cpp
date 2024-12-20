@@ -69,7 +69,7 @@ void ANetworkPawn::BeginPlay()
 	if(IsLocallyControlled())
 	{
 		InitPlayerUI();
-		PlaySound(BackgroundSound);
+		//PlaySound(BackgroundSound);
 	}
 	
 }
@@ -78,47 +78,6 @@ void ANetworkPawn::BeginPlay()
 void ANetworkPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	/*FString ThisName = this->GetName();
-	
-	//연결상태
-	FString ConnStr = (GetNetConnection() != nullptr ? TEXT("Valid Connection") : TEXT("Invalid Connection"));
-
-	//Owner
-	FString OwnerStr = GetOwner() ? GetOwner()->GetName() : TEXT("Not Owner");
-
-	//권한
-	FString role = UEnum::GetValueAsString<ENetRole>(GetLocalRole());
-	
-	//서버 권한인지 여부 체크
-	FString bIsAuthority = HasAuthority() ? TEXT("Authority") : TEXT("No Authority");
-
-	//내 것인지
-	FString IsMine = IsLocallyControlled() ? TEXT("LocalControl") : TEXT("No Control");
-
-	FString IsUI = (PlayerUI ? TEXT("Has UI") : TEXT("No UI"));
-
-	FString IsTurn = (GetIsTurnPlayer() ? TEXT("Turn") : TEXT("No Turn"));
-
-	int32 Score = (GetPlayerState() ? GetPlayerState()->GetScore() : -1);
-
-	const UEnum* EnumPtr = StaticEnum<EPieceColor>();
-	FString EnumName = EnumPtr->GetNameByValue(static_cast<int64>(PawnPieceColor)).ToString();
-
-	FString IsPlaying = (Timeline->IsPlaying() ? TEXT("Playing") : TEXT("Not Playing"));
-	
-	FString LogStr = FString::Printf(TEXT("Connection : %s\nOwner : %s\nRole : %s\nAuthority : %s\nIsMine : %s\nPlayerUI : %s\nIsTurn : %s\nIsPlaying : %s"),
-		*ConnStr, *OwnerStr, *role, *bIsAuthority, *IsMine, *IsUI, *IsTurn, *IsPlaying);
-	
-	FVector TestLoc = GetActorLocation();
-	TestLoc.Y += -200;
-	if(IsLocallyControlled())
-	{
-		TestLoc.X += -100;
-	}
-
-	//TextBaseActor를 this를 넣는지 여부는 상대좌표, 월드좌표?
-	DrawDebugString(GetWorld(), TestLoc, LogStr, nullptr, FColor::Red, 0, true, 1);*/
 }
 
 // Called to bind functionality to input
@@ -202,7 +161,8 @@ void ANetworkPawn::MulticastRPC_GameStart_Implementation()
 		{
 			OwnerPawn->WaitingUI->DestroyWaitingUI();
 			//사운드
-			PlaySound(GameStartSound);
+			//PlaySound(GameStartSound);
+			PlaySound(BackgroundSound);
 		}
 	}
 }
