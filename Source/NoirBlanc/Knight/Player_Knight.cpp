@@ -139,6 +139,11 @@ void APlayer_Knight::Tick(float DeltaTime)
 		{
 			BGMAudioComponent->Stop();
 		}
+
+
+
+
+		
 		if(Main != nullptr)
 		{
 			Main->PlayerDisappear();
@@ -221,6 +226,7 @@ void APlayer_Knight::ClientRPC_CreateUI_Implementation()
 		CountDownUI = Cast<UCountDownUI>(CreateWidget(GetWorld(), CountDownFactory));
 		CountDownUI->AddToViewport();
 		CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
+		PlaySound(CountDownSound);
 	}
 }
 
@@ -268,6 +274,8 @@ void APlayer_Knight::OnRep_CountDownLeft()
 {
 	if(IsLocallyControlled())
 	{
+
+		
 		if(CountDownLeft < 0)
 		{
 			CountDownUI->RemoveFromParent();
@@ -279,10 +287,22 @@ void APlayer_Knight::OnRep_CountDownLeft()
 		{
 			if(CountDownLeft == 0)
 			{
+				PlaySound(StartSound);
+				AudioComponent->SetSound(RunSound);
+				BGMAudioComponent->SetSound(BackgroundMusic);
+				FTimerHandle TimerHandle;
+				GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+				{
+					BGMAudioComponent->Play();
+					AudioComponent->Play();
+				}, 0.5f, false);
+				
 				CountDownUI->UpdateCountDown(FText::FromString(TEXT("시작!")));
 			}
 			else
 			{
+				PlaySound(CountDownSound);
+				
 				CountDownUI->UpdateCountDown(FText::AsNumber(CountDownLeft));
 			}
 		}
