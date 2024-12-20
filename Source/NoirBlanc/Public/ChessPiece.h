@@ -39,6 +39,7 @@ public:
 
 	void DissolveMaterial();
 	void StopTimer();
+	void MaterialChange();
 	
 protected:
 	void SetPieceMesh();

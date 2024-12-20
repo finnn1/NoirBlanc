@@ -117,25 +117,26 @@ void AChessPiece::DissolveMaterial()
 		// Scalar Parameter 값 설정 (예: "MyScalarParam" 이름의 Scalar 파라미터)
 		if (Dynamic)
 		{
-			GetWorld()->GetTimerManager().SetTimer(DissolveTimer, [this]()
-				{
-					float DeltaTime = GetWorld()->DeltaTimeSeconds;
-					float StartValue = -0.4f;
-					float EndValue = 0.7f;
-					float InterpSpeed = 3.f;
-					float Value = FMath::Lerp(StartValue, EndValue, DissolveCounter *InterpSpeed);
-					DissolveCounter += DeltaTime;
-					if(Dynamic)
-					{
-				    	Dynamic->SetScalarParameterValue(TEXT("Dissolve"), Value);
-					}		
-					if(DissolveCounter / InterpSpeed >= 1.f)
-					{
-						StopTimer();
-					}
-				},
-			0.05, true);
+			GetWorld()->GetTimerManager().SetTimer(DissolveTimer,this, &AChessPiece::MaterialChange, 0.05, true);
 		}
+	}
+}
+
+void AChessPiece::MaterialChange()
+{
+	float DeltaTime = GetWorld()->DeltaTimeSeconds;
+	float StartValue = -0.4f;
+	float EndValue = 0.7f;
+	float InterpSpeed = 3.f;
+	float Value = FMath::Lerp(StartValue, EndValue, DissolveCounter *InterpSpeed);
+	DissolveCounter += DeltaTime;
+	if(Dynamic)
+	{
+		Dynamic->SetScalarParameterValue(TEXT("Dissolve"), Value);
+	}		
+	if(DissolveCounter / InterpSpeed >= 1.f)
+	{
+		StopTimer();
 	}
 }
 
