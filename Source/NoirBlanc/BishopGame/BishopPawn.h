@@ -8,6 +8,9 @@
 #include "WaitingOtherPlayerUI.h"
 #include "BishopPawn.generated.h"
 
+class UCountDownUI;
+class UWaitingUI;
+
 UCLASS()
 class NOIRBLANC_API ABishopPawn : public APawn, public IUIUpdatable
 {
@@ -43,11 +46,23 @@ protected:
 public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UWaitingOtherPlayerUI> UWaitingOtherPlayerUIClass;
-	UWaitingOtherPlayerUI* WaitingOtherPlayerUI;
+	
+	// UWaitingOtherPlayerUI* WaitingOtherPlayerUI;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UWaitingUI> WaitingUIClass;
+	
+	UWaitingUI* WaitingUI;
+	UPROPERTY(EditAnywhere)
+	
+	TSubclassOf<UCountDownUI> CountDownUIClass;
+	UCountDownUI* CountDownUI;
+
 	// 서버에게 들어왔다고 알려주기
 	void Joined(APlayerController* NewPlayer);
+	
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_Joined(APlayerController* JoinedPlayer);
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_ShowWaitingUI(APlayerController* JoinedPlayer);
 	
@@ -82,9 +97,18 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_UpdateMainTimerUI(const FText& NewText) override;
 
+	// GameOver UI
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UFinishUI> FinishUIClass;
+	
+	class UFinishUI* FinishUI;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_ShowGameOverUI(const FText& Winner) override;
+	
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_UpdateStartCountdownUI(const FText& NewText) override;
-
+	
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_SetInput(bool bIsEnable) override;
 

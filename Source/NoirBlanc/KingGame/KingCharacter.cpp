@@ -13,6 +13,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "NoirBlanc/BishopGame/NoirBlancPlayerState.h"
 #include "NoirBlanc/BishopGame/WaitingOtherPlayerUI.h"
+#include "NoirBlanc/Knight/FinishUI.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 
@@ -213,6 +214,22 @@ void AKingCharacter::MulticastRPC_UpdateMainTimerUI_Implementation(const FText& 
 		if (KingGameMainUI)
 		{
 			KingGameMainUI->Text_Timer->SetText(NewText);
+		}
+	}
+}
+
+void AKingCharacter::MulticastRPC_ShowGameOverUI_Implementation(const FText& Winner)
+{
+	if (IsLocallyControlled())
+	{
+		if (FinishUIClass)
+		{
+			FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
+			if (FinishUI)
+			{
+				FinishUI->AddToViewport();
+				FinishUI->UpdateWinnerText(Winner);
+			}
 		}
 	}
 }

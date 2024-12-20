@@ -15,6 +15,9 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "PieceTypes.h"
+#include "NoirBlanc/Knight/CountDownUI.h"
+#include "NoirBlanc/Knight/FinishUI.h"
+#include "NoirBlanc/Knight/WaitingUI.h"
 
 
 ABishopPawn::ABishopPawn()
@@ -95,15 +98,25 @@ void ABishopPawn::MulticastRPC_ShowWaitingUI_Implementation(APlayerController* J
 	// Waiting For Player UI 띄우기
 	if (IsLocallyControlled())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Joined Player : %s"), *JoinedPlayer->GetActorNameOrLabel());
-		WaitingOtherPlayerUI = CreateWidget<UWaitingOtherPlayerUI>
+		WaitingUI = CreateWidget<UWaitingUI>
 			(
 			 JoinedPlayer,
-			 UWaitingOtherPlayerUIClass
+			 WaitingUIClass
 			);
-		if (WaitingOtherPlayerUI)
+		if (WaitingUI)
 		{
-			WaitingOtherPlayerUI->AddToViewport();
+			WaitingUI->AddToViewport();
+		}
+
+		CountDownUI = CreateWidget<UCountDownUI>
+			(
+			 JoinedPlayer,
+			 CountDownUIClass
+			);
+		if (CountDownUI)
+		{
+			CountDownUI->AddToViewport();
+			CountDownUI->Txt_Count->SetText(FText());
 		}
 	}
 }
@@ -183,11 +196,32 @@ void ABishopPawn::MulticastRPC_UpdateMainTimerUI_Implementation(const FText& New
 	}
 }
 
-void ABishopPawn::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
+void ABishopPawn::MulticastRPC_ShowGameOverUI_Implementation(const FText& Winner)
 {
 	if (IsLocallyControlled())
 	{
-		WaitingOtherPlayerUI->SetText(NewText);
+		if (FinishUIClass)
+		{
+			FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
+			if (FinishUI)
+			{
+				FinishUI->AddToViewport();
+				FinishUI->UpdateWinnerText(Winner);
+			}
+		}
+	}
+}
+
+void ABishopPawn::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
+{
+	if (IsValid(WaitingUI))
+	{
+		WaitingUI->Txt_Waiting->SetText(FText());
+	}
+
+	if (IsLocallyControlled())
+	{
+		CountDownUI->UpdateCountDown(NewText);
 	}
 }
 

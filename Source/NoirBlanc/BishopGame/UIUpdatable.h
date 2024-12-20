@@ -49,6 +49,9 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_UpdateMainTimerUI(const FText& NewText) = 0;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_ShowGameOverUI(const FText& Winner) = 0;
 	
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_SetInput(bool bIsEnable) = 0;

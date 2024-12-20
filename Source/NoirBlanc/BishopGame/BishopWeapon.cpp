@@ -48,7 +48,8 @@ void ABishopWeapon::Tick(float DeltaTime)
 	AddActorWorldRotation(FRotator(-PitchMoveValue, 0, 0));
 }
 
-void ABishopWeapon::OnBoxComponentOverlap(
+void ABishopWeapon::OnBoxComponentOverlap
+(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,
 	UPrimitiveComponent* OtherComp,
@@ -57,16 +58,12 @@ void ABishopWeapon::OnBoxComponentOverlap(
 	const FHitResult& SweepResult
 )
 {
-	ServerRPC_OnBoxComponentOverlap(OtherActor);
-}
-
-void ABishopWeapon::ServerRPC_OnBoxComponentOverlap_Implementation(
-	AActor* OtherActor
-)
-{
-	ABishopGameMode* _BishopGameMode = Cast<ABishopGameMode>(GetWorld()->GetAuthGameMode());
-	if (_BishopGameMode)
+	if (HasAuthority())
 	{
-		_BishopGameMode->OnTaggerOverlapped(OtherActor);
+		ABishopGameMode* _BishopGameMode = Cast<ABishopGameMode>(GetWorld()->GetAuthGameMode());
+		if (_BishopGameMode)
+		{
+			_BishopGameMode->OnTaggerOverlapped(OtherActor);
+		}
 	}
 }

@@ -17,6 +17,7 @@
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 #include "NoirBlanc/BishopGame/NoirBlancPlayerState.h"
+#include "NoirBlanc/Knight/FinishUI.h"
 
 AKingGameMode::AKingGameMode()
 {
@@ -36,37 +37,37 @@ AKingGameMode::AKingGameMode()
 AActor* AKingGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
 	//// For Test ////
-	// ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
-	// if (Player->IsLocalPlayerController())
-	// {
-	// 	_PlayerState->PieceColor = EPieceColor::White;
-	// 	_PlayerState->bIsAttaker = false;
-	// 	for (int i = 0; i < AllStartPoints.Num(); ++i)
-	// 	{
-	// 		if (AllStartPoints[i]->PlayerStartTag == TEXT("King"))
-	// 		{
-	// 			return AllStartPoints[i];
-	// 		}
-	// 	}
-	// }
-	// else
-	// {
-	// 	_PlayerState->PieceColor = EPieceColor::Black;
-	// 	_PlayerState->bIsAttaker = true;
-	// 	for (int i = 0; i < AllStartPoints.Num(); ++i)
-	// 	{
-	// 		if (AllStartPoints[i]->PlayerStartTag == TEXT("Catcher"))
-	// 		{
-	// 			return AllStartPoints[i];
-	// 		}
-	// 	}
-	// }
-	//
-	// return Super::ChoosePlayerStart_Implementation(Player);
+	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
+	if (Player->IsLocalPlayerController())
+	{
+		_PlayerState->PieceColor = EPieceColor::White;
+		_PlayerState->bIsAttaker = false;
+		for (int i = 0; i < AllStartPoints.Num(); ++i)
+		{
+			if (AllStartPoints[i]->PlayerStartTag == TEXT("King"))
+			{
+				return AllStartPoints[i];
+			}
+		}
+	}
+	else
+	{
+		_PlayerState->PieceColor = EPieceColor::Black;
+		_PlayerState->bIsAttaker = true;
+		for (int i = 0; i < AllStartPoints.Num(); ++i)
+		{
+			if (AllStartPoints[i]->PlayerStartTag == TEXT("Catcher"))
+			{
+				return AllStartPoints[i];
+			}
+		}
+	}
+	
+	return Super::ChoosePlayerStart_Implementation(Player);
 
 
 	//// TODO: 메인 게임에서는 주석 해제할 것. ////
-	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
+	/*ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
 	UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
 
 	// 게임모드 안에서 LocalPlayer다? 서버이다 => 하얀색
@@ -126,7 +127,7 @@ AActor* AKingGameMode::ChoosePlayerStart_Implementation(AController* Player)
 		}
 	}
 
-	return Super::ChoosePlayerStart_Implementation(Player);
+	return Super::ChoosePlayerStart_Implementation(Player);*/
 }
 
 UClass* AKingGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
@@ -455,48 +456,88 @@ void AKingGameMode::GameOver(APawn* Winner)
 {
 	GetWorld()->GetTimerManager().ClearTimer(StartCountDownTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(MainTimerHandle);
-	UE_LOG(LogTemp, Warning, TEXT("들어옴!"));
+
+	// 게임오버 UI 띄우기
 	// UIUpdatable 인터페이스 구현 여부 확인
-	if (Winner->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
+	for (int i = 0; i < JoinedPlayers.Num(); ++i)
 	{
-		UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
-		if (_NoirBlancGameInstance)
+		APawn* _Pawn = JoinedPlayers[i]->GetPawn();
+		if (IsValid(_Pawn))
 		{
-			EPieceColor _WinnerColor = IKingUIUpdatable::Execute_GetPieceColor(Winner);
-
-			for (int i = 0; i < JoinedPlayers.Num(); ++i)
+			if (_Pawn->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
 			{
-				// UIUpdatable 인터페이스 구현 여부 확인
-				APawn* _Pawn = JoinedPlayers[i]->GetPawn();
-				if (IsValid(_Pawn))
+				EPieceColor _WinnerColor = IKingUIUpdatable::Execute_GetPieceColor(Winner);
+
+				if (_WinnerColor == EPieceColor::White)
 				{
-					if (_Pawn->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
-					{
-						IKingUIUpdatable::Execute_MulticastRPC_SetWinner(_Pawn, _WinnerColor);
-
-						// Level Travel
-						ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
-						if (_ATravelPlayerController)
-						{
-							_ATravelPlayerController->ServerRPC_LevelTravelToChess();
-						}
-						else
-						{
-							UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
-						}
-
-						// 승리자가 아닐 경우 Destory!
-						// if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
-						// {
-						// 	JoinedPlayers[i]->GetPawn()->Destroy();
-						// }
-					}
+					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("Blanc"));
+				}
+				else if (_WinnerColor == EPieceColor::Black)
+				{
+					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("Noir"));				
+				}
+				else
+				{
+					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("Draw"));
 				}
 			}
 		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
-		}
 	}
+
+	// 5초 뒤에 체스 보드로 돌아가기.
+	FTimerHandle GameOverUITimerHandle;
+	GetWorld()->GetTimerManager().SetTimer
+		(
+		 GameOverUITimerHandle,
+		 FTimerDelegate::CreateLambda([this, Winner]()
+		 {
+			 // GAMEOVER and Return to Chessboard.
+			 // UIUpdatable 인터페이스 구현 여부 확인
+			 if (Winner->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
+			 {
+				 UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
+				 if (_NoirBlancGameInstance)
+				 {
+					 EPieceColor _WinnerColor = IKingUIUpdatable::Execute_GetPieceColor(Winner);
+
+					 for (int i = 0; i < JoinedPlayers.Num(); ++i)
+					 {
+						 // UIUpdatable 인터페이스 구현 여부 확인
+						 APawn* _Pawn = JoinedPlayers[i]->GetPawn();
+						 if (IsValid(_Pawn))
+						 {
+							 if (_Pawn->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
+							 {
+								 IKingUIUpdatable::Execute_MulticastRPC_SetWinner(_Pawn, _WinnerColor);
+
+								 // Level Travel
+								 ATravelPlayerController* _ATravelPlayerController = Cast<
+									 ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
+								 if (_ATravelPlayerController)
+								 {
+									 _ATravelPlayerController->ServerRPC_LevelTravelToChess();
+								 }
+								 else
+								 {
+									 UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
+								 }
+
+								 // 승리자가 아닐 경우 Destory!
+								 // if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
+								 // {
+								 // 	JoinedPlayers[i]->GetPawn()->Destroy();
+								 // }
+							 }
+						 }
+					 }
+				 }
+				 else
+				 {
+					 UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
+				 }
+			 }
+		 }),
+		 5.f,
+		 false
+		);
 }

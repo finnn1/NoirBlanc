@@ -9,6 +9,9 @@
 #include "GameFramework/Character.h"
 #include "TaggerCharacter.generated.h"
 
+class UWaitingUI;
+class UCountDownUI;
+
 UCLASS()
 class NOIRBLANC_API ATaggerCharacter : public ACharacter, public IUIUpdatable
 {
@@ -73,14 +76,22 @@ public:
 	virtual void MulticastRPC_SpawnWeapon(FVector Location, FRotator Rotation, UClass* WeaponClass) override;
 
 	UFUNCTION(NetMulticast, Reliable)
-	virtual void MulticastRPC_SetUITextTo(const FText& InputedText, const FText& CurrentTextToType,
-	                                      const TArray<bool>& StringCorrectArray) override;
+	virtual void MulticastRPC_SetUITextTo(const FText& InputedText, const FText& CurrentTextToType, const TArray<bool>& StringCorrectArray) override;
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_UpdateMainTimerUI(const FText& NewText) override;
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_UpdateStartCountdownUI(const FText& NewText) override;
+
+	// GameOver UI
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UFinishUI> FinishUIClass;
+
+	class UFinishUI* FinishUI;
+
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_ShowGameOverUI(const FText& Winner) override;
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_SetInput(bool bIsEnable) override;
@@ -100,36 +111,55 @@ protected:
 public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UWaitingOtherPlayerUI> UWaitingOtherPlayerUIClass;
-	UWaitingOtherPlayerUI* WaitingOtherPlayerUI;
+	
+	// UWaitingOtherPlayerUI* WaitingOtherPlayerUI;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UWaitingUI> WaitingUIClass;
+	
+	UWaitingUI* WaitingUI;
+	UPROPERTY(EditAnywhere)
+	
+	TSubclassOf<UCountDownUI> CountDownUIClass;
+	UCountDownUI* CountDownUI;
+
 	// 서버에게 들어왔다고 알려주기
 	void Joined(APlayerController* NewPlayer);
+
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_Joined(APlayerController* JoinedPlayer);
+
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_ShowWaitingUI(APlayerController* JoinedPlayer);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_JumpStarted(const FInputActionValue& Value);
+
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_JumpEnded(const FInputActionValue& Value);
+
 	FTimerHandle JumpChargineTimerHandle;
+
 	void ChargeJumpPower();
 	float CurrentJumpPower = 0.f;
+
 	UPROPERTY(EditAnywhere, Category = "Tagger Jump")
 	float MultiplyJumpPower = 150.f;
+
 	UPROPERTY(EditAnywhere, Category = "Tagger Jump")
 	float MinJumpPower = 100.f;
+
 	UPROPERTY(EditAnywhere, Category = "Tagger Jump")
 	float MaxJumpPower = 1000.f;
+
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_UpdateProgressBar(float Value);
 
 	// 점프 힘에 따라 스케일 줄어들기
 	void UpdateScale();
-	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"),
-		Category = "Tagger Jump")
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"), Category = "Tagger Jump")
 	float MinSquashScale = 0.3f;
-	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"),
-		Category = "Tagger Jump")
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"), Category = "Tagger Jump")
 	float MaxSquashScale = 1.f;
 };
