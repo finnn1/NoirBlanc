@@ -393,6 +393,7 @@ void AChessBoard::MiniGameEnd()
 		FTimerHandle DeleteTimer;
 		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col]()
 		{
+			BoardFloors[Delete_Row*Chess_Num + Delete_Col]->ActivateHighlight();
 			DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
 			bIsClickEnabled = true;
 		}, 0.5f, false);
@@ -405,7 +406,11 @@ void AChessBoard::MiniGameEnd()
 		Delete_Col = GameInstance->DeffenderCol;
 		Delete_Row = GameInstance->DeffenderRow;
 		FTimerHandle DeleteTimer;
-		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col](){DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());}, 0.5f, false);
+		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [this, Delete_Row, Delete_Col]()
+		{
+			BoardFloors[Delete_Row*Chess_Num + Delete_Col]->ActivateHighlight();
+			DeletePiece(BoardFloors[Delete_Row*Chess_Num + Delete_Col]->GetPieceOnFloor());
+		}, 0.5f, false);
 
 		AChessPiece* Attacker = BoardFloors[GameInstance->AttackerRow*Chess_Num + GameInstance->AttackerCol]->GetPieceOnFloor();
 		ABoardFloor* Destination = BoardFloors[Delete_Row*Chess_Num + Delete_Col];
@@ -1047,6 +1052,7 @@ void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
 			FTimerHandle DeleteTimer;
 			GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [DeletePiece]()
 			{
+				DeletePiece->GetFloorBeneathPiece()->DeactivateHighlight();
 				DeletePiece->GetFloorBeneathPiece()->SetPieceOnFloor(nullptr);
 				DeletePiece->Destroy();
 			}, 4.15f, false);
