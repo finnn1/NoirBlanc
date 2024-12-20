@@ -108,6 +108,9 @@ void AChessBoard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 void AChessBoard::ClickFloor()
 {
 	if(!bIsClickEnabled) return;
+	if(HasAuthority() && Turn == EPieceColor::Black) return;
+	if(!HasAuthority() && Turn == EPieceColor::White) return;
+	
 	AActor* HitActor = Controller->TraceForActor();
 	if(!bIsClickedOnce)
 	{
@@ -116,24 +119,24 @@ void AChessBoard::ClickFloor()
 		{
 			if(SelectedPiece->GetPieceColor() == Turn)
 			{
-				if(HasAuthority() && SelectedPiece->GetPieceColor() == EPieceColor::White)
-				{
-					PlaySound(PiecePickSound);
-					bIsClickedOnce = true;
-					SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
-					ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
-					SelectedFloor->ToggleGreen();
-					ShowMovableFloors(SelectedFloor);
-				}
-				else if(!HasAuthority() && SelectedPiece->GetPieceColor() == EPieceColor::Black)
-				{
-					PlaySound(PiecePickSound);
-					bIsClickedOnce = true;
-					SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
-					ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
-					SelectedFloor->ToggleGreen();
-					ShowMovableFloors(SelectedFloor);
-				}
+				// if(HasAuthority() && SelectedPiece->GetPieceColor() == EPieceColor::White)
+				// {
+				// 	PlaySound(PiecePickSound);
+				// 	bIsClickedOnce = true;
+				// 	SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
+				// 	ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
+				// 	SelectedFloor->ToggleGreen();
+				// 	ShowMovableFloors(SelectedFloor);
+				// }
+				// else if(!HasAuthority() && SelectedPiece->GetPieceColor() == EPieceColor::Black)
+				// {
+				PlaySound(PiecePickSound);
+				bIsClickedOnce = true;
+				SelectedFloor = SelectedPiece->GetFloorBeneathPiece();
+				ServerRPC_SetPiece(SelectedFloor, TargetFloor, SelectedPiece, TargetPiece, MovableFloors, AttackableFloors);
+				SelectedFloor->ToggleGreen();
+				ShowMovableFloors(SelectedFloor);
+				//}
 			}
 		}
 	}
@@ -231,8 +234,9 @@ void AChessBoard::MulticastRPC_PieceEncounter_Implementation()
 void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 {
 	//Event when two pieces meet
-	for(auto Floor : AttackableFloors)
+	for(int32 i = 0; i < AttackableFloors.Num(); ++i)
 	{
+		ABoardFloor* Floor = AttackableFloors[i];
 		if(Floor->GetPieceOnFloor() == Target)
 		{
 			Selected->IncreaseEncounterCount();
@@ -242,7 +246,7 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 				QueenEncounter();
 			}
 			else
-			{	
+			{   
 				AfterQueen(Selected, Target);
 			}
 		}
@@ -1041,7 +1045,11 @@ void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
 		if(HasAuthority())
 		{
 			FTimerHandle DeleteTimer;
-			GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [DeletePiece](){DeletePiece->Destroy();}, 4.15f, false);
+			GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [DeletePiece]()
+			{
+				DeletePiece->GetFloorBeneathPiece()->SetPieceOnFloor(nullptr);
+				DeletePiece->Destroy();
+			}, 4.15f, false);
 		}
 	}
 }
