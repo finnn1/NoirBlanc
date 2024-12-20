@@ -57,6 +57,16 @@ void ABishopWeapon::OnBoxComponentOverlap(
 	const FHitResult& SweepResult
 )
 {
-	ABishopGameMode* BishopGameMode = Cast<ABishopGameMode>(GetWorld()->GetAuthGameMode());
-	BishopGameMode->OnTaggerOverlapped(OtherActor);
+	ServerRPC_OnBoxComponentOverlap(OtherActor);
+}
+
+void ABishopWeapon::ServerRPC_OnBoxComponentOverlap_Implementation(
+	AActor* OtherActor
+)
+{
+	ABishopGameMode* _BishopGameMode = Cast<ABishopGameMode>(GetWorld()->GetAuthGameMode());
+	if (_BishopGameMode)
+	{
+		_BishopGameMode->OnTaggerOverlapped(OtherActor);
+	}
 }

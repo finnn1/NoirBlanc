@@ -42,4 +42,9 @@ private:
 		bool bFromSweep,
 		const FHitResult& SweepResult
 	);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_OnBoxComponentOverlap(
+		AActor* OtherActor
+	);
 };
