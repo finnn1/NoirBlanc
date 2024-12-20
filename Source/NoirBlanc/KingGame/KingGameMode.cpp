@@ -37,44 +37,43 @@ AKingGameMode::AKingGameMode()
 AActor* AKingGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
 	//// For Test ////
-	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
-	if (Player->IsLocalPlayerController())
-	{
-		_PlayerState->PieceColor = EPieceColor::White;
-		_PlayerState->bIsAttaker = false;
-		for (int i = 0; i < AllStartPoints.Num(); ++i)
-		{
-			if (AllStartPoints[i]->PlayerStartTag == TEXT("King"))
-			{
-				return AllStartPoints[i];
-			}
-		}
-	}
-	else
-	{
-		_PlayerState->PieceColor = EPieceColor::Black;
-		_PlayerState->bIsAttaker = true;
-		for (int i = 0; i < AllStartPoints.Num(); ++i)
-		{
-			if (AllStartPoints[i]->PlayerStartTag == TEXT("Catcher"))
-			{
-				return AllStartPoints[i];
-			}
-		}
-	}
+	// ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
+	// if (Player->IsLocalPlayerController())
+	// {
+	// 	_PlayerState->PieceColor = EPieceColor::White;
+	// 	_PlayerState->bIsAttaker = false;
+	// 	for (int i = 0; i < AllStartPoints.Num(); ++i)
+	// 	{
+	// 		if (AllStartPoints[i]->PlayerStartTag == TEXT("King"))
+	// 		{
+	// 			return AllStartPoints[i];
+	// 		}
+	// 	}
+	// }
+	// else
+	// {
+	// 	_PlayerState->PieceColor = EPieceColor::Black;
+	// 	_PlayerState->bIsAttaker = true;
+	// 	for (int i = 0; i < AllStartPoints.Num(); ++i)
+	// 	{
+	// 		if (AllStartPoints[i]->PlayerStartTag == TEXT("Catcher"))
+	// 		{
+	// 			return AllStartPoints[i];
+	// 		}
+	// 	}
+	// }
+	//
+	// return Super::ChoosePlayerStart_Implementation(Player);
 	
-	return Super::ChoosePlayerStart_Implementation(Player);
-
-
 	//// TODO: 메인 게임에서는 주석 해제할 것. ////
-	/*ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
+	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
 	UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
 
 	// 게임모드 안에서 LocalPlayer다? 서버이다 => 하얀색
 	if (Player->IsLocalPlayerController())
 	{
 		_PlayerState->PieceColor = EPieceColor::White;
-
+	
 		if (_NoirBlancGameInstance->AttackerColor == EPieceColor::White)
 		{
 			_PlayerState->bIsAttaker = true;
@@ -127,7 +126,7 @@ AActor* AKingGameMode::ChoosePlayerStart_Implementation(AController* Player)
 		}
 	}
 
-	return Super::ChoosePlayerStart_Implementation(Player);*/
+	return Super::ChoosePlayerStart_Implementation(Player);
 }
 
 UClass* AKingGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
