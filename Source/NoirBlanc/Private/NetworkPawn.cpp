@@ -42,8 +42,8 @@ void ANetworkPawn::BeginPlay()
 	if(GameMode)
 	{
 		GameMode->OnGameStart.AddUObject(this, &ANetworkPawn::MulticastRPC_GameStart);
-		GameMode->OnShuffleStart.AddUObject(this, &ANetworkPawn::MulticastRPC_ShuffleStart);
-		GameMode->OnShuffleEnd.AddUObject(this, &ANetworkPawn::MulticastRPC_ShuffleEnd);
+		//GameMode->OnShuffleStart.AddUObject(this, &ANetworkPawn::MulticastRPC_ShuffleStart);
+		//GameMode->OnShuffleEnd.AddUObject(this, &ANetworkPawn::MulticastRPC_ShuffleEnd);
 		GameMode->OnGameSet.BindUObject(this, &ANetworkPawn::MulticastRPC_GameEnd);
 		GameMode->OnChangePlayerTurn.BindUObject(this, &ANetworkPawn::ChangePlayerTurn);
 		//GameMode->AddPlayer(this);
@@ -334,7 +334,7 @@ bool ANetworkPawn::IsCheckCardMatch()
 
 void ANetworkPawn::InitPlayerUI()
 {
-	PlayerUI = Cast<UPlayerUI>(CreateWidget(GetWorld(), TSubPlayerUI));
+	/*PlayerUI = Cast<UPlayerUI>(CreateWidget(GetWorld(), TSubPlayerUI));
 	if(PlayerUI && !PlayerUI->IsInViewport())
 	{
 		PlayerUI->AddToViewport();
@@ -346,7 +346,7 @@ void ANetworkPawn::InitPlayerUI()
 		{
 			PlayerUI->SetNoirTurnText();
 		}
-	}
+	}*/
 
 	/* Turn UI */
 	TurnUI = Cast<UTurnUI>(CreateWidget(GetWorld(), TurnUIFactory));
@@ -596,11 +596,10 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 	if(StartPlayer->IsLocallyControlled())
 	{
 		//초기화
-		//StartPlayer->PlayerUI->HideTurnStart();
-		StartPlayer->PlayerUI->HideEnmTurnStart();
+		/*StartPlayer->PlayerUI->HideEnmTurnStart();
 
 		//My Turn UI
-		StartPlayer->PlayerUI->ShowTurnStart();
+		StartPlayer->PlayerUI->ShowTurnStart();*/
 		
 		/*Turn UI */
 		StartPlayer->TurnUI->ShowTurn(TurnPlayerColor);
@@ -613,11 +612,10 @@ void ANetworkPawn::MulticastRPC_ChangePlayerTurn_Implementation(ANetworkPawn* St
 		ANetworkPawn* LocalNetPawn = Cast<ANetworkPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 
 		//초기화
-		LocalNetPawn->PlayerUI->HideTurnStart();
-		//LocalNetPawn->PlayerUI->HideEnmTurnStart();
+		/*LocalNetPawn->PlayerUI->HideTurnStart();
 
 		//Enemy Turn UI
-		LocalNetPawn->PlayerUI->ShowEnmTurnStart();
+		LocalNetPawn->PlayerUI->ShowEnmTurnStart();*/
 		
 		/*Turn UI */
 		LocalNetPawn->TurnUI->ShowTurn(TurnPlayerColor);
@@ -650,7 +648,7 @@ void ANetworkPawn::ServerRPC_IncreaseScore_Implementation(ANetworkPawn* ScorePla
 	
 	ScorePlayer->GetPlayerState()->SetScore(CurrentScore);
 
-	MulticastRPC_IncreaseScore(ScorePlayer, CurrentScore);
+	//MulticastRPC_IncreaseScore(ScorePlayer, CurrentScore);
 }
 
 // UI의 점수 세팅 (PlayerState를 통한 Score 동기화가 느려서 매개변수로 처리)
