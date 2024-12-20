@@ -20,4 +20,9 @@ public:
 	
 	UPROPERTY(meta=(BindWidget))
 	class UTextBlock* Txt_Winner;
+
+	UPROPERTY(meta=(BindWidget))
+	class UImage* Img_Blanc;
+	UPROPERTY(meta=(BindWidget))
+	class UImage* Img_Noir;
 };

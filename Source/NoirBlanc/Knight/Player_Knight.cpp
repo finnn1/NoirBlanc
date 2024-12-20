@@ -52,6 +52,24 @@ void APlayer_Knight::BeginPlay()
 		MulticastRPC_DestroyWaiting();
 	}
 	*/
+
+	
+	if(HasAuthority())
+	{
+		// 흑말
+		if(!IsLocallyControlled())
+		{
+			SetActorLocation(FVector(60, 0, 0));
+		}
+	}
+	else
+	{
+		// 흑말
+		if(IsLocallyControlled())
+		{
+			SetActorLocation(FVector(60, 0, 0));
+		}
+	}
 }
 
 void APlayer_Knight::MulticastRPC_DestroyWaiting_Implementation()
