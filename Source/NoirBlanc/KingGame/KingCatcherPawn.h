@@ -116,6 +116,15 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_UpdateMainTimerUI(const FText& NewText) override;
 
+	// GameOver UI
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UFinishUI> FinishUIClass;
+	
+	class UFinishUI* FinishUI;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_ShowGameOverUI(const FText& Winner) override;
+	
 	// Game State
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_SetWinner(EPieceColor WinnerColor) override;

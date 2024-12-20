@@ -38,6 +38,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_UpdateMainTimerUI(const FText& NewText) = 0;
 
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_ShowGameOverUI(const FText& Winner) = 0;
+	
 	// Set GameInstance
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_SetWinner(EPieceColor WinnerColor) = 0;

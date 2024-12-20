@@ -17,6 +17,7 @@
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "NoirBlanc/BishopGame/NoirBlancPlayerState.h"
+#include "NoirBlanc/Knight/FinishUI.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 
@@ -218,6 +219,22 @@ void AKingCatcherPawn::MulticastRPC_ShowWaitingUI_Implementation(APlayerControll
 EPieceColor AKingCatcherPawn::GetPieceColor_Implementation()
 {
 	return GetPlayerState<ANoirBlancPlayerState>()->PieceColor;
+}
+
+void AKingCatcherPawn::MulticastRPC_ShowGameOverUI_Implementation(const FText& Winner)
+{
+	if (IsLocallyControlled())
+	{
+		if (FinishUIClass)
+		{
+			FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
+			if (FinishUI)
+			{
+				FinishUI->AddToViewport();
+				FinishUI->UpdateWinnerText(Winner);
+			}
+		}
+	}
 }
 
 void AKingCatcherPawn::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)

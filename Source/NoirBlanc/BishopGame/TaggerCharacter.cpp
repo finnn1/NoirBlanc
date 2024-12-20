@@ -20,6 +20,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "NoirBlanc/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "PieceTypes.h"
+#include "NoirBlanc/Knight/CountDownUI.h"
+#include "NoirBlanc/Knight/FinishUI.h"
+#include "NoirBlanc/Knight/WaitingUI.h"
 
 class ABishopGameMode;
 // Sets default values
@@ -115,11 +118,32 @@ void ATaggerCharacter::MulticastRPC_UpdateMainTimerUI_Implementation(const FText
 	}
 }
 
-void ATaggerCharacter::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
+void ATaggerCharacter::MulticastRPC_ShowGameOverUI_Implementation(const FText& Winner)
 {
 	if (IsLocallyControlled())
 	{
-		WaitingOtherPlayerUI->SetText(NewText);
+		if (FinishUIClass)
+		{
+			FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
+			if (FinishUI)
+			{
+				FinishUI->AddToViewport();
+				FinishUI->UpdateWinnerText(Winner);
+			}
+		}
+	}
+}
+
+void ATaggerCharacter::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
+{
+	if (IsValid(WaitingUI))
+	{
+		WaitingUI->Txt_Waiting->SetText(FText());
+	}
+
+	if (IsLocallyControlled())
+	{
+		CountDownUI->UpdateCountDown(NewText);
 	}
 }
 
@@ -285,15 +309,25 @@ void ATaggerCharacter::MulticastRPC_ShowWaitingUI_Implementation(APlayerControll
 	// Waiting For Player UI 띄우기
 	if (IsLocallyControlled())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Joined Player : %s"), *JoinedPlayer->GetActorNameOrLabel());
-		WaitingOtherPlayerUI = CreateWidget<UWaitingOtherPlayerUI>
+		WaitingUI = CreateWidget<UWaitingUI>
 			(
 			 JoinedPlayer,
-			 UWaitingOtherPlayerUIClass
+			 WaitingUIClass
 			);
-		if (WaitingOtherPlayerUI)
+		if (WaitingUI)
 		{
-			WaitingOtherPlayerUI->AddToViewport();
+			WaitingUI->AddToViewport();
+		}
+
+		CountDownUI = CreateWidget<UCountDownUI>
+			(
+			 JoinedPlayer,
+			 CountDownUIClass
+			);
+		if (CountDownUI)
+		{
+			CountDownUI->AddToViewport();
+			CountDownUI->Txt_Count->SetText(FText());
 		}
 	}
 }

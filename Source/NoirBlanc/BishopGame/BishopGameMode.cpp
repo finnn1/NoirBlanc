@@ -131,6 +131,7 @@ void ABishopGameMode::BeginPlay()
 void ABishopGameMode::NotifyJoined(APlayerController* JoinedPlayer)
 {
 	JoinedPlayers.Add(JoinedPlayer);
+	
 	// 2명 들어왔으면 게임 시작 (GameMode에게 게임 시작하라고 알려주기)
 	if (JoinedPlayers.Num() >= 2)
 	{
@@ -172,7 +173,7 @@ void ABishopGameMode::StartCountTimer()
 					IUIUpdatable::Execute_MulticastRPC_UpdateStartCountdownUI
 						(
 						 JoinedPlayers[i]->GetPawn(),
-						 FText::FromString(TEXT("GO!"))
+						 FText::FromString(TEXT("시작!"))
 						);
 				}
 			}
@@ -368,8 +369,6 @@ FText ABishopGameMode::PickRandomText()
 		const int32 MaxNum = TextsToType.Num();
 		const int32 RandomNumber = FMath::RandRange(0, MaxNum - 1);
 		RandomText = TextsToType[RandomNumber];
-		// UE_LOG(LogTemp, Warning, TEXT("Current Text: %s"), *CurrentTextToType.ToString());
-		// UE_LOG(LogTemp, Warning, TEXT("Random Text: %s"), *RandomText.ToString());
 	}
 	while (TextsToType.Num() >= 2 && RandomText.EqualTo(CurrentTextToType));
 	CurrentTextToType = RandomText;
@@ -381,48 +380,90 @@ void ABishopGameMode::GameOver(APawn* Winner)
 {
 	GetWorld()->GetTimerManager().ClearTimer(StartCountDownTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(MainTimerHandle);
-	UE_LOG(LogTemp, Warning, TEXT("들어옴!"));
+	
+	// 게임오버 UI 띄우기
 	// UIUpdatable 인터페이스 구현 여부 확인
-	if (Winner->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+	for (int i = 0; i < JoinedPlayers.Num(); ++i)
 	{
-		UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
-		if (_NoirBlancGameInstance)
+		APawn* _Pawn = JoinedPlayers[i]->GetPawn();
+		if (IsValid(_Pawn))
 		{
-			EPieceColor _WinnerColor = IUIUpdatable::Execute_GetPieceColor(Winner);
-			for (int i = 0; i < JoinedPlayers.Num(); ++i)
+			if (_Pawn->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
 			{
-				APawn* _Pawn = JoinedPlayers[i]->GetPawn();
-				if (IsValid(_Pawn))
-				{
-					// UIUpdatable 인터페이스 구현 여부 확인
-					if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
-					{
-						IUIUpdatable::Execute_MulticastRPC_SetWinner(JoinedPlayers[i]->GetPawn(), _WinnerColor);
+				EPieceColor _WinnerColor = IUIUpdatable::Execute_GetPieceColor(Winner);
 
-						// Level Travel
-						ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
-						if (_ATravelPlayerController)
-						{
-							_ATravelPlayerController->ServerRPC_LevelTravelToChess();
-						}
-						else
-						{
-							UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
-						}
-						// 승리자가 아닐 경우 Destory!
-						// if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
-						// {
-						// 	JoinedPlayers[i]->GetPawn()->Destroy();
-						// }
-					}
+				if (_WinnerColor == EPieceColor::White)
+				{
+					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("Blanc"));
+				}
+				else if (_WinnerColor == EPieceColor::Black)
+				{
+					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("Noir"));
+				}
+				else
+				{
+					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("Draw"));
 				}
 			}
 		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
-		}
 	}
+
+	// 5초 뒤에 체스 보드로 돌아가기.
+	FTimerHandle GameOverUITimerHandle;
+	GetWorld()->GetTimerManager().SetTimer
+		(
+		 GameOverUITimerHandle,
+		 FTimerDelegate::CreateLambda([this, Winner]()
+		 {
+			 // GAMEOVER and Return to Chessboard.
+			 // UIUpdatable 인터페이스 구현 여부 확인
+			 if (Winner->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+			 {
+				 UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
+				 if (_NoirBlancGameInstance)
+				 {
+					 EPieceColor _WinnerColor = IUIUpdatable::Execute_GetPieceColor(Winner);
+					 for (int i = 0; i < JoinedPlayers.Num(); ++i)
+					 {
+						 APawn* _Pawn = JoinedPlayers[i]->GetPawn();
+						 if (IsValid(_Pawn))
+						 {
+							 // UIUpdatable 인터페이스 구현 여부 확인
+							 if (JoinedPlayers[i]->GetPawn()->GetClass()->
+							                       ImplementsInterface(UUIUpdatable::StaticClass()))
+							 {
+								 IUIUpdatable::Execute_MulticastRPC_SetWinner(JoinedPlayers[i]->GetPawn(),
+								                                              _WinnerColor);
+
+								 // Level Travel
+								 ATravelPlayerController* _ATravelPlayerController = Cast<
+									 ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
+								 if (_ATravelPlayerController)
+								 {
+									 _ATravelPlayerController->ServerRPC_LevelTravelToChess();
+								 }
+								 else
+								 {
+									 UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
+								 }
+								 // 승리자가 아닐 경우 Destory!
+								 // if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
+								 // {
+								 // 	JoinedPlayers[i]->GetPawn()->Destroy();
+								 // }
+							 }
+						 }
+					 }
+				 }
+				 else
+				 {
+					 UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
+				 }
+			 }
+		 }),
+		 5.f,
+		 false
+		);
 }
 
 bool ABishopGameMode::CheckCheatting(const FText& TypedText)

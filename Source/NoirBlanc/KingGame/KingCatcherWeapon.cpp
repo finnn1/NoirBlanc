@@ -50,6 +50,9 @@ void AKingCatcherWeapon::OnBoxComponentOverlap
 	if (HasAuthority())
 	{
 		AKingGameMode* _KingGameMode = Cast<AKingGameMode>(GetWorld()->GetAuthGameMode());
-		_KingGameMode->OnKingCharacterOverlapped(OtherActor);
+		if (_KingGameMode)
+		{
+			_KingGameMode->OnKingCharacterOverlapped(OtherActor);
+		}
 	}
 }

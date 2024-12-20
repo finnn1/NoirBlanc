@@ -68,19 +68,34 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UKingGameMainUI> KingGameMainUIClass;
+	
 	UKingGameMainUI* KingGameMainUI;
+	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UWaitingUI> WaitingUIClass;
+	
 	UWaitingUI* WaitingUI;
+	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UCountDownUI> CountDownUIClass;
+	
 	UCountDownUI* CountDownUI;
+	
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_InitializeMainGameUI() override;
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_UpdateMainTimerUI(const FText& NewText) override;
 
+	// GameOver UI
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UFinishUI> FinishUIClass;
+	
+	class UFinishUI* FinishUI;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastRPC_ShowGameOverUI(const FText& Winner) override;
+	
 	// Set GameInstance
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_SetWinner(EPieceColor WinnerColor) override;
