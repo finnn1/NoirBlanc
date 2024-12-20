@@ -122,7 +122,11 @@ protected:
 	TSubclassOf<class UWaitingUI> WaitingUIClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	UWaitingUI* WaitingUI;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UMiniGameToChessUI> MiniGameToChessUIClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	UMiniGameToChessUI* MiniGameToChessUI;
 private:
 	const int32 Chess_Num  = 8;
 	bool bIsClickEnabled = false;
