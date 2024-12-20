@@ -138,6 +138,11 @@ void AChessPiece::DissolveMaterial()
 
 void AChessPiece::StopTimer()
 {
+	if (Dynamic)
+	{
+		Dynamic = nullptr; // 참조 해제
+	}
+	DissolveCounter = 0.0f;
 	GetWorldTimerManager().ClearTimer(DissolveTimer);
 }
 

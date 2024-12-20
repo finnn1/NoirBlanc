@@ -73,5 +73,5 @@ private:
 	float DissolveCounter = 0.f;
 
 	UPROPERTY()
-	UMaterialInstanceDynamic* Dynamic;
+	UMaterialInstanceDynamic* Dynamic = nullptr;
 };
