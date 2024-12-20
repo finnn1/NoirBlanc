@@ -27,7 +27,7 @@ AKingCharacter::AKingCharacter()
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true;            // Character moves in the direction of input...	
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
@@ -87,7 +87,8 @@ void AKingCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<
+				UEnhancedInputLocalPlayerSubsystem>
 			(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(KingMappingContext, 0);
@@ -167,11 +168,11 @@ EPieceColor AKingCharacter::GetPieceColor_Implementation()
 
 void AKingCharacter::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
 {
-	// if (IsValid(WaitingUI))
-	// {
-	// 	WaitingUI->RemoveFromParent();
-	// }
-	
+	if (IsValid(WaitingUI))
+	{
+		WaitingUI->Txt_Waiting->SetText(FText());
+	}
+
 	if (IsLocallyControlled())
 	{
 		CountDownUI->UpdateCountDown(NewText);

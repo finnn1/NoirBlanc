@@ -391,17 +391,30 @@ void ABishopGameMode::GameOver(APawn* Winner)
 			EPieceColor _WinnerColor = IUIUpdatable::Execute_GetPieceColor(Winner);
 			for (int i = 0; i < JoinedPlayers.Num(); ++i)
 			{
-				// UIUpdatable 인터페이스 구현 여부 확인
-				if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+				APawn* _Pawn = JoinedPlayers[i]->GetPawn();
+				if (IsValid(_Pawn))
 				{
-					IUIUpdatable::Execute_MulticastRPC_SetWinner(JoinedPlayers[i]->GetPawn(), _WinnerColor);
-					//Level Travel
-					Cast<ATravelPlayerController>(GetWorld()->GetFirstPlayerController())->ServerRPC_LevelTravelToChess();
-					// 승리자가 아닐 경우 Destory!
-					// if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
-					// {
-					// 	JoinedPlayers[i]->GetPawn()->Destroy();
-					// }
+					// UIUpdatable 인터페이스 구현 여부 확인
+					if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+					{
+						IUIUpdatable::Execute_MulticastRPC_SetWinner(JoinedPlayers[i]->GetPawn(), _WinnerColor);
+
+						// Level Travel
+						ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
+						if (_ATravelPlayerController)
+						{
+							_ATravelPlayerController->ServerRPC_LevelTravelToChess();
+						}
+						else
+						{
+							UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
+						}
+						// 승리자가 아닐 경우 Destory!
+						// if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
+						// {
+						// 	JoinedPlayers[i]->GetPawn()->Destroy();
+						// }
+					}
 				}
 			}
 		}

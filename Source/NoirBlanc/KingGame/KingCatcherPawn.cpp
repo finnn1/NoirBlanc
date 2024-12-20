@@ -70,7 +70,7 @@ void AKingCatcherPawn::ServerRPC_HandleFireButtonClick_Implementation()
 	{
 		_AKingGameMode->HandleCatcherFireButtonClick();
 	}
-	
+
 	// // if (SelectedSpawnLocations.Num() < 4) return;
 	// for (class ASpawnLocation* SelectedSpawnLocation : SelectedSpawnLocations)
 	// {
@@ -152,7 +152,7 @@ void AKingCatcherPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// UI가 아닌 실제 액터를 클릭하는 경우 사용
 	// if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	// {
-		// EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AKingCatcherPawn::Click);
+	// EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AKingCatcherPawn::Click);
 	// }
 	else
 	{
@@ -222,7 +222,10 @@ EPieceColor AKingCatcherPawn::GetPieceColor_Implementation()
 
 void AKingCatcherPawn::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
 {
-	if (WaitingUI) WaitingUI->RemoveFromParent();
+	if (IsValid(WaitingUI))
+	{
+		WaitingUI->Txt_Waiting->SetText(FText());
+	}
 
 	if (IsLocallyControlled())
 	{
