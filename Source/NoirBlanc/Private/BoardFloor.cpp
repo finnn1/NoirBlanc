@@ -24,6 +24,10 @@ ABoardFloor::ABoardFloor()
 	CompRed = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CompRed"));
 	CompRed->SetupAttachment(RootComponent);
 	CompRed->SetVisibility(false);
+	
+	CompHighlight = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CompHighlight"));
+	CompHighlight->SetupAttachment(RootComponent);
+	CompHighlight->SetVisibility(false);
 }
 
 // Called when the game starts or when spawned
@@ -124,4 +128,14 @@ void ABoardFloor::ActivateBlue()
 void ABoardFloor::DeactivateBlue()
 {
 	CompBlue->SetVisibility(false);
+}
+
+void ABoardFloor::ActivateHighlight()
+{
+	CompHighlight->SetVisibility(true);
+}
+
+void ABoardFloor::DeactivateHighlight()
+{
+	CompHighlight->SetVisibility(false);
 }

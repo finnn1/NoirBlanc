@@ -96,6 +96,16 @@ public:
 	// void ServerRPC_Init();
 	
 	float WindForceMax;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* BitSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* ShortFireSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* LongFireSound;
 	
 };
 

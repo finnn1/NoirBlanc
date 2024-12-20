@@ -41,6 +41,8 @@ public:
 	void DeactivateRed();
 	void ActivateBlue();
 	void DeactivateBlue();
+	void ActivateHighlight();
+	void DeactivateHighlight();
 //////////Variables
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompCollision")
@@ -52,6 +54,9 @@ protected:
 	UStaticMeshComponent* CompBlue;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompRed")
 	UStaticMeshComponent* CompRed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CompHighLight")
+	UStaticMeshComponent* CompHighlight;
+	
 	
 private:
 	UPROPERTY(Replicated,VisibleAnywhere, Category = "FloorInfo")
