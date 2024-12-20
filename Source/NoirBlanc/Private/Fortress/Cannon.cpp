@@ -119,6 +119,9 @@ void ACannon::BeginPlay()
 		ServerRPC_NewPlayerJoined();
 		if (HasAuthority()) this->bIsturn = true; // set the first player turn true
 	}
+
+	if (IsLocallyControlled() && BackgroundSound != nullptr)
+		UGameplayStatics::PlaySound2D(this, BackgroundSound);
 }
 
 void ACannon::ServerRPC_NewPlayerJoined_Implementation()
@@ -171,6 +174,7 @@ void ACannon::Tick(float DeltaTime)
 
 void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation)
 {
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *NewLocation.ToString());
 	MulticastRPC_Move_Implementation(NewLocation, NewRotation);
 }
 
