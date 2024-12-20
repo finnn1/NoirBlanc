@@ -1047,18 +1047,20 @@ void AChessBoard::DeletePiece(AChessPiece* DeletePiece)
 
 		DeletePiece->DissolveMaterial();
 
-		if(HasAuthority())
+	
+		FTimerHandle DeleteTimer;
+		GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [DeletePiece, this]()
 		{
-			FTimerHandle DeleteTimer;
-			GetWorld()->GetTimerManager().SetTimer(DeleteTimer, [DeletePiece]()
+			DeletePiece->GetFloorBeneathPiece()->DeactivateHighlight();
+			if(HasAuthority())
 			{
-				DeletePiece->GetFloorBeneathPiece()->DeactivateHighlight();
 				DeletePiece->GetFloorBeneathPiece()->SetPieceOnFloor(nullptr);
 				DeletePiece->Destroy();
-			}, 4.15f, false);
-		}
+			}
+		}, 4.15f, false);
 	}
 }
+
 
 void AChessBoard::EndGame()
 {
