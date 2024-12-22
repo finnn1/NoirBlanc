@@ -60,15 +60,15 @@ ATaggerCharacter::ATaggerCharacter()
 	// GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	/*CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 400.0f;
-	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bUsePawnControlRotation = true;*/
 
 	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	/*FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom);
-	FollowCamera->bUsePawnControlRotation = false;
+	FollowCamera->bUsePawnControlRotation = false;*/
 }
 
 // Called to bind functionality to input
@@ -160,7 +160,6 @@ void ATaggerCharacter::MulticastRPC_SetWinner_Implementation(EPieceColor WinnerC
 	}
 }
 
-// Called when the game starts or when spawned
 void ATaggerCharacter::BeginPlay()
 {
 	Super::BeginPlay();

@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BishopGameMode.h"
+
+#include "BishopGameCamera.h"
 #include "BishopPawn.h"
 #include "NoirBlancPlayerState.h"
 #include "Components/ArrowComponent.h"
@@ -31,6 +33,36 @@ ABishopGameMode::ABishopGameMode()
 
 AActor* ABishopGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
+	//// For Test ////
+	// ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
+	// if (Player->IsLocalPlayerController())
+	// {
+	// 	_PlayerState->PieceColor = EPieceColor::White;
+	// 	_PlayerState->bIsAttaker = false;
+	// 	for (int i = 0; i < AllStartPoints.Num(); ++i)
+	// 	{
+	// 		if (AllStartPoints[i]->PlayerStartTag == TEXT("Bishop"))
+	// 		{
+	// 			return AllStartPoints[i];
+	// 		}
+	// 	}
+	// }
+	// else
+	// {
+	// 	_PlayerState->PieceColor = EPieceColor::Black;
+	// 	_PlayerState->bIsAttaker = true;
+	// 	for (int i = 0; i < AllStartPoints.Num(); ++i)
+	// 	{
+	// 		if (AllStartPoints[i]->PlayerStartTag == TEXT("Tagger"))
+	// 		{
+	// 			return AllStartPoints[i];
+	// 		}
+	// 	}
+	// }
+	//
+	// return Super::ChoosePlayerStart_Implementation(Player);
+
+
 	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
 	UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
 
@@ -126,12 +158,36 @@ void ABishopGameMode::BeginPlay()
 	CurrentTextToType = RandomText;
 
 	CurrentRemainTime = DefaultRemainTime;
+
+	AActor* _BishopGameCameraActor = UGameplayStatics::GetActorOfClass(GetWorld(), ABishopGameCamera::StaticClass());
+	if (_BishopGameCameraActor)
+	{
+		BishopGameCamera = Cast<ABishopGameCamera>(_BishopGameCameraActor);
+	}
 }
 
 void ABishopGameMode::NotifyJoined(APlayerController* JoinedPlayer)
 {
 	JoinedPlayers.Add(JoinedPlayer);
-	
+
+	if (BishopGameCamera)
+	{
+		if (JoinedPlayer->GetPawn()->IsA(ABishopPawn::StaticClass()))
+		{
+			BishopGameCamera->Player1 = JoinedPlayer->GetPawn();
+		}
+		else
+		{
+			BishopGameCamera->Player2 = JoinedPlayer->GetPawn();
+		}
+
+		ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(JoinedPlayer);
+		if (_ATravelPlayerController)
+		{
+			_ATravelPlayerController->ClientRPC_SetViewTarget(BishopGameCamera);
+		}
+	}
+
 	// 2명 들어왔으면 게임 시작 (GameMode에게 게임 시작하라고 알려주기)
 	if (JoinedPlayers.Num() >= 2)
 	{
@@ -151,6 +207,15 @@ void ABishopGameMode::NotifyJoined(APlayerController* JoinedPlayer)
 
 void ABishopGameMode::StartCountTimer()
 {
+	for (APlayerController* JoinedPlayer : JoinedPlayers)
+	{
+		ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(JoinedPlayer);
+		if (_ATravelPlayerController)
+		{
+			_ATravelPlayerController->ClientRPC_SetViewTarget(BishopGameCamera);
+		}
+	}
+
 	// 카운트 다운 내리자!
 	if (CountdownNumber > -1)
 	{
@@ -201,8 +266,11 @@ void ABishopGameMode::StartCountTimer()
 				IUIUpdatable::Execute_MulticastRPC_InitializeTypingUI(JoinedPlayers[i]->GetPawn());
 
 				// 6. Main Timer 똑딱똑딱 시작
-				IUIUpdatable::Execute_MulticastRPC_UpdateMainTimerUI(JoinedPlayers[i]->GetPawn(),
-				                                                     FText::AsNumber(CurrentRemainTime));
+				IUIUpdatable::Execute_MulticastRPC_UpdateMainTimerUI
+					(
+					 JoinedPlayers[i]->GetPawn(),
+					 FText::AsNumber(CurrentRemainTime)
+					);
 				GetWorld()->GetTimerManager().SetTimer
 					(
 					 MainTimerHandle,
@@ -243,8 +311,11 @@ void ABishopGameMode::UpdateTimer()
 		// UIUpdatable 인터페이스 구현 여부 확인
 		if (JoinedPlayers[i]->GetPawn()->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
 		{
-			IUIUpdatable::Execute_MulticastRPC_UpdateMainTimerUI(JoinedPlayers[i]->GetPawn(),
-			                                                     FText::AsNumber(CurrentRemainTime));
+			IUIUpdatable::Execute_MulticastRPC_UpdateMainTimerUI
+				(
+				 JoinedPlayers[i]->GetPawn(),
+				 FText::AsNumber(CurrentRemainTime)
+				);
 		}
 	}
 }
@@ -334,7 +405,8 @@ void ABishopGameMode::CommitText(const FText& TypedText)
 				// 무기 소환!
 				FVector SpawnPoint = BishopPawn->WeaponSpawnPoint->GetComponentLocation();
 				FRotator SpawnRotation = BishopPawn->WeaponSpawnPoint->GetComponentRotation();
-				BishopPawn->MulticastRPC_SpawnWeapon(SpawnPoint, SpawnRotation, BishopWeaponClass);
+				GetWorld()->SpawnActor<ABishopWeapon>(BishopWeaponClass, SpawnPoint, SpawnRotation);
+				// BishopPawn->MulticastRPC_SpawnWeapon(SpawnPoint, SpawnRotation, BishopWeaponClass);
 			}
 
 			// UIUpdatable 인터페이스 구현 여부 확인
@@ -380,7 +452,7 @@ void ABishopGameMode::GameOver(APawn* Winner)
 {
 	GetWorld()->GetTimerManager().ClearTimer(StartCountDownTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(MainTimerHandle);
-	
+
 	// 게임오버 UI 띄우기
 	// UIUpdatable 인터페이스 구현 여부 확인
 	for (int i = 0; i < JoinedPlayers.Num(); ++i)
@@ -413,54 +485,60 @@ void ABishopGameMode::GameOver(APawn* Winner)
 	GetWorld()->GetTimerManager().SetTimer
 		(
 		 GameOverUITimerHandle,
-		 FTimerDelegate::CreateLambda([this, Winner]()
-		 {
-			 // GAMEOVER and Return to Chessboard.
-			 // UIUpdatable 인터페이스 구현 여부 확인
-			 if (Winner->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
-			 {
-				 UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
-				 if (_NoirBlancGameInstance)
-				 {
-					 EPieceColor _WinnerColor = IUIUpdatable::Execute_GetPieceColor(Winner);
-					 for (int i = 0; i < JoinedPlayers.Num(); ++i)
-					 {
-						 APawn* _Pawn = JoinedPlayers[i]->GetPawn();
-						 if (IsValid(_Pawn))
-						 {
-							 // UIUpdatable 인터페이스 구현 여부 확인
-							 if (JoinedPlayers[i]->GetPawn()->GetClass()->
-							                       ImplementsInterface(UUIUpdatable::StaticClass()))
-							 {
-								 IUIUpdatable::Execute_MulticastRPC_SetWinner(JoinedPlayers[i]->GetPawn(),
-								                                              _WinnerColor);
+		 FTimerDelegate::CreateLambda
+		 (
+		  [this, Winner]()
+		  {
+			  // GAMEOVER and Return to Chessboard.
+			  // UIUpdatable 인터페이스 구현 여부 확인
+			  if (Winner->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
+			  {
+				  UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
+				  if (_NoirBlancGameInstance)
+				  {
+					  EPieceColor _WinnerColor = IUIUpdatable::Execute_GetPieceColor(Winner);
+					  for (int i = 0; i < JoinedPlayers.Num(); ++i)
+					  {
+						  APawn* _Pawn = JoinedPlayers[i]->GetPawn();
+						  if (IsValid(_Pawn))
+						  {
+							  // UIUpdatable 인터페이스 구현 여부 확인
+							  if (JoinedPlayers[i]->GetPawn()->GetClass()->
+							                        ImplementsInterface(UUIUpdatable::StaticClass()))
+							  {
+								  IUIUpdatable::Execute_MulticastRPC_SetWinner
+									  (
+									   JoinedPlayers[i]->GetPawn(),
+									   _WinnerColor
+									  );
 
-								 // Level Travel
-								 ATravelPlayerController* _ATravelPlayerController = Cast<
-									 ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
-								 if (_ATravelPlayerController)
-								 {
-									 _ATravelPlayerController->ServerRPC_LevelTravelToChess();
-								 }
-								 else
-								 {
-									 UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
-								 }
-								 // 승리자가 아닐 경우 Destory!
-								 // if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
-								 // {
-								 // 	JoinedPlayers[i]->GetPawn()->Destroy();
-								 // }
-							 }
-						 }
-					 }
-				 }
-				 else
-				 {
-					 UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
-				 }
-			 }
-		 }),
+								  // Level Travel
+								  ATravelPlayerController* _ATravelPlayerController = Cast<
+									  ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
+								  if (_ATravelPlayerController)
+								  {
+									  _ATravelPlayerController->ServerRPC_LevelTravelToChess();
+								  }
+								  else
+								  {
+									  UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
+								  }
+								  // 승리자가 아닐 경우 Destory!
+								  // if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
+								  // {
+								  // 	JoinedPlayers[i]->GetPawn()->Destroy();
+								  // }
+							  }
+						  }
+					  }
+				  }
+				  else
+				  {
+					  UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
+				  }
+			  }
+		  }
+		 ),
 		 5.f,
 		 false
 		);

@@ -25,14 +25,12 @@ public:
 	UStaticMeshComponent* MeshComponent;
 
 	/** Camera boom positioning the camera behind the character */
-	UPROPERTY
-	(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	// class USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
-	UPROPERTY
-	(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	// class UCameraComponent* FollowCamera;
 
 	UPROPERTY
 	(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -117,9 +115,10 @@ public:
 	TSubclassOf<UWaitingUI> WaitingUIClass;
 	
 	UWaitingUI* WaitingUI;
-	UPROPERTY(EditAnywhere)
 	
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<UCountDownUI> CountDownUIClass;
+	
 	UCountDownUI* CountDownUI;
 
 	// 서버에게 들어왔다고 알려주기

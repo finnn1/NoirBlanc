@@ -21,6 +21,7 @@ class NOIRBLANC_API ABishopGameMode : public AGameModeBase
 public:
 	ABishopGameMode();
 
+	class ABishopGameCamera* BishopGameCamera;
 	TArray<APlayerController*> JoinedPlayers;
 	
 	FText CurrentTextToType;
