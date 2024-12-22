@@ -6,9 +6,9 @@
 #include "Cannon.h"
 #include "Blueprint/UserWidget.h"
 #include "NoirBlanc/Knight/CountDownUI.h"
+#include "NoirBlanc/Knight/TurnUI.h"
 #include "NoirBlanc/Knight/WaitingUI.h"
 #include "FortressUI.generated.h"
-
 
 class ACannon;
 class UProgressBar;
@@ -55,6 +55,8 @@ public:
 	ACannon* playerCannon;
 	// Cannon* Player2;
 
+	EPieceColor playerPieceColor;
+	
 	UPROPERTY(BlueprintReadOnly)
 	float Player1Percentage;
 	
@@ -65,24 +67,28 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player);
 
-	UPROPERTY(meta=(BindWidget))
-	class UHorizontalBox* horizontalBox_Turn;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UTurnUI> TurnUIFactory;
 	
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* text_Turn;
-
+	UPROPERTY()
+	UTurnUI* turnUI;
+	
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* windForcePlus;
 
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* windForceMinus;
+	
 	// End UI
 public:
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* text_Winner;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UFinishUI> FinishUIFactory;
 
+	UPROPERTY()
+	UFinishUI* FinishUI;
+	
 	void GameOver(int32 index);
-
+	
 	// Etc. 
 public:
 	void SetTurnWidgetVisible(); 

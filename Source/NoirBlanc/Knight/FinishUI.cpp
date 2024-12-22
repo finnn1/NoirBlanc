@@ -12,4 +12,6 @@ void UFinishUI::NativeConstruct()
 void UFinishUI::UpdateWinnerText(FText winner)
 {
 	Txt_Winner->SetText(winner);
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *winner.ToString());
+	Txt_Winner->InvalidateLayoutAndVolatility();
 }

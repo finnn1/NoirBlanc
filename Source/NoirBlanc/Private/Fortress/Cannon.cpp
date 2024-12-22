@@ -164,8 +164,7 @@ void ACannon::Tick(float DeltaTime)
 	if (!bIsturn) return;
 
 	FVector NewLocation = GetActorLocation() + (MovementInput * MoveSpeed * DeltaTime);
-
-	// TODO: should set the limit of the rotation angle
+	
 	FRotator NewRotation = Muzzle->GetComponentRotation() + RotationInput * RotationSpeed * DeltaTime;
 
 	if (IsLocallyControlled())
@@ -174,7 +173,6 @@ void ACannon::Tick(float DeltaTime)
 
 void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *NewLocation.ToString());
 	MulticastRPC_Move_Implementation(NewLocation, NewRotation);
 }
 
