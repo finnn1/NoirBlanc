@@ -16,4 +16,7 @@ class NOIRBLANC_API ATravelPlayerController : public APlayerController
 public:
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void ServerRPC_LevelTravelToChess();
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams());
 };
