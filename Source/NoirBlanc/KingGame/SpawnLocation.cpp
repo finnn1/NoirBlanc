@@ -44,7 +44,7 @@ void ASpawnLocation::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ASpawnLocation::ColorToRed()
+/*void ASpawnLocation::ColorToRed()
 {
 	if (DynamicMaterial)
 	{
@@ -58,14 +58,25 @@ void ASpawnLocation::ColorToWhite()
 	{
 		DynamicMaterial->SetVectorParameterValue("BaseColor", FLinearColor(1.f, 1.f, 1.f, 1.f));
 	}
-}
+}*/
 
-void ASpawnLocation::Select()
+void ASpawnLocation::ColorTo_Implementation(FLinearColor color, APlayerController* WhoWantToSee)
 {
-	ColorToRed();
-}
-
-void ASpawnLocation::Deselect()
-{
-	ColorToWhite();
+	if (WhoWantToSee == nullptr)
+	{
+		if (DynamicMaterial)
+		{
+			DynamicMaterial->SetVectorParameterValue("BaseColor", color);
+		}
+	}
+	else
+	{
+		if (GetWorld()->GetFirstPlayerController() == WhoWantToSee)
+		{
+			if (DynamicMaterial)
+			{
+				DynamicMaterial->SetVectorParameterValue("BaseColor", color);
+			}
+		}
+	}
 }

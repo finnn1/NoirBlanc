@@ -64,7 +64,7 @@ AActor* AKingGameMode::ChoosePlayerStart_Implementation(AController* Player)
 	// }
 	//
 	// return Super::ChoosePlayerStart_Implementation(Player);
-	
+
 	//// TODO: 메인 게임에서는 주석 해제할 것. ////
 	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
 	UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
@@ -324,7 +324,26 @@ void AKingGameMode::HandleCatcherLocationSelect(int32 ButtonIndex)
 			AKingCatcherPawn* _KingCatcherPawn = Cast<AKingCatcherPawn>(JoinedPlayers[i]->GetPawn());
 			if (_KingCatcherPawn == nullptr) continue;
 
-			_KingCatcherPawn->MulticastRPC_SetButtonColor(ButtonIndex, true);
+			APlayerController* _PlayerController = _KingCatcherPawn->GetController<APlayerController>();
+			if (_PlayerController)
+			{
+				ColorSpawnLocationToPlayer(ButtonIndex, _PlayerController);
+			}
+			// _KingCatcherPawn->MulticastRPC_SetButtonColor(ButtonIndex, true);
+		}
+	}
+}
+
+void AKingGameMode::ColorSpawnLocationToPlayer(int32 SpawnLocationIndex, APlayerController* PlayerController)
+{
+	TArray<AActor*> SpawnLocationActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnLocation::StaticClass(), SpawnLocationActors);
+	for (AActor* SpawnLocationActor : SpawnLocationActors)
+	{
+		ASpawnLocation* _SpawnLocation = Cast<ASpawnLocation>(SpawnLocationActor);
+		if (_SpawnLocation && _SpawnLocation->Index == SpawnLocationIndex)
+		{
+			_SpawnLocation->ColorTo(FColor::Red, PlayerController);
 		}
 	}
 }
@@ -352,7 +371,7 @@ void AKingGameMode::HandleCatcherFireButtonClick()
 			if (SpawnLocation->Index == SelectedLocationIndex)
 			{
 				SelectedSpawnLocations.Add(SpawnLocation);
-				SpawnLocation->ColorToRed();
+				SpawnLocation->ColorTo(FColor::Red, nullptr);
 			}
 		}
 	}
@@ -381,13 +400,12 @@ void AKingGameMode::HandleCatcherFireButtonClick()
 		  {
 			  for (class ASpawnLocation* SelectedSpawnLocation : SelectedSpawnLocations)
 			  {
-				  SelectedSpawnLocation->ColorToWhite();
+				  SelectedSpawnLocation->ColorTo(FColor::White, nullptr);
 			  }
 
 			  AKingGameMode* _KingGameMode = Cast<AKingGameMode>(this->GetWorld()->GetAuthGameMode());
 			  if (_KingGameMode)
 			  {
-				  // TODO: 게임모드에서 로직 처리
 				  _KingGameMode->FireAt(SelectedSpawnLocations);
 			  }
 
@@ -473,7 +491,7 @@ void AKingGameMode::GameOver(APawn* Winner)
 				}
 				else if (_WinnerColor == EPieceColor::Black)
 				{
-					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("Noir"));				
+					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("Noir"));
 				}
 				else
 				{
@@ -488,54 +506,57 @@ void AKingGameMode::GameOver(APawn* Winner)
 	GetWorld()->GetTimerManager().SetTimer
 		(
 		 GameOverUITimerHandle,
-		 FTimerDelegate::CreateLambda([this, Winner]()
-		 {
-			 // GAMEOVER and Return to Chessboard.
-			 // UIUpdatable 인터페이스 구현 여부 확인
-			 if (Winner->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
-			 {
-				 UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
-				 if (_NoirBlancGameInstance)
-				 {
-					 EPieceColor _WinnerColor = IKingUIUpdatable::Execute_GetPieceColor(Winner);
+		 FTimerDelegate::CreateLambda
+		 (
+		  [this, Winner]()
+		  {
+			  // GAMEOVER and Return to Chessboard.
+			  // UIUpdatable 인터페이스 구현 여부 확인
+			  if (Winner->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
+			  {
+				  UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
+				  if (_NoirBlancGameInstance)
+				  {
+					  EPieceColor _WinnerColor = IKingUIUpdatable::Execute_GetPieceColor(Winner);
 
-					 for (int i = 0; i < JoinedPlayers.Num(); ++i)
-					 {
-						 // UIUpdatable 인터페이스 구현 여부 확인
-						 APawn* _Pawn = JoinedPlayers[i]->GetPawn();
-						 if (IsValid(_Pawn))
-						 {
-							 if (_Pawn->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
-							 {
-								 IKingUIUpdatable::Execute_MulticastRPC_SetWinner(_Pawn, _WinnerColor);
+					  for (int i = 0; i < JoinedPlayers.Num(); ++i)
+					  {
+						  // UIUpdatable 인터페이스 구현 여부 확인
+						  APawn* _Pawn = JoinedPlayers[i]->GetPawn();
+						  if (IsValid(_Pawn))
+						  {
+							  if (_Pawn->GetClass()->ImplementsInterface(UKingUIUpdatable::StaticClass()))
+							  {
+								  IKingUIUpdatable::Execute_MulticastRPC_SetWinner(_Pawn, _WinnerColor);
 
-								 // Level Travel
-								 ATravelPlayerController* _ATravelPlayerController = Cast<
-									 ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
-								 if (_ATravelPlayerController)
-								 {
-									 _ATravelPlayerController->ServerRPC_LevelTravelToChess();
-								 }
-								 else
-								 {
-									 UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
-								 }
+								  // Level Travel
+								  ATravelPlayerController* _ATravelPlayerController = Cast<
+									  ATravelPlayerController>(GetWorld()->GetFirstPlayerController());
+								  if (_ATravelPlayerController)
+								  {
+									  _ATravelPlayerController->ServerRPC_LevelTravelToChess();
+								  }
+								  else
+								  {
+									  UE_LOG(LogTemp, Error, TEXT("Travel Controller 설정하세요!"));
+								  }
 
-								 // 승리자가 아닐 경우 Destory!
-								 // if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
-								 // {
-								 // 	JoinedPlayers[i]->GetPawn()->Destroy();
-								 // }
-							 }
-						 }
-					 }
-				 }
-				 else
-				 {
-					 UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
-				 }
-			 }
-		 }),
+								  // 승리자가 아닐 경우 Destory!
+								  // if (JoinedPlayers[i]->GetPawn() && JoinedPlayers[i]->GetPawn() != Winner)
+								  // {
+								  // 	JoinedPlayers[i]->GetPawn()->Destroy();
+								  // }
+							  }
+						  }
+					  }
+				  }
+				  else
+				  {
+					  UE_LOG(LogTemp, Warning, TEXT("NoirBlanc Game Instance Not Exist!!!"));
+				  }
+			  }
+		  }
+		 ),
 		 5.f,
 		 false
 		);

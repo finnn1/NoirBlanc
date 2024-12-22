@@ -34,12 +34,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	void Select();
-	void Deselect();
-
-public:
 	class UMaterialInstanceDynamic* DynamicMaterial;
 	
-	void ColorToRed();
-	void ColorToWhite();
+	// void ColorToRed();
+	// void ColorToWhite();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void ColorTo(FLinearColor color, APlayerController* WhoWantToSee = nullptr);
 };

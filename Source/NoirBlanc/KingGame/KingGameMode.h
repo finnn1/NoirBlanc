@@ -53,6 +53,7 @@ public:
 	int32 DefaultRemainTime = 100;
 
 	void HandleCatcherLocationSelect(int32 ButtonIndex);
+	void ColorSpawnLocationToPlayer(int32 SpawnLocationIndex, APlayerController* PlayerController);
 	void HandleCatcherFireButtonClick();
 	void FireAt(TArray<class ASpawnLocation*> SpawnLocations);
 
