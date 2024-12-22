@@ -18,8 +18,8 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* ConfirmButton;
 
-	UPROPERTY(meta = (BindWidget))
-	class UCanvasPanel* Panel_Buttons;
+	// UPROPERTY(meta = (BindWidget))
+	// class UCanvasPanel* Panel_Buttons;
 
 	TArray<class UKingCatcherFireButtonUI*> AllSpawnLocationButtons;
 

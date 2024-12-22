@@ -9,6 +9,7 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "KingCatcherUI.h"
+#include "KingCatcherWeapon.h"
 #include "KingCharacter.h"
 #include "KingGameMode.h"
 #include "NoirBlancGameInstance.h"
@@ -151,10 +152,10 @@ void AKingCatcherPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 
 	// UI가 아닌 실제 액터를 클릭하는 경우 사용
-	// if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	// {
-	// EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AKingCatcherPawn::Click);
-	// }
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AKingCatcherPawn::Click);
+	}
 	else
 	{
 		UE_LOG
@@ -314,75 +315,92 @@ void AKingCatcherPawn::MulticastRPC_SetWinner_Implementation(EPieceColor WinnerC
 	}
 }
 
-// void AKingCatcherPawn::Click(const struct FInputActionValue& Value)
-// {
-// 	UE_LOG(LogTemp, Warning, TEXT("Catcher Clicked!!"));
-//
-// 	// 마우스로 클릭된 위치 가져오기
-// 	APlayerController* _PlayerContoller = Cast<APlayerController>(GetController());
-// 	if (_PlayerContoller == nullptr) return;
-//
-// 	FVector WorldLocation;
-// 	FVector WorldDirection;
-// 	bool _bIsDeprojectSuccess = _PlayerContoller->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
-// 	if (_bIsDeprojectSuccess == false) return;
-//
-// 	ServerRPC_Click(WorldLocation, WorldDirection);
-// }
+void AKingCatcherPawn::Click(const struct FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Catcher Clicked!!"));
 
-// void AKingCatcherPawn::ServerRPC_Click_Implementation(FVector WorldLocation, FVector WorldDirection)
-// {
-// 	// 서버에서 라인 트레이스 수행
-// 	FHitResult HitResult;
-// 	FCollisionQueryParams QueryParams;
-// 	QueryParams.AddIgnoredActor(this);
-//
-// 	float TraceDistance = 10000.0f;
-// 	ECollisionChannel TraceChannel = ECollisionChannel::ECC_WorldDynamic;
-// 	if (GetWorld()->LineTraceSingleByChannel
-// 		(
-// 		 HitResult,
-// 		 WorldLocation,
-// 		 WorldLocation + (WorldDirection * TraceDistance),
-// 		 TraceChannel,
-// 		 QueryParams
-// 		))
-// 	{
-// 		// 히트 결과 처리
-// 		UE_LOG(LogTemp, Warning, TEXT("Clicked object : %s"), *HitResult.GetActor()->GetActorNameOrLabel());
-// 	}
-//
-// 	for (int32 i = 0; i < SelectedSpawnLocations.Num(); i++)
-// 	{
-// 		UE_LOG
-// 		(
-// 		 LogTemp,
-// 		 Warning,
-// 		 TEXT("Selected SpawnLocation : %s"),
-// 		 *SelectedSpawnLocations[i]->GetActorNameOrLabel()
-// 		);
-// 	}
-//
-// 	ASpawnLocation* SpawnLocation = Cast<ASpawnLocation>(HitResult.GetActor());
-// 	if (SpawnLocation)
-// 	{
-// 		if (SpawnLocation->bIsSelected == false)
-// 		{
-// 			// 4개 이상 선택하려 하면 return 시키자!
-// 			if (SelectedSpawnLocations.Num() >= 4) return;
-//
-// 			SelectedSpawnLocations.Add(SpawnLocation);
-//
-// 			// 누른 사람에게만 빨간색으로 보이게 하기!
-// 			MulticastRPC_SelectOnlyForLocallyPlayer(SpawnLocation);
-// 		}
-// 		else
-// 		{
-// 			SelectedSpawnLocations.Remove(SpawnLocation);
-// 			MulticastRPC_DeselectOnlyForLocallyPlayer(SpawnLocation);
-// 		}
-// 	}
-// }
+	// 마우스로 클릭된 위치 가져오기
+	APlayerController* _PlayerContoller = Cast<APlayerController>(GetController());
+	if (_PlayerContoller == nullptr) return;
+
+	FVector WorldLocation;
+	FVector WorldDirection;
+	bool _bIsDeprojectSuccess = _PlayerContoller->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+	if (_bIsDeprojectSuccess == false) return;
+
+	ServerRPC_Click(WorldLocation, WorldDirection);
+}
+
+void AKingCatcherPawn::ServerRPC_Click_Implementation(FVector WorldLocation, FVector WorldDirection)
+{
+	// 서버에서 라인 트레이스 수행
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	float TraceDistance = 10000.0f;
+	ECollisionChannel TraceChannel = ECollisionChannel::ECC_WorldDynamic;
+	bool bIsHit = GetWorld()->LineTraceSingleByChannel
+		(
+		 HitResult,
+		 WorldLocation,
+		 WorldLocation + (WorldDirection * TraceDistance),
+		 TraceChannel,
+		 QueryParams
+		);
+	if (bIsHit)
+	{
+		// 히트 결과 처리
+		UE_LOG(LogTemp, Warning, TEXT("Clicked object : %s"), *HitResult.GetActor()->GetActorNameOrLabel());
+		if (HitResult.GetActor())
+		{
+			if (HitResult.GetActor()->IsA(ASpawnLocation::StaticClass()))
+			{
+				ASpawnLocation* _ASpawnLocation = Cast<ASpawnLocation>(HitResult.GetActor());
+				if (_ASpawnLocation)
+				{
+					AKingGameMode* _AKingGameMode = GetWorld()->GetAuthGameMode<AKingGameMode>();
+					if (_AKingGameMode)
+					{
+						_AKingGameMode->HandleCatcherLocationSelect(_ASpawnLocation->Index);
+					}
+				}
+			}
+		}
+	}
+
+
+	// for (int32 i = 0; i < SelectedSpawnLocations.Num(); i++)
+	// {
+	// 	UE_LOG
+	// 	(
+	// 	 LogTemp,
+	// 	 Warning,
+	// 	 TEXT("Selected SpawnLocation : %s"),
+	// 	 *SelectedSpawnLocations[i]->GetActorNameOrLabel()
+	// 	);
+	// }
+	//
+	// ASpawnLocation* SpawnLocation = Cast<ASpawnLocation>(HitResult.GetActor());
+	// if (SpawnLocation)
+	// {
+	// 	if (SpawnLocation->bIsSelected == false)
+	// 	{
+	// 		// 4개 이상 선택하려 하면 return 시키자!
+	// 		if (SelectedSpawnLocations.Num() >= 4) return;
+	//
+	// 		SelectedSpawnLocations.Add(SpawnLocation);
+	//
+	// 		// 누른 사람에게만 빨간색으로 보이게 하기!
+	// 		MulticastRPC_SelectOnlyForLocallyPlayer(SpawnLocation);
+	// 	}
+	// 	else
+	// 	{
+	// 		SelectedSpawnLocations.Remove(SpawnLocation);
+	// 		MulticastRPC_DeselectOnlyForLocallyPlayer(SpawnLocation);
+	// 	}
+	// }
+}
 
 void AKingCatcherPawn::HandleButtonClick(int32 ButtonIndex)
 {
@@ -406,8 +424,8 @@ void AKingCatcherPawn::MulticastRPC_Select_Implementation(ASpawnLocation* SpawnL
 	{
 		SpawnLocation->bIsSelected = true;
 	}
-
-	SpawnLocation->ColorToRed();
+	
+	SpawnLocation->ColorTo(FColor::Red, nullptr);
 }
 
 void AKingCatcherPawn::MulticastRPC_Deselect_Implementation(ASpawnLocation* SpawnLocation)
@@ -416,6 +434,6 @@ void AKingCatcherPawn::MulticastRPC_Deselect_Implementation(ASpawnLocation* Spaw
 	{
 		SpawnLocation->bIsSelected = false;
 	}
-
-	SpawnLocation->ColorToWhite();
+	
+	SpawnLocation->ColorTo(FColor::White, nullptr);
 }

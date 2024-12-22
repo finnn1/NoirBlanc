@@ -71,10 +71,10 @@ public:
 	void MulticastRPC_ShowWaitingUI(APlayerController* JoinedPlayer);
 	
 	// Input Handling
-	// void Click(const struct FInputActionValue& Value);
+	void Click(const struct FInputActionValue& Value);
 	
-	// UFUNCTION(Server, Reliable)
-	// void ServerRPC_Click(FVector WorldLocation, FVector WorldDirection);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Click(FVector WorldLocation, FVector WorldDirection);
 	
 	void HandleButtonClick(int32 ButtonIndex);
 	
