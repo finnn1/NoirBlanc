@@ -37,15 +37,27 @@ void ABishopWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	FRotator CurrentRotation = GetActorRotation();
-	if (CurrentRotation.Pitch >= 80.0f)
-	{
-		Destroy();
-		return;
-	}
+	// FRotator CurrentRotation = GetActorRotation();
+	// if (CurrentRotation.Pitch >= 80.0f)
+	// {
+	// 	Destroy();
+	// 	return;
+	// }
+	//
+	// // 회전
+	// float PitchMoveValue = AttackSpeed * DeltaTime;
+	// AddActorWorldRotation(FRotator(-PitchMoveValue, 0, 0));
 
-	float PitchMoveValue = AttackSpeed * DeltaTime;
-	AddActorWorldRotation(FRotator(-PitchMoveValue, 0, 0));
+	FVector CurrentLocation = GetActorLocation();
+	// if (CurrentLocation.Pitch >= 80.0f)
+	// {
+	// 	Destroy();
+	// 	return;
+	// }
+
+	// 전진
+	float LocationMoveValue = AttackSpeed * DeltaTime;
+	AddActorWorldOffset(FVector(-AttackSpeed, 0, 0));
 }
 
 void ABishopWeapon::OnBoxComponentOverlap

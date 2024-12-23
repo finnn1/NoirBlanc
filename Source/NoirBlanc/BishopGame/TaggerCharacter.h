@@ -12,6 +12,14 @@
 class UWaitingUI;
 class UCountDownUI;
 
+UENUM()
+enum class SoundEffect : uint8
+{
+	BeforeJump		UMETA(DisplayName = "BeforeJump"),
+	AfterJump		UMETA(DisplayName = "AfterJump"),
+	AfterLanding	UMETA(DisplayName = "AfterLanding")
+};
+
 UCLASS()
 class NOIRBLANC_API ATaggerCharacter : public ACharacter, public IUIUpdatable
 {
@@ -96,7 +104,27 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_SetWinner(EPieceColor WinnerColor) override;
+	
+public:
+	// Sound Effects
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* SoundBeforeJump;
+	UAudioComponent* AudioComponentBeforeJump;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* SoundAfterJump;
+	UAudioComponent* AudioComponentAfterJump;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* SoundAfterLanding;
+	UAudioComponent* AudioComponentAfterLanding;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SpawnSoundAtLocation(USoundBase* Sound, FVector Location, SoundEffect SFX);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_StopSound(SoundEffect SFX);
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;

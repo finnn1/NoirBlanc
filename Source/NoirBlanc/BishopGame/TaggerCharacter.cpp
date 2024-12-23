@@ -20,6 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NoirBlanc/TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "PieceTypes.h"
+#include "Components/AudioComponent.h"
 #include "NoirBlanc/Knight/CountDownUI.h"
 #include "NoirBlanc/Knight/FinishUI.h"
 #include "NoirBlanc/Knight/WaitingUI.h"
@@ -157,6 +158,51 @@ void ATaggerCharacter::MulticastRPC_SetWinner_Implementation(EPieceColor WinnerC
 			UE_LOG(LogTemp, Warning, TEXT("Tagger :: Winner : %d"), WinnerColor);
 			_NoirBlancGameInstance->WinnerColor = WinnerColor;
 		}
+	}
+}
+
+void ATaggerCharacter::MulticastRPC_SpawnSoundAtLocation_Implementation(USoundBase* Sound, FVector Location, SoundEffect SFX)
+{
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), Sound, Location, FRotator());
+	if (AudioComp)
+	{
+		AudioComp->Play();
+	}
+	
+	switch (SFX)
+	{
+	case SoundEffect::BeforeJump:
+		AudioComponentBeforeJump = AudioComp;
+		break;
+	case SoundEffect::AfterJump:
+		AudioComponentAfterJump = AudioComp;
+		break;
+	case SoundEffect::AfterLanding:
+		AudioComponentAfterLanding = AudioComp;
+		break;
+	default:
+		break;
+	}
+}
+
+void ATaggerCharacter::MulticastRPC_StopSound_Implementation(SoundEffect SFX)
+{
+	switch (SFX)
+	{
+	case SoundEffect::BeforeJump:
+		if (IsValid(AudioComponentBeforeJump) == false) return; 
+		AudioComponentBeforeJump->Stop();
+		break;
+	case SoundEffect::AfterJump:
+		if (IsValid(AudioComponentAfterJump) == false) return;
+		AudioComponentAfterJump->Stop();
+		break;
+	case SoundEffect::AfterLanding:
+		if (IsValid(AudioComponentAfterLanding) == false) return;
+		AudioComponentAfterLanding->Stop();
+		break;
+	default:
+		break;
 	}
 }
 
@@ -352,6 +398,7 @@ void ATaggerCharacter::ServerRPC_JumpStarted_Implementation(const FInputActionVa
 	if (GetMovementComponent()->IsFalling()) return;
 
 	// 힘 쌓기 시작
+	MulticastRPC_SpawnSoundAtLocation(SoundBeforeJump, GetActorLocation(), SoundEffect::BeforeJump);
 	GetWorld()->GetTimerManager().SetTimer
 		(
 		 JumpChargineTimerHandle,
@@ -366,6 +413,9 @@ void ATaggerCharacter::ServerRPC_JumpEnded_Implementation(const FInputActionValu
 {
 	if (CurrentJumpPower <= 0.f) return;
 	if (GetMovementComponent()->IsFalling()) return;
+
+	MulticastRPC_StopSound(SoundEffect::BeforeJump);
+	MulticastRPC_SpawnSoundAtLocation(SoundAfterJump, GetActorLocation(), SoundEffect::AfterJump);
 
 	// 타이머 초기화
 	GetWorld()->GetTimerManager().ClearTimer(JumpChargineTimerHandle);
