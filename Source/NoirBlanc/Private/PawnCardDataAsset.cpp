@@ -9,7 +9,7 @@ void UPawnCardDataAsset::InitMeshMaterial(UStaticMeshComponent* StaticMeshComp)
 	{
 		UMaterialInstanceDynamic* MatDynamic = UMaterialInstanceDynamic::Create(GetCardMaterialIns(), this);
 		StaticMeshComp->SetMaterial(4, MatDynamic);
-		FLinearColor NewUVOffsets(1.f,1.f, U_Offset,V_Offset);
+		FLinearColor NewUVOffsets(0.76f,1.f, U_Offset,V_Offset);
 		MatDynamic->SetVectorParameterValue(TEXT("UV"), NewUVOffsets);
 	}
 }

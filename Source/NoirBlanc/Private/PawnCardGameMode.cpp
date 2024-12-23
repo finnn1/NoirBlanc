@@ -122,10 +122,10 @@ bool APawnCardGameMode::CheckRemainCards()
 	{
 		GameSet();
 	}
-	else if(RemainCardNum <= 3 && NoLuckCardNum >= 2)
+	/*else if(RemainCardNum <= 3 && NoLuckCardNum >= 2)
 	{
 		GameSet();
-	}
+	}*/
 	
 	return (PawnCards.Num() == 0);
 }
