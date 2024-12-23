@@ -13,6 +13,8 @@
 #include "SpawnLocation.h"
 #include "TravelPlayerController.h"
 #include "Components/ArrowComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
@@ -459,9 +461,13 @@ void AKingGameMode::FireAt(TArray<ASpawnLocation*> SpawnLocations)
 
 void AKingGameMode::OnKingCharacterOverlapped(AActor* OtherActor)
 {
-	const AKingCharacter* KingCharacter = Cast<AKingCharacter>(OtherActor);
+	AKingCharacter* KingCharacter = Cast<AKingCharacter>(OtherActor);
 	if (IsValid(KingCharacter) == false) return;
 
+	KingCharacter->MulticastRPC_SetVisibility(false);
+	KingCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	KingCharacter->GetCharacterMovement()->SetActive(false);
+	
 	// Game Over : King Catcher Win
 	for (const APlayerController* JoinedPlayer : JoinedPlayers)
 	{

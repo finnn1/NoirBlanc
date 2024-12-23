@@ -28,7 +28,7 @@ AKingCharacter::AKingCharacter()
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
+	GetCharacterMovement()->bOrientRotationToMovement = true;            // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
@@ -167,6 +167,11 @@ EPieceColor AKingCharacter::GetPieceColor_Implementation()
 	return GetPlayerState<ANoirBlancPlayerState>()->PieceColor;
 }
 
+void AKingCharacter::MulticastRPC_SetVisibility_Implementation(bool bIsVisible)
+{
+	GetMesh()->SetVisibility(bIsVisible);
+}
+
 void AKingCharacter::MulticastRPC_UpdateStartCountdownUI_Implementation(const FText& NewText)
 {
 	if (IsValid(WaitingUI))
@@ -222,15 +227,38 @@ void AKingCharacter::MulticastRPC_ShowGameOverUI_Implementation(const FText& Win
 {
 	if (IsLocallyControlled())
 	{
-		if (FinishUIClass)
+		if (IsValid(WaitingUI))
 		{
-			FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
-			if (FinishUI)
-			{
-				FinishUI->AddToViewport();
-				FinishUI->UpdateWinnerText(Winner);
-			}
+			WaitingUI->RemoveFromParent();
 		}
+
+		if (IsValid(CountDownUI))
+		{
+			CountDownUI->RemoveFromParent();
+		}
+
+		if (IsValid(KingGameMainUI))
+		{
+			KingGameMainUI->RemoveFromParent();
+		}
+
+		FTimerHandle GameOverTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer
+			(GameOverTimerHandle, [this, Winner]()
+			 {
+				 if (FinishUIClass)
+				 {
+					 FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
+					 if (FinishUI)
+					 {
+						 FinishUI->AddToViewport();
+						 FinishUI->UpdateWinnerText(Winner);
+					 }
+				 }
+			 },
+			 1.f,
+			 false
+			);
 	}
 }
 

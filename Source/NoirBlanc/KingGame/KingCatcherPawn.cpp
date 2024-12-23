@@ -226,15 +226,43 @@ void AKingCatcherPawn::MulticastRPC_ShowGameOverUI_Implementation(const FText& W
 {
 	if (IsLocallyControlled())
 	{
-		if (FinishUIClass)
+		if (IsValid(WaitingUI))
 		{
-			FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
-			if (FinishUI)
-			{
-				FinishUI->AddToViewport();
-				FinishUI->UpdateWinnerText(Winner);
-			}
+			WaitingUI->RemoveFromParent();
 		}
+
+		if (IsValid(CountDownUI))
+		{
+			CountDownUI->RemoveFromParent();
+		}
+
+		if (IsValid(KingGameMainUI))
+		{
+			KingGameMainUI->RemoveFromParent();
+		}
+
+		if (IsValid(CatcherUI))
+		{
+			CatcherUI->RemoveFromParent();
+		}
+
+		FTimerHandle GameOverTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer
+			(GameOverTimerHandle, [this, Winner]()
+			 {
+				 if (FinishUIClass)
+				 {
+					 FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
+					 if (FinishUI)
+					 {
+						 FinishUI->AddToViewport();
+						 FinishUI->UpdateWinnerText(Winner);
+					 }
+				 }
+			 },
+			 1.f,
+			 false
+			);
 	}
 }
 
@@ -424,7 +452,7 @@ void AKingCatcherPawn::MulticastRPC_Select_Implementation(ASpawnLocation* SpawnL
 	{
 		SpawnLocation->bIsSelected = true;
 	}
-	
+
 	SpawnLocation->ColorTo(FColor::Red, nullptr);
 }
 
@@ -434,6 +462,6 @@ void AKingCatcherPawn::MulticastRPC_Deselect_Implementation(ASpawnLocation* Spaw
 	{
 		SpawnLocation->bIsSelected = false;
 	}
-	
+
 	SpawnLocation->ColorTo(FColor::White, nullptr);
 }

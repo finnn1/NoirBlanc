@@ -581,7 +581,7 @@ void ABishopGameMode::OnTaggerOverlapped(AActor* OtherActor)
 	if (TaggerCharacter == nullptr) return;
 	if (TaggerCharacter->GetMovementComponent()->IsFalling() == false) return;
 
-	TaggerCharacter->MeshComponent->SetVisibility(false);
+	TaggerCharacter->MulticastRPC_SetVisibility(false);
 	TaggerCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	TaggerCharacter->GetCharacterMovement()->SetActive(false);
 	

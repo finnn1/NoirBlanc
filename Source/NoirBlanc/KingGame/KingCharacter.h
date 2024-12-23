@@ -66,6 +66,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_SetInput(bool bIsEnable) override;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SetVisibility(bool bIsVisible);
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UKingGameMainUI> KingGameMainUIClass;
 	
