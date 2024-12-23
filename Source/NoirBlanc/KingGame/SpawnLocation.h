@@ -41,4 +41,9 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void ColorTo(FLinearColor color, APlayerController* WhoWantToSee = nullptr);
+
+	UPROPERTY(EditAnywhere)
+	class UMaterial* NorMalMat;
+	UPROPERTY(EditAnywhere)
+	class UMaterial* ChooseMat;
 };

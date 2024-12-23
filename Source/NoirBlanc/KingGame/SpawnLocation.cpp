@@ -66,7 +66,16 @@ void ASpawnLocation::ColorTo_Implementation(FLinearColor color, APlayerControlle
 	{
 		if (DynamicMaterial)
 		{
-			DynamicMaterial->SetVectorParameterValue("BaseColor", color);
+			//DynamicMaterial->SetVectorParameterValue("BaseColor", color);
+			
+			if(color == FLinearColor::Red)
+			{
+				StaticMeshComponent->SetMaterial(0, ChooseMat);
+			}
+			else
+			{
+				StaticMeshComponent->SetMaterial(0, NorMalMat);
+			}
 		}
 	}
 	else
@@ -75,7 +84,18 @@ void ASpawnLocation::ColorTo_Implementation(FLinearColor color, APlayerControlle
 		{
 			if (DynamicMaterial)
 			{
-				DynamicMaterial->SetVectorParameterValue("BaseColor", color);
+
+				//DynamicMaterial->SetVectorParameterValue("BaseColor", color);
+				
+				if(color == FLinearColor::Red)
+				{
+					StaticMeshComponent->SetMaterial(0, ChooseMat);
+				}
+				else
+				{
+					StaticMeshComponent->SetMaterial(0, NorMalMat);
+				}
+				
 			}
 		}
 	}
