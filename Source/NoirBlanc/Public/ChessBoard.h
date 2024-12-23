@@ -242,13 +242,13 @@ protected:
 	// void ServerRPC_EndGame(EPieceColor Loser);
 public:
 	UFUNCTION()
-	void ShowQueenWidget();
+	void ShowQueenWidget(EPieceType Attacker);
 	UFUNCTION()
 	void DestroyQueenWidget();
 	UFUNCTION()
 	void QueenWidgetClicked(const FString& Level);
 	
-	void QueenEncounter();
+	void QueenEncounter(EPieceType Attacker);
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_AfterQueen(const FString& Level);
 	UFUNCTION(NetMulticast, Reliable)

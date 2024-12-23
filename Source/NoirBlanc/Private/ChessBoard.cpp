@@ -243,7 +243,11 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 			Target->IncreaseEncounterCount();
 			if(Selected->GetPieceType() == EPieceType::Queen && Target->GetPieceType() != EPieceType::King)
 			{
-				QueenEncounter();
+				QueenEncounter(Selected->GetPieceType());
+			}
+			else if(Selected->GetPieceType() == EPieceType::King)
+			{
+				QueenEncounter(Selected->GetPieceType());
 			}
 			else
 			{   
@@ -254,20 +258,20 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 }
 
 
-void AChessBoard::QueenEncounter()
+void AChessBoard::QueenEncounter(EPieceType Attacker)
 {
 	if(Turn == EPieceColor::White)
 	{
 		if(HasAuthority())
 		{
-			ShowQueenWidget();
+			ShowQueenWidget(Attacker);
 		}	
 	}
 	else if(Turn == EPieceColor::Black)
 	{
 		if(!HasAuthority())
 		{
-			ShowQueenWidget();
+			ShowQueenWidget(Attacker);
 		}
 	}
 }
@@ -357,6 +361,9 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 				LevelName = "Rook";
 				break;
 			case EPieceType::Queen:
+				LevelName = FName(*QueenLevel);
+				break;
+			case EPieceType::King:
 				LevelName = FName(*QueenLevel);
 				break;
 			}
@@ -1081,7 +1088,7 @@ void AChessBoard::EndGame()
 		6.f, false);
 }
 
-void AChessBoard::ShowQueenWidget()
+void AChessBoard::ShowQueenWidget(EPieceType Attacker)
 {
 	FString Selected;
 	if (Controller)
@@ -1090,6 +1097,14 @@ void AChessBoard::ShowQueenWidget()
 		if (QueenSelectUI) 
 		{
 			QueenSelectUI->AddToViewport();
+			if(Attacker == EPieceType::King)
+			{
+				QueenSelectUI->SetPawnText(TEXT("킹"));
+			}
+			else if(Attacker == EPieceType::Queen)
+			{
+				QueenSelectUI->SetPawnText(TEXT("퀸"));
+			}
 	        FInputModeUIOnly InputMode;
 	        Controller->SetInputMode(InputMode);
 			UGameplayStatics::SetGamePaused(GetWorld(), true);

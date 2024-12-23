@@ -24,8 +24,12 @@ public:
 	UButton* Btn_Rook;
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UButton* Btn_Bishop;
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	class UTextBlock* Text_PawnName;
 	
 	virtual void NativeConstruct() override;
+
+	void SetPawnText(FString PawnType);
 	
 	UFUNCTION()
 	void OnPawnClicked();

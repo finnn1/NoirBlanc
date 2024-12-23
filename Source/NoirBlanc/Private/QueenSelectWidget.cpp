@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 
 void UQueenSelectWidget::NativeConstruct()
 {
@@ -20,6 +21,11 @@ void UQueenSelectWidget::NativeConstruct()
 	AChessBoard* ChessBoard = Cast<AChessBoard>(Board);
 
 	OnBtnClicked.BindUObject(ChessBoard, &AChessBoard::QueenWidgetClicked);
+}
+
+void UQueenSelectWidget::SetPawnText(FString PawnType)
+{
+	Text_PawnName->SetText(FText::FromString(PawnType));
 }
 
 void UQueenSelectWidget::OnPawnClicked()
