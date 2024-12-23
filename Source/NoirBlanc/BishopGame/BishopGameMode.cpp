@@ -13,6 +13,8 @@
 #include "NoirBlancGameInstance.h"
 #include "TaggerCharacter.h"
 #include "TravelPlayerController.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PawnMovementComponent.h"
 
@@ -63,7 +65,6 @@ AActor* ABishopGameMode::ChoosePlayerStart_Implementation(AController* Player)
 	// return Super::ChoosePlayerStart_Implementation(Player);
 
 
-	
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// 실제 게임에서는 주석 해제하기
 	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
@@ -178,16 +179,15 @@ void ABishopGameMode::NotifyJoined(APlayerController* JoinedPlayer)
 		if (JoinedPlayer->GetPawn()->IsA(ABishopPawn::StaticClass()))
 		{
 			BishopGameCamera->Player1 = JoinedPlayer->GetPawn();
+			ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(JoinedPlayer);
+			if (_ATravelPlayerController)
+			{
+				_ATravelPlayerController->ClientRPC_SetViewTarget(BishopGameCamera);
+			}
 		}
 		else
 		{
 			BishopGameCamera->Player2 = JoinedPlayer->GetPawn();
-		}
-
-		ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(JoinedPlayer);
-		if (_ATravelPlayerController)
-		{
-			_ATravelPlayerController->ClientRPC_SetViewTarget(BishopGameCamera);
 		}
 	}
 
@@ -212,10 +212,16 @@ void ABishopGameMode::StartCountTimer()
 {
 	for (APlayerController* JoinedPlayer : JoinedPlayers)
 	{
-		ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(JoinedPlayer);
-		if (_ATravelPlayerController)
+		if (JoinedPlayer->GetPawn()->IsA(ABishopPawn::StaticClass()))
 		{
-			_ATravelPlayerController->ClientRPC_SetViewTarget(BishopGameCamera);
+			ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(JoinedPlayer);
+			if (_ATravelPlayerController)
+			{
+				if (BishopGameCamera)
+				{
+					_ATravelPlayerController->ClientRPC_SetViewTarget(BishopGameCamera);
+				}
+			}
 		}
 	}
 
@@ -455,7 +461,8 @@ void ABishopGameMode::GameOver(APawn* Winner)
 {
 	GetWorld()->GetTimerManager().ClearTimer(StartCountDownTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(MainTimerHandle);
-
+	
+	
 	// 게임오버 UI 띄우기
 	// UIUpdatable 인터페이스 구현 여부 확인
 	for (int i = 0; i < JoinedPlayers.Num(); ++i)
@@ -465,6 +472,8 @@ void ABishopGameMode::GameOver(APawn* Winner)
 		{
 			if (_Pawn->GetClass()->ImplementsInterface(UUIUpdatable::StaticClass()))
 			{
+				IUIUpdatable::Execute_MulticastRPC_SetInput(_Pawn, false);
+				
 				EPieceColor _WinnerColor = IUIUpdatable::Execute_GetPieceColor(Winner);
 
 				if (_WinnerColor == EPieceColor::White)
@@ -572,6 +581,10 @@ void ABishopGameMode::OnTaggerOverlapped(AActor* OtherActor)
 	if (TaggerCharacter == nullptr) return;
 	if (TaggerCharacter->GetMovementComponent()->IsFalling() == false) return;
 
+	TaggerCharacter->MeshComponent->SetVisibility(false);
+	TaggerCharacter->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	TaggerCharacter->GetCharacterMovement()->SetActive(false);
+	
 	// Game Over : Bishop Win
 	for (APlayerController* JoinedPlayer : JoinedPlayers)
 	{
@@ -614,3 +627,4 @@ TArray<bool> ABishopGameMode::CheckTypingCorrect(const FText& TypedText)
 
 	return StringCorrectArray;
 }
+

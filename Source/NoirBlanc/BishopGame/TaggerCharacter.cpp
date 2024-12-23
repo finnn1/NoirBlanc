@@ -61,15 +61,15 @@ ATaggerCharacter::ATaggerCharacter()
 	// GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
-	/*CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 400.0f;
-	CameraBoom->bUsePawnControlRotation = true;*/
+	CameraBoom->bUsePawnControlRotation = true;
 
 	// Create a follow camera
-	/*FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom);
-	FollowCamera->bUsePawnControlRotation = false;*/
+	FollowCamera->bUsePawnControlRotation = false;
 }
 
 // Called to bind functionality to input
@@ -123,15 +123,43 @@ void ATaggerCharacter::MulticastRPC_ShowGameOverUI_Implementation(const FText& W
 {
 	if (IsLocallyControlled())
 	{
-		if (FinishUIClass)
+		if (IsValid(WaitingUI))
 		{
-			FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
-			if (FinishUI)
-			{
-				FinishUI->AddToViewport();
-				FinishUI->UpdateWinnerText(Winner);
-			}
+			WaitingUI->RemoveFromParent();
 		}
+
+		if (IsValid(CountDownUI))
+		{
+			CountDownUI->RemoveFromParent();
+		}
+
+		if (IsValid(TypingUIWidget))
+		{
+			TypingUIWidget->RemoveFromParent();
+		}
+
+		if (IsValid(TaggerUIWidget))
+		{
+			TaggerUIWidget->RemoveFromParent();
+		}
+
+		FTimerHandle GameOverTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer
+			(GameOverTimerHandle, [this, Winner]()
+			 {
+				 if (FinishUIClass)
+				 {
+					 FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
+					 if (FinishUI)
+					 {
+						 FinishUI->AddToViewport();
+						 FinishUI->UpdateWinnerText(Winner);
+					 }
+				 }
+			 },
+			 1.f,
+			 false
+			);
 	}
 }
 
@@ -168,7 +196,7 @@ void ATaggerCharacter::MulticastRPC_SpawnSoundAtLocation_Implementation(USoundBa
 	{
 		AudioComp->Play();
 	}
-	
+
 	switch (SFX)
 	{
 	case SoundEffect::BeforeJump:
@@ -190,7 +218,7 @@ void ATaggerCharacter::MulticastRPC_StopSound_Implementation(SoundEffect SFX)
 	switch (SFX)
 	{
 	case SoundEffect::BeforeJump:
-		if (IsValid(AudioComponentBeforeJump) == false) return; 
+		if (IsValid(AudioComponentBeforeJump) == false) return;
 		AudioComponentBeforeJump->Stop();
 		break;
 	case SoundEffect::AfterJump:
