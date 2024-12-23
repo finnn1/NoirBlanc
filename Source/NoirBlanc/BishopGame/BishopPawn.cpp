@@ -200,15 +200,38 @@ void ABishopPawn::MulticastRPC_ShowGameOverUI_Implementation(const FText& Winner
 {
 	if (IsLocallyControlled())
 	{
-		if (FinishUIClass)
+		if (IsValid(WaitingUI))
 		{
-			FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
-			if (FinishUI)
-			{
-				FinishUI->AddToViewport();
-				FinishUI->UpdateWinnerText(Winner);
-			}
+			WaitingUI->RemoveFromParent();
 		}
+
+		if (IsValid(CountDownUI))
+		{
+			CountDownUI->RemoveFromParent();
+		}
+
+		if (IsValid(TypingUIWidget))
+		{
+			TypingUIWidget->RemoveFromParent();
+		}
+
+		FTimerHandle GameOverTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer
+			(GameOverTimerHandle, [this, Winner]()
+			 {
+				 if (FinishUIClass)
+				 {
+					 FinishUI = CreateWidget<UFinishUI>(GetWorld()->GetFirstPlayerController(), FinishUIClass);
+					 if (FinishUI)
+					 {
+						 FinishUI->AddToViewport();
+						 FinishUI->UpdateWinnerText(Winner);
+					 }
+				 }
+			 },
+			 1.f,
+			 false
+			);
 	}
 }
 
