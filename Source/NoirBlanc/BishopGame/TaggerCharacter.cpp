@@ -284,6 +284,11 @@ void ATaggerCharacter::UpdateText(const FText& InputedText)
 	ServerRPC_UpdateText(InputedText);
 }
 
+void ATaggerCharacter::MulticastRPC_SetVisibility_Implementation(bool bIsVisible)
+{
+	MeshComponent->SetVisibility(bIsVisible);
+}
+
 void ATaggerCharacter::ServerRPC_UpdateText_Implementation(const FText& InputedText)
 {
 	// 받은 텍스트를 모두에게 띄워야 함.

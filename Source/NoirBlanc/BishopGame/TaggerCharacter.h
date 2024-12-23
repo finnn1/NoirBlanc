@@ -97,6 +97,9 @@ public:
 	class UFinishUI* FinishUI;
 
 	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SetVisibility(bool bIsVisible);
+	
+	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastRPC_ShowGameOverUI(const FText& Winner) override;
 
 	UFUNCTION(NetMulticast, Reliable)
