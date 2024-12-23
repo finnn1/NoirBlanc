@@ -83,7 +83,8 @@ void AProjectileEqBased::SetSpeedAddImpuse(FVector Direction)
 	float mass = Mesh->GetMass();
 	/* if simulate physics is false*/
 	// impulse = F*t -> m*v, bVelChange: to consider mass or not: engine automatically set the mass
-	Mesh->AddImpulse(InitImpulse/mass*20.0f, NAME_None, true);
+	//Mesh->AddImpulse(InitImpulse/mass*20.0f, NAME_None, true);
+	Mesh->AddImpulse(InitImpulse, NAME_None, true);
 	UE_LOG(LogTemp, Warning, TEXT("Mass: %f"), Mesh->GetMass());
 }
 
@@ -150,15 +151,15 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 
 			playerUI->ApplyDamageHPBar(Opponent, playerCannon);
 
-			// noir-client-black, blanc-server-white
+			// noir-client-black-1, blanc-server-white-0
 			// whether the opponent is server of client
 			if (Opponent->Health <= 0)
 			{
 				int32 num = 0;
 				if (Opponent->HasAuthority()) // server
 				{
-					if (Opponent->IsLocallyControlled()) num = 1;
-					else num = 0;
+					if (Opponent->IsLocallyControlled()) num = 1;	// noir
+					else num = 0;	// blanc
 				}
 				else // client
 				{
@@ -175,11 +176,31 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		Destroy();
 	}
 
+	
 	// next turn
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle,
-	                                       FTimerDelegate::CreateUObject(playerUI, &UFortressUI::SetTurnWidgetVisible),
-	                                       1.0f, false);
+	if (OwnerCannon->HasAuthority()) // server
+	{
+		if (OwnerCannon->IsLocallyControlled()) playerUI->playerPieceColor = EPieceColor::Black;	// noir
+		else playerUI->playerPieceColor = EPieceColor::White;	// blanc
+	}
+	else // client
+	{
+		if (OwnerCannon->IsLocallyControlled()) playerUI->playerPieceColor = EPieceColor::White;
+		else playerUI->playerPieceColor = EPieceColor::Black;
+	}
+	
+	if (playerUI->turnUI)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player UI turned"));
+		playerUI->turnUI->ShowTurn(playerUI->playerPieceColor);
+	}
+	
+	// FTimerHandle TimerHandle;
+	// GetWorld()->GetTimerManager().SetTimer(
+	// 	TimerHandle,
+	// 	FTimerDelegate::CreateUObject(playerUI, &UFortressUI::SetTurnWidgetVisible),
+	// 	1.0f,
+	// 	false);
 
 	if (HasAuthority())
 	{
@@ -193,7 +214,6 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 
 void AProjectileEqBased::SetTurnWidgetHidden()
 {
-	playerUI->horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
 }
 
 // void AProjectileEqBased::PrepareNextTurn()

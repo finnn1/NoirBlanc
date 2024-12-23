@@ -85,7 +85,7 @@ void ACannon::BeginPlay()
 
 	StartLocation = GetActorLocation();
 	StartRotation = Muzzle->GetComponentRotation();
-	
+
 	// does not work if it is located in constructor
 	ProjectilesEqBasedFactoryArray.Append({
 		                                      ProjectileEqBasedFactory,
@@ -110,8 +110,11 @@ void ACannon::BeginPlay()
 	}
 
 	if (AngleWidgetComponent != nullptr)
+	{
 		AngleWidget = Cast<UAngleWidget>(AngleWidgetComponent->GetWidget());
-	
+		AngleWidget->RadialSlider->SetVisibility(ESlateVisibility::Visible);
+	}
+
 	// add players in the array
 	if (IsLocallyControlled())
 	{
@@ -155,17 +158,28 @@ void ACannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	}
 }
 
+void ACannon::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	//UE_LOG(LogTemp, Warning, TEXT("%s, %d - 1111"), *GetActorNameOrLabel(), IsLocallyControlled());
+}
+
+void ACannon::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	//UE_LOG(LogTemp, Warning, TEXT("%s, %d - 1111"), *GetActorNameOrLabel(), IsLocallyControlled());
+}
+
 // Called every frame
 void ACannon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	//BillboardFireBoost();
 	if (!bIsturn) return;
-
+	
 	FVector NewLocation = GetActorLocation() + (MovementInput * MoveSpeed * DeltaTime);
 
-	// TODO: should set the limit of the rotation angle
 	FRotator NewRotation = Muzzle->GetComponentRotation() + RotationInput * RotationSpeed * DeltaTime;
 
 	if (IsLocallyControlled())
@@ -174,38 +188,28 @@ void ACannon::Tick(float DeltaTime)
 
 void ACannon::ServerRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *NewLocation.ToString());
-	MulticastRPC_Move_Implementation(NewLocation, NewRotation);
+	MulticastRPC_Move(NewLocation, NewRotation);
 }
 
 void ACannon::MulticastRPC_Move_Implementation(FVector NewLocation, FRotator NewRotation)
 {
+	// location
 	float distance = FMath::Abs(FVector::Dist(StartLocation, NewLocation));
-	if (distance < DistanceRange)
+	if (distance < DistanceRange) // if it is within the limit range, set actor location
 		SetActorLocation(NewLocation);
-	
+
+	// rotation
 	float angle = NewRotation.Roll - StartRotation.Roll;
-	if (IsLocallyControlled())
+
+	// blanc-white: -40~40, noir-black: 320-360, 0-40
+	
+	//UE_LOG(LogTemp, Warning, TEXT("%s, %d"), *GetActorNameOrLabel(), IsLocallyControlled());
+	
+	if (angle >360-AngleRange) angle -= 360;
+	if (angle < AngleRange && angle > -AngleRange)
 	{
-		if (angle < AngleRange && angle > -AngleRange)
-		{
-			Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
-			if (AngleWidget) AngleWidget->RadialSlider->SetValue(0.5f + angle/AngleRange);
-		}
-	}
-	else
-	{
-		if (angle < AngleRange && angle > 0.0f)
-		{
-			Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
-			if (AngleWidget) AngleWidget->RadialSlider->SetValue(0.5f + angle/AngleRange);
-		}
-		else if (angle > 360.0f-AngleRange && angle < 360.0f)
-		{
-			angle -= 360.0f;
-			Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
-			if (AngleWidget) AngleWidget->RadialSlider->SetValue(0.5f + angle/AngleRange);
-		}
+		Muzzle->SetRelativeRotation(FRotator(0.0f, -90.0f, NewRotation.Roll));
+		if (AngleWidget) AngleWidget->RadialSlider->SetValue(0.5 + 0.5 * (angle / AngleRange));
 	}
 }
 
@@ -253,7 +257,6 @@ void ACannon::ServerRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjecti
 	// after firing, switch the turn and display the turn, only server can access to the gamemode
 	if (gm != nullptr)
 		gm->ChangeTurn();
-	
 }
 
 void ACannon::MulticastRPC_Fire_Implementation(float Impulse, TSubclassOf<AProjectileEqBased> ProjectileEqBasedSubclass)
@@ -366,4 +369,3 @@ void ACannon::ClientRPC_EnableInput_Implementation(bool enable)
 	else
 		DisableInput(GetWorld()->GetFirstPlayerController());
 }
-

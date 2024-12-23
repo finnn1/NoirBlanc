@@ -11,7 +11,10 @@
 #include "Fortress/Cannon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/WidgetSwitcher.h"
+#include "NoirBlanc/Knight/TurnUI.h"
+#include "NoirBlanc/Knight/FinishUI.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "PieceTypes.h"
 
 
 void UFortressUI::NativeConstruct()
@@ -22,7 +25,9 @@ void UFortressUI::NativeConstruct()
 	Player1Percentage = 1.0f;
 	Player2Percentage = 1.0f;
 
-	horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
+	playerPieceColor = EPieceColor::White;
+	turnUI->ShowTurn(playerPieceColor);
+}
 
 	// APlayerController* pc = GetWorld()->GetFirstPlayerController();
 	// if (pc)
@@ -31,7 +36,6 @@ void UFortressUI::NativeConstruct()
 
 	// CountdownTime = 0;
 	// GetWorld()->GetTimerManager().SetTimer(CountdownTimer, this, &UFortressUI::UpdateCountdown, 1.0f, true);
-}
 
 void UFortressUI::UpdateCountdown()
 {	
@@ -40,14 +44,14 @@ void UFortressUI::UpdateCountdown()
 	if (CountdownTime > 3)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(CountdownTimer);
-		WidgetSwitcher->SetActiveWidgetIndex(1);
+		WidgetSwitcher->SetActiveWidgetIndex(2);
+	}
+}
+
 		//playerCannon->GetMovementComponent()->Activate();
 		// APlayerController* pc = GetWorld()->GetFirstPlayerController();
 		// if (pc)
 		// 	playerCannon->EnableInput(pc);
-	}
-	// MulticastRPC -> UI 업데이트 해라!!
-}
 
 void UFortressUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
@@ -61,22 +65,21 @@ void UFortressUI::ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player)
 	if (damagedCannon == player)
 	{
 		Player1Percentage = percentage;
-		//UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
 	}
 	else
 	{
-		// Player2pg->SetPercent(percentage);	// not working
 		Player2Percentage = percentage;
-		//UE_LOG(LogTemp, Warning, TEXT("Player2Percentage: %f"), Player2Percentage);
 	}
 }
 
 void UFortressUI::GameOver(int32 index)
 {
-	FText winner = index == 0 ? FText::FromString(TEXT("Blanc")) : FText::FromString(TEXT("Noir"));
-	text_Winner->SetText(winner);
-	WidgetSwitcher->SetActiveWidgetIndex(2);
-
+	UE_LOG(LogTemp, Warning, TEXT("Index %d"), index);
+	FText winner = index == 0 ? FText::FromString(TEXT("블랑")) : FText::FromString(TEXT("느와르"));
+	UE_LOG(LogTemp, Warning, TEXT("Winner %s"), *winner.ToString());
+	FinishUI->UpdateWinnerText(winner);
+	WidgetSwitcher->SetActiveWidgetIndex(3);
+	
 	// save result to game instance
 	UNoirBlancGameInstance* gi = Cast<UNoirBlancGameInstance>(GetWorld()->GetGameInstance());
 	gi->WinnerColor = index == 0 ? EPieceColor::White : EPieceColor::Black;
@@ -84,25 +87,14 @@ void UFortressUI::GameOver(int32 index)
 }
 
 // turn UI
-void UFortressUI::SetTurnWidgetVisible()
-{
-	// set widget visible to know whose turn is it
-	if (playerCannon) // server doesn't have playerCannon
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("UI turnCannon %s"), *playerCannon->turnCannon.ToString());
-		text_Turn->SetText(playerCannon->turnCannon);
-	}
-		
-	horizontalBox_Turn->SetVisibility(ESlateVisibility::Visible);
-	// delay for 2 sec
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UFortressUI::SetTurnWidgetHidden, 1.0f, false);
-}
-
-void UFortressUI::SetTurnWidgetHidden()
-{
-	horizontalBox_Turn->SetVisibility(ESlateVisibility::Hidden);
-}
+// void UFortressUI::SetTurnWidgetVisible()
+// {
+// 	// set widget visible to know whose turn is it
+// 	if (playerCannon) // server doesn't have playerCannon
+// 	{
+// 		turnUI->ShowTurn(playerPieceColor);
+// 	}
+// }
 
 void UFortressUI::SetWindBar(float percent)
 {
