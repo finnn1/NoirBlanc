@@ -536,12 +536,12 @@ void ANetworkPawn::MulticastRPT_FractureCard_Implementation(APawnCard* FirstTarg
 void ANetworkPawn::DestroyCardAndCheck(APawnCard* PawnCard)
 {
 	// 꽝 카드면 데칼 그리기 X
-	if(PawnCard->PawnCardData->PawnCardType != PawnCardType::NoLuck)
-	{
+	//if(PawnCard->PawnCardData->PawnCardType != PawnCardType::NoLuck)
+	//{
 		DrawDecalActor(PawnCard->GetActorLocation(), PawnPieceColor);
 		PlaySound(CorrectSound);
 		PawnCard->Destroy();
-	}
+	//}
 	
 	if(GameMode)
 	{
@@ -597,15 +597,18 @@ bool ANetworkPawn::GetIsTurnPlayer()
 void ANetworkPawn::ServerRPC_IncreaseScore_Implementation(ANetworkPawn* ScorePlayer, bool IsNoLuck)
 {
 	// 꽝 카드를 매칭시켰으면 턴 체인
-	if(IsNoLuck)
+	/*if(IsNoLuck)
 	{
-		//CurrentScore--;
 		ServerRPC_ChangeTurn(this);
 		return;
-	}
+	}*/
 	
 	int32 CurrentScore = ScorePlayer->GetPlayerState()->GetScore();
 	CurrentScore++;
+	if(IsNoLuck)
+	{
+		CurrentScore++;
+	}
 	
 	ScorePlayer->GetPlayerState()->SetScore(CurrentScore);
 
