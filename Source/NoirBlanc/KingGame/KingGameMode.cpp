@@ -299,23 +299,27 @@ void AKingGameMode::UpdateTimer()
 	}
 }
 
-void AKingGameMode::HandleCatcherLocationSelect(int32 ButtonIndex)
+void AKingGameMode::HandleCatcherLocationSelect(int32 ButtonIndex, ASpawnLocation* ClickedSpawnLocation)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, FString::Printf(TEXT("index : %d"), ButtonIndex));
 
 	// 이미 배열에 있으면 리턴 (이미 선택한 곳이면)
 	for (int32 SelectedLocationIndex : SelectedLocationsIndex)
 	{
+		// 사운드 재생
 		if (SelectedLocationIndex == ButtonIndex) return;
 	}
 
 	// 4개 이미 선택했으면 리턴
+	// 사운드 재생
 	if (SelectedLocationsIndex.Num() >= 4) return;
 
 
 	// 선택한 인덱스 목록에 추가
 	SelectedLocationsIndex.Add(ButtonIndex);
 
+	ClickedSpawnLocation->MulticastRPC_SpawnSoundAtLocation(ClickedSpawnLocation->SoundClick, ClickedSpawnLocation->GetActorLocation(), KingGameSoundEffect::Click);
+	
 	// 해당 인덱스 선택했다고 CatcherPawn에게 빨간 불 들어오게 하기.
 	for (int i = 0; i < JoinedPlayers.Num(); ++i)
 	{

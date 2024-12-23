@@ -362,7 +362,7 @@ void AKingCatcherPawn::ServerRPC_Click_Implementation(FVector WorldLocation, FVe
 					AKingGameMode* _AKingGameMode = GetWorld()->GetAuthGameMode<AKingGameMode>();
 					if (_AKingGameMode)
 					{
-						_AKingGameMode->HandleCatcherLocationSelect(_ASpawnLocation->Index);
+						_AKingGameMode->HandleCatcherLocationSelect(_ASpawnLocation->Index, _ASpawnLocation);
 					}
 				}
 			}
@@ -414,7 +414,7 @@ void AKingCatcherPawn::ServerRPC_HandleButtonClick_Implementation(int32 ButtonIn
 	AKingGameMode* _KingGameMode = GetWorld()->GetAuthGameMode<AKingGameMode>();
 	if (_KingGameMode)
 	{
-		_KingGameMode->HandleCatcherLocationSelect(ButtonIndex);
+		// _KingGameMode->HandleCatcherLocationSelect(ButtonIndex, TODO);
 	}
 }
 

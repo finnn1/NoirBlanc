@@ -52,7 +52,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	int32 DefaultRemainTime = 100;
 
-	void HandleCatcherLocationSelect(int32 ButtonIndex);
+	void HandleCatcherLocationSelect(int32 ButtonIndex, class ASpawnLocation* ClickedSpawnLocation);
 	void ColorSpawnLocationToPlayer(int32 SpawnLocationIndex, APlayerController* PlayerController);
 	void HandleCatcherFireButtonClick();
 	void FireAt(TArray<class ASpawnLocation*> SpawnLocations);
