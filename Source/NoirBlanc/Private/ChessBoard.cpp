@@ -241,7 +241,7 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 		{
 			Selected->IncreaseEncounterCount();
 			Target->IncreaseEncounterCount();
-			if(Selected->GetPieceType() == EPieceType::Queen)
+			if(Selected->GetPieceType() == EPieceType::Queen && Target->GetPieceType() != EPieceType::King)
 			{
 				QueenEncounter();
 			}
@@ -274,12 +274,12 @@ void AChessBoard::QueenEncounter()
 
 void AChessBoard::ServerRPC_AfterQueen_Implementation(const FString& Level)
 {
-	QueenLevel = Level;
-	MulticastRPC_AfterQueen();
+	MulticastRPC_AfterQueen(Level);
 }
 
-void AChessBoard::MulticastRPC_AfterQueen_Implementation()
+void AChessBoard::MulticastRPC_AfterQueen_Implementation(const FString& Level)
 {
+	QueenLevel = Level;
 	AfterQueen(SelectedPiece, TargetPiece);
 }
 
@@ -311,11 +311,11 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	BattleUI->AddToViewport();
 	if(Target->GetPieceType() != EPieceType::King)
 	{
-		BattleUI->UpdateBattleUI(GameInstance->AttackerType);
+		BattleUI->UpdateBattleUI(GameInstance->AttackerType, QueenLevel);
 	}
 	else
 	{
-		BattleUI->UpdateBattleUI(EPieceType::King);
+		BattleUI->UpdateBattleUI(EPieceType::King, QueenLevel);
 	}
 
 	if(HasAuthority())

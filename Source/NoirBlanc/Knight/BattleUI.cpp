@@ -6,7 +6,7 @@
 #include "PieceTypes.h"
 #include "Components/TextBlock.h"
 
-void UBattleUI::UpdateBattleUI(EPieceType GamePiece)
+void UBattleUI::UpdateBattleUI(EPieceType GamePiece,FString QueenLevel)
 {
 	switch (GamePiece)
 	{
@@ -37,7 +37,22 @@ void UBattleUI::UpdateBattleUI(EPieceType GamePiece)
 		case EPieceType::Queen:
 			{
 				Txt_Piece->SetText(FText::FromString(TEXT("퀸의 미니게임!")));
-				Txt_Game->SetText(FText::FromString(TEXT("?")));
+				if(QueenLevel == TEXT("Pawn"))
+				{
+					Txt_Game->SetText(FText::FromString(TEXT("카드 맞추기")));
+				}
+				else if(QueenLevel == TEXT("Knight"))
+				{
+					Txt_Game->SetText(FText::FromString(TEXT("경마 레이스")));
+				}
+				else if(QueenLevel == TEXT("Rook"))
+				{
+					Txt_Game->SetText(FText::FromString(TEXT("포탄 날리기")));
+				}
+				else if(QueenLevel == TEXT("Bishop"))
+				{
+					Txt_Game->SetText(FText::FromString(TEXT("그대로 멈춰라")));
+				}
 				break;
 			}
 		case EPieceType::King:

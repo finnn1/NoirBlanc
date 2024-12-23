@@ -144,14 +144,14 @@ private:
 
 	bool bIsTargetPointEmpty = false;
 
-	float SpawnHeight = 50.f;
+	float SpawnHeight = 10.f;
 
 	//bool bIsSamePieceClicked = false;
 
 	bool bIsGoingToAnotherLevel = false;
 
 	FName LevelToOpen;
-
+	
 	FString QueenLevel;
 
 	UPROPERTY(Replicated)
@@ -252,7 +252,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_AfterQueen(const FString& Level);
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_AfterQueen();
+	void MulticastRPC_AfterQueen(const FString& Level);
 	void AfterQueen(AChessPiece* Selected, AChessPiece* Target);
 
 	UFUNCTION(Server, Reliable)
