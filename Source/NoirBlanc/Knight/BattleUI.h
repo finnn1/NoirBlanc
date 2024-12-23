@@ -22,5 +22,5 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* Txt_Game;
 
-	void UpdateBattleUI(EPieceType GamePiece, FString QueenLevel);
+	void UpdateBattleUI(EPieceType GamePiece, FString QueenLevel, bool bIsKingGame);
 };

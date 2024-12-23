@@ -18,9 +18,14 @@ void URestartUI::NativeConstruct()
 void URestartUI::OnRestartClicked()
 {
 	UNoirBlancGameInstance* GameInstance = Cast<UNoirBlancGameInstance>(GetGameInstance());
-	GameInstance->Init();
-	AChessPlayerController* Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());
-	Controller->ServerRPC_LevelTravel(TEXT("/Game/Level/Lv_ChessBoard?listen"));
+	GameInstance->ServerRPC_InitInstance();
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		{
+			AChessPlayerController* Controller = Cast<AChessPlayerController>(GetWorld()->GetFirstPlayerController());
+			Controller->ServerRPC_LevelTravel(TEXT("/Game/Level/Lv_ChessBoard?listen"));
+		}, 1.0f, false);
+
 }
 
 void URestartUI::OnEndClicked()

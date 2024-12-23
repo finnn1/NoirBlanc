@@ -22,6 +22,9 @@ void UNoirBlancGameInstance::Init()
 		MoveCountData[i] = 0;
 	}
 
+	Saved_Turn = EPieceColor::White;
+	WinnerColor = EPieceColor::Blank;
+
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
 	if (Subsystem == nullptr) return;
 	SessionInterFace = Subsystem->GetSessionInterface();
@@ -35,6 +38,16 @@ void UNoirBlancGameInstance::Init()
 		this, &UNoirBlancGameInstance::OnFindOtherSessionComplete);
 	SessionInterFace->OnJoinSessionCompleteDelegates.AddUObject(
 		this, &UNoirBlancGameInstance::OnJoinOtherSessionComplete);
+}
+
+void UNoirBlancGameInstance::ServerRPC_InitInstance_Implementation()
+{
+	MulticastRPC_InitInstance();
+}
+
+void UNoirBlancGameInstance::MulticastRPC_InitInstance_Implementation()
+{
+	Init();	
 }
 
 void UNoirBlancGameInstance::ServerRPC_LevelTravel_Implementation(const FString& LevelName)

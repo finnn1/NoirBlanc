@@ -22,9 +22,9 @@ enum class EPieceType : uint8
 UENUM(BlueprintType)
 enum class EPieceColor : uint8
 {
- Blank,
  Black,
- White
+ White,
+ Blank
 };
 
 inline TArray<TArray<int32>> KnightValue = {

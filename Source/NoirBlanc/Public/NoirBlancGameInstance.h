@@ -24,7 +24,7 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
-	EPieceColor WinnerColor = EPieceColor::White;
+	EPieceColor WinnerColor;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	EPieceColor DeffenderColor;
@@ -51,7 +51,7 @@ public:
 	TArray<int32 > MoveCountData;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
-	EPieceColor Saved_Turn = EPieceColor::White;
+	EPieceColor Saved_Turn;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SaveData")
 	int32 AttackerRow;
@@ -69,6 +69,10 @@ public:
 public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_LevelTravel(const FString& LevelName);
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_InitInstance();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_InitInstance();
 
 	// 세션 생성
 	UFUNCTION()

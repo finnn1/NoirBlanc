@@ -241,7 +241,11 @@ void AChessBoard::PieceEncounter(AChessPiece* Selected, AChessPiece* Target)
 		{
 			Selected->IncreaseEncounterCount();
 			Target->IncreaseEncounterCount();
-			if(Selected->GetPieceType() == EPieceType::Queen && Target->GetPieceType() != EPieceType::King)
+			if(Target->GetPieceType() == EPieceType::King)
+			{
+				AfterQueen(Selected, Target);
+			}
+			else if(Selected->GetPieceType() == EPieceType::Queen)
 			{
 				QueenEncounter(Selected->GetPieceType());
 			}
@@ -315,11 +319,11 @@ void AChessBoard::AfterQueen(AChessPiece* Selected, AChessPiece* Target)
 	BattleUI->AddToViewport();
 	if(Target->GetPieceType() != EPieceType::King)
 	{
-		BattleUI->UpdateBattleUI(GameInstance->AttackerType, QueenLevel);
+		BattleUI->UpdateBattleUI(GameInstance->AttackerType, QueenLevel, false);
 	}
 	else
 	{
-		BattleUI->UpdateBattleUI(EPieceType::King, QueenLevel);
+		BattleUI->UpdateBattleUI(EPieceType::King, QueenLevel, true);
 	}
 
 	if(HasAuthority())
