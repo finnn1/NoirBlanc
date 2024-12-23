@@ -6,6 +6,13 @@
 #include "GameFramework/Actor.h"
 #include "SpawnLocation.generated.h"
 
+UENUM()
+enum class KingGameSoundEffect : uint8
+{
+	Click		UMETA(DisplayName = "Click"),
+	ClickDeny		UMETA(DisplayName = "ClickDeny")
+};
+
 UCLASS()
 class NOIRBLANC_API ASpawnLocation : public AActor
 {
@@ -34,6 +41,24 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
+	// Sound Effects
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* SoundClick;
+	UAudioComponent* AudioComponentClick;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	class USoundBase* SoundClickDeny;
+	UAudioComponent* AudioComponentClickDeny;
+	
+	void SpawnClickSound();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_SpawnSoundAtLocation(USoundBase* Sound, FVector Location, KingGameSoundEffect SoundEffect);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_StopSound(KingGameSoundEffect SoundEffect);
+
+	
 	class UMaterialInstanceDynamic* DynamicMaterial;
 	
 	// void ColorToRed();

@@ -4,7 +4,10 @@
 
 #include "KingCharacter.h"
 #include "Components/ArrowComponent.h"
+#include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "NoirBlanc/BishopGame/TaggerCharacter.h"
 
 ASpawnLocation::ASpawnLocation()
 {
@@ -44,6 +47,54 @@ void ASpawnLocation::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void ASpawnLocation::SpawnClickSound()
+{
+	MulticastRPC_SpawnSoundAtLocation(SoundClick, GetActorLocation(), KingGameSoundEffect::Click);
+}
+
+void ASpawnLocation::MulticastRPC_SpawnSoundAtLocation_Implementation(USoundBase* Sound, FVector Location, KingGameSoundEffect SoundEffect)
+{
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), Sound, Location);
+	if (AudioComp)
+	{
+		AudioComp->bAutoDestroy = true;
+		AudioComp->Play();
+	}
+
+	switch (SoundEffect)
+	{
+	case KingGameSoundEffect::Click:
+		AudioComponentClick = AudioComp;
+		break;
+	case KingGameSoundEffect::ClickDeny:
+		AudioComponentClickDeny = AudioComp;
+		break;
+	default:
+		break;
+	}
+}
+
+void ASpawnLocation::MulticastRPC_StopSound_Implementation(KingGameSoundEffect SoundEffect)
+{
+	switch (SoundEffect)
+	{
+	case KingGameSoundEffect::Click:
+		if (AudioComponentClick)
+		{
+			AudioComponentClick->Stop();
+		}
+		break;
+	case KingGameSoundEffect::ClickDeny:
+		if (AudioComponentClickDeny)
+		{
+			AudioComponentClickDeny->Stop();
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 /*void ASpawnLocation::ColorToRed()
 {
 	if (DynamicMaterial)
@@ -67,8 +118,8 @@ void ASpawnLocation::ColorTo_Implementation(FLinearColor color, APlayerControlle
 		if (DynamicMaterial)
 		{
 			//DynamicMaterial->SetVectorParameterValue("BaseColor", color);
-			
-			if(color == FLinearColor::Red)
+
+			if (color == FLinearColor::Red)
 			{
 				StaticMeshComponent->SetMaterial(0, ChooseMat);
 			}
@@ -84,10 +135,9 @@ void ASpawnLocation::ColorTo_Implementation(FLinearColor color, APlayerControlle
 		{
 			if (DynamicMaterial)
 			{
-
 				//DynamicMaterial->SetVectorParameterValue("BaseColor", color);
-				
-				if(color == FLinearColor::Red)
+
+				if (color == FLinearColor::Red)
 				{
 					StaticMeshComponent->SetMaterial(0, ChooseMat);
 				}
@@ -95,7 +145,6 @@ void ASpawnLocation::ColorTo_Implementation(FLinearColor color, APlayerControlle
 				{
 					StaticMeshComponent->SetMaterial(0, NorMalMat);
 				}
-				
 			}
 		}
 	}

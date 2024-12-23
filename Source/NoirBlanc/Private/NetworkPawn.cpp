@@ -134,6 +134,7 @@ void ANetworkPawn::DrawDecalActor(FVector DecalLocation, EPieceColor ContrColor)
 	}
 	
 	DecalActor->SetActorRotation(FRotator(-3.f,-98.f, 100.f));
+	//DecalActor->SetActorRotation(FRotator(90.f,0.f, 90.f));
 	DecalActor->SetActorScale3D(FVector(0.15f,0.2f,0.15f));
 }
 
