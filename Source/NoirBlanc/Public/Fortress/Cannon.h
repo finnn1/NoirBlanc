@@ -108,6 +108,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual  void PossessedBy(AController* NewController) override;
+	virtual void OnRep_Controller() override;
+
 public:
 	// UPROPERTY(EditAnywhere)
 	// TSubclassOf<AProjectile> ProjectileFactory;		// class

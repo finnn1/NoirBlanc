@@ -70,7 +70,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UTurnUI> TurnUIFactory;
 	
-	UPROPERTY()
+	UPROPERTY(meta=(BindWidget))
 	UTurnUI* turnUI;
 	
 	UPROPERTY(meta = (BindWidget))
@@ -84,7 +84,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UFinishUI> FinishUIFactory;
 
-	UPROPERTY()
+	UPROPERTY(meta = (BindWidget))
 	UFinishUI* FinishUI;
 	
 	void GameOver(int32 index);

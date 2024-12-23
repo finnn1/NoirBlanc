@@ -25,12 +25,10 @@ void UFortressUI::NativeConstruct()
 	Player1Percentage = 1.0f;
 	Player2Percentage = 1.0f;
 
-	turnUI = CreateWidget<UTurnUI>(this, TurnUIFactory);
-
-	FinishUI = CreateWidget<UFinishUI>(this, FinishUIFactory);
-
 	playerPieceColor = EPieceColor::White;
-	
+	turnUI->ShowTurn(playerPieceColor);
+}
+
 	// APlayerController* pc = GetWorld()->GetFirstPlayerController();
 	// if (pc)
 	// 	playerCannon->DisableInput(pc);
@@ -38,7 +36,6 @@ void UFortressUI::NativeConstruct()
 
 	// CountdownTime = 0;
 	// GetWorld()->GetTimerManager().SetTimer(CountdownTimer, this, &UFortressUI::UpdateCountdown, 1.0f, true);
-}
 
 void UFortressUI::UpdateCountdown()
 {	
@@ -48,13 +45,13 @@ void UFortressUI::UpdateCountdown()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(CountdownTimer);
 		WidgetSwitcher->SetActiveWidgetIndex(2);
+	}
+}
+
 		//playerCannon->GetMovementComponent()->Activate();
 		// APlayerController* pc = GetWorld()->GetFirstPlayerController();
 		// if (pc)
 		// 	playerCannon->EnableInput(pc);
-	}
-	// MulticastRPC -> UI 업데이트 해라!!
-}
 
 void UFortressUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
@@ -68,13 +65,10 @@ void UFortressUI::ApplyDamageHPBar(ACannon* damagedCannon, ACannon* player)
 	if (damagedCannon == player)
 	{
 		Player1Percentage = percentage;
-		//UE_LOG(LogTemp, Warning, TEXT("Player1Percentage: %f"), Player1Percentage);
 	}
 	else
 	{
-		// Player2pg->SetPercent(percentage);	// not working
 		Player2Percentage = percentage;
-		//UE_LOG(LogTemp, Warning, TEXT("Player2Percentage: %f"), Player2Percentage);
 	}
 }
 
@@ -93,23 +87,14 @@ void UFortressUI::GameOver(int32 index)
 }
 
 // turn UI
-void UFortressUI::SetTurnWidgetVisible()
-{
-	// set widget visible to know whose turn is it
-	if (playerCannon) // server doesn't have playerCannon
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("UI turnCannon %s"), *playerCannon->turnCannon.ToString());
-		turnUI->ShowTurn(playerPieceColor);
-	}
-	
-	// delay for 2 sec
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UFortressUI::SetTurnWidgetHidden, 1.0f, false);
-}
-
-void UFortressUI::SetTurnWidgetHidden()
-{
-}
+// void UFortressUI::SetTurnWidgetVisible()
+// {
+// 	// set widget visible to know whose turn is it
+// 	if (playerCannon) // server doesn't have playerCannon
+// 	{
+// 		turnUI->ShowTurn(playerPieceColor);
+// 	}
+// }
 
 void UFortressUI::SetWindBar(float percent)
 {

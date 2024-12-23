@@ -151,18 +151,6 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 
 			playerUI->ApplyDamageHPBar(Opponent, playerCannon);
 
-			// next turn
-			if (Opponent->HasAuthority()) // server
-			{
-				if (Opponent->IsLocallyControlled()) playerUI->playerPieceColor = EPieceColor::Black;	// noir
-				else playerUI->playerPieceColor = EPieceColor::White;	// blanc
-			}
-			else // client
-			{
-				if (Opponent->IsLocallyControlled()) playerUI->playerPieceColor = EPieceColor::White;
-				else playerUI->playerPieceColor = EPieceColor::Black;
-			}
-			
 			// noir-client-black-1, blanc-server-white-0
 			// whether the opponent is server of client
 			if (Opponent->Health <= 0)
@@ -188,7 +176,19 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		Destroy();
 	}
 
+	
 	// next turn
+	if (OwnerCannon->HasAuthority()) // server
+	{
+		if (OwnerCannon->IsLocallyControlled()) playerUI->playerPieceColor = EPieceColor::Black;	// noir
+		else playerUI->playerPieceColor = EPieceColor::White;	// blanc
+	}
+	else // client
+	{
+		if (OwnerCannon->IsLocallyControlled()) playerUI->playerPieceColor = EPieceColor::White;
+		else playerUI->playerPieceColor = EPieceColor::Black;
+	}
+	
 	if (playerUI->turnUI)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Player UI turned"));
@@ -214,7 +214,6 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 
 void AProjectileEqBased::SetTurnWidgetHidden()
 {
-	playerUI->turnUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
 // void AProjectileEqBased::PrepareNextTurn()
