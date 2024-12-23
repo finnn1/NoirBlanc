@@ -32,5 +32,5 @@ public:
 	class UWidgetAnimation* MainDisappearAnim;
 	void PlayerDisappear();
 
-	float MaxDistance = 12.63f;
+	float MaxDistance = 10.849078f;
 };
