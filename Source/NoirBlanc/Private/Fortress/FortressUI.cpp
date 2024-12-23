@@ -27,6 +27,14 @@ void UFortressUI::NativeConstruct()
 
 	playerPieceColor = EPieceColor::White;
 	turnUI->ShowTurn(playerPieceColor);
+
+	if (playerCannon->HasAuthority())
+	{
+		Player1Info->SetText(FText::FromString(TEXT("블랑")));
+		Player2Info->SetText(FText::FromString(TEXT("느와르")));
+		Player1pg->SetFillColorAndOpacity(FLinearColor::White);
+		Player2pg->SetFillColorAndOpacity(FLinearColor::Black);
+	}
 }
 
 	// APlayerController* pc = GetWorld()->GetFirstPlayerController();

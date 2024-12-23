@@ -47,6 +47,12 @@ public:
 	// Main UI
 public:
 	UPROPERTY(meta = (BindWidget))
+	UTextBlock* Player1Info;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* Player2Info;
+	
+	UPROPERTY(meta = (BindWidget))
 	UProgressBar* Player1pg;
 	
 	UPROPERTY(meta = (BindWidget))
