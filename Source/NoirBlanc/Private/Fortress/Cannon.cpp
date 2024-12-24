@@ -346,6 +346,7 @@ void ACannon::ClientRPC_UpdateCountdownUI_Implementation(const FText& text)
 void ACannon::MulticastRPC_SetWindForce_Implementation(FVector NewWindForce, float NewWindForceMax)
 {
 	WindForce = NewWindForce;
+	
 	if (IsLocallyControlled())
 	{
 		FortressUI->SetWindBar(WindForce.X / NewWindForceMax);

@@ -24,7 +24,6 @@ AProjectileEqBased::AProjectileEqBased()
 	RootComponent = Mesh;
 
 	Gravity = 980.0f; // unit: (cm/s^2)
-	ElapsedTime = 0.0f;
 	WindResistance = 1.0f;
 	Force = 1.0f;
 	Impulse = 0.0f;
@@ -37,37 +36,36 @@ void AProjectileEqBased::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//SetReplicateMovement(true);
-
 	// this projectile owner != playerOwner
 	OwnerCannon = Cast<ACannon>(GetOwner());
 	playerCannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	playerUI = playerCannon->FortressUI;
-	//ServerRPC_Init();
 
 	if (OwnerCannon)
 	{
-		FVector LaunchDirection = OwnerCannon->SpawnLocation->GetComponentLocation() -
-		                          OwnerCannon->SpawnOrigin->GetComponentLocation();
+		FVector LaunchDirection =
+			OwnerCannon->SpawnLocation->GetComponentLocation() - OwnerCannon->SpawnOrigin->GetComponentLocation();
 
 		WindForce = OwnerCannon->WindForce * WindResistance;
 		UE_LOG(LogTemp, Warning, TEXT("Windforce: %s"), *WindForce.ToString());
+		
 		SetSpeedAddImpuse(LaunchDirection);
+		
+		if (ShortFireSound)
+			UGameplayStatics::PlaySoundAtLocation(this, ShortFireSound, OwnerCannon->SpawnLocation->GetComponentLocation());
+		
+		// when collision happens
+		Mesh->IgnoreActorWhenMoving(OwnerCannon, true);
+		
+		Mesh->OnComponentHit.AddDynamic(this, &AProjectileEqBased::OnProjectileHit);
+	}
+}
 
 		// InitImpulse = LaunchDirection.GetSafeNormal() * Speed;
 		//
 		// /* if simulate physics is false*/
 		// // impulse = F*t or m*v, bVelChange: to consider mass or not: engine automatically set the mass
 		// Mesh->AddImpulse(InitImpulse * Mass, NAME_None, true);
-
-		if (ShortFireSound)
-			UGameplayStatics::PlaySoundAtLocation(this, ShortFireSound, OwnerCannon->SpawnLocation->GetComponentLocation());
-		
-		// when collision happens
-		Mesh->IgnoreActorWhenMoving(OwnerCannon, true);
-		Mesh->OnComponentHit.AddDynamic(this, &AProjectileEqBased::OnProjectileHit);
-	}
-}
 
 void AProjectileEqBased::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -79,14 +77,20 @@ void AProjectileEqBased::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 void AProjectileEqBased::SetSpeedAddImpuse(FVector Direction)
 {
 	Impulse = OwnerCannon->ProjectileImpulse;
+
 	FVector InitImpulse = Direction.GetSafeNormal() * Impulse;
-	float mass = Mesh->GetMass();
-	/* if simulate physics is false*/
-	// impulse = F*t -> m*v, bVelChange: to consider mass or not: engine automatically set the mass
+
+	// float mass = Mesh->GetMass();
+	
 	//Mesh->AddImpulse(InitImpulse/mass*20.0f, NAME_None, true);
+
+	// the impulse-momentum theorem 
 	Mesh->AddImpulse(InitImpulse, NAME_None, true);
+
 	UE_LOG(LogTemp, Warning, TEXT("Mass: %f"), Mesh->GetMass());
 }
+	/* if simulate physics is false*/
+	// impulse = F*t -> m*v, bVelChange: to consider mass or not: engine automatically set the mass
 
 // Called every frame
 void AProjectileEqBased::Tick(float DeltaTime)
@@ -94,7 +98,6 @@ void AProjectileEqBased::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	Mesh->AddForce(WindForce);
-	ElapsedTime += DeltaTime;
 
 	/* if simulate physics is true*/
 	// NewLocation.X += InitImpulse.X * DeltaTime;
@@ -188,20 +191,13 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 		if (OwnerCannon->IsLocallyControlled()) playerUI->playerPieceColor = EPieceColor::White;
 		else playerUI->playerPieceColor = EPieceColor::Black;
 	}
-	
+	// switch UI into next player
 	if (playerUI->turnUI)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Player UI turned"));
 		playerUI->turnUI->ShowTurn(playerUI->playerPieceColor);
 	}
-	
-	// FTimerHandle TimerHandle;
-	// GetWorld()->GetTimerManager().SetTimer(
-	// 	TimerHandle,
-	// 	FTimerDelegate::CreateUObject(playerUI, &UFortressUI::SetTurnWidgetVisible),
-	// 	1.0f,
-	// 	false);
-
+	// set next turn wind
 	if (HasAuthority())
 	{
 		AFortressGameMode* gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
@@ -210,6 +206,13 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 			gm->SetWind();
 		}
 	}
+	
+	// FTimerHandle TimerHandle;
+	// GetWorld()->GetTimerManager().SetTimer(
+	// 	TimerHandle,
+	// 	FTimerDelegate::CreateUObject(playerUI, &UFortressUI::SetTurnWidgetVisible),
+	// 	1.0f,
+	// 	false);
 }
 
 void AProjectileEqBased::SetTurnWidgetHidden()

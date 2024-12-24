@@ -107,6 +107,7 @@ void AFortressGameMode::ChangeTurn()
 void AFortressGameMode::SetWind()
 {
 	float windStrength = FMath::RandRange(-WindMaxStrength, WindMaxStrength);
+	
 	FVector windForce = FVector(1, 0, 0) * windStrength;
 
 	for (int32 i = 0; i < AllPlayers.Num(); i++)
@@ -137,7 +138,6 @@ void AFortressGameMode::StartCountdown()
 		else if (CountdownLeft == 0)
 			AllPlayers[i]->ClientRPC_UpdateCountdownUI(FText::FromString(TEXT("시작")));
 	}
-	
-				
 }
+
 

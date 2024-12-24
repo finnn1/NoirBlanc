@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 
-#include "GameFramework/GameMode.h"
+#include "GameFramework/GameModeBase.h"
 #include "FortressGameMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class NOIRBLANC_API AFortressGameMode : public AGameMode
+class NOIRBLANC_API AFortressGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
@@ -41,6 +41,4 @@ public:
 	int32 CountdownLeft = 3;
 	
 	void StartCountdown();
-
-	
 };
