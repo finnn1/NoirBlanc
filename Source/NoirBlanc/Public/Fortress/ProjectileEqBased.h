@@ -27,7 +27,7 @@ protected:
 	
 	FVector WindForce;
 	float Gravity;
-	float ElapsedTime;
+	
 
 	UPROPERTY(EditAnywhere)
 	float WindResistance;
