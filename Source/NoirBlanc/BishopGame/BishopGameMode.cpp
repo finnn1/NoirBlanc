@@ -36,38 +36,38 @@ ABishopGameMode::ABishopGameMode()
 AActor* ABishopGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
 	//// For Test ////
-	// ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
-	// if (Player->IsLocalPlayerController())
-	// {
-	// 	_PlayerState->PieceColor = EPieceColor::White;
-	// 	_PlayerState->bIsAttaker = false;
-	// 	for (int i = 0; i < AllStartPoints.Num(); ++i)
-	// 	{
-	// 		if (AllStartPoints[i]->PlayerStartTag == TEXT("Bishop"))
-	// 		{
-	// 			return AllStartPoints[i];
-	// 		}
-	// 	}
-	// }
-	// else
-	// {
-	// 	_PlayerState->PieceColor = EPieceColor::Black;
-	// 	_PlayerState->bIsAttaker = true;
-	// 	for (int i = 0; i < AllStartPoints.Num(); ++i)
-	// 	{
-	// 		if (AllStartPoints[i]->PlayerStartTag == TEXT("Tagger"))
-	// 		{
-	// 			return AllStartPoints[i];
-	// 		}
-	// 	}
-	// }
-	//
-	// return Super::ChoosePlayerStart_Implementation(Player);
+	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
+	if (Player->IsLocalPlayerController())
+	{
+		_PlayerState->PieceColor = EPieceColor::White;
+		_PlayerState->bIsAttaker = false;
+		for (int i = 0; i < AllStartPoints.Num(); ++i)
+		{
+			if (AllStartPoints[i]->PlayerStartTag == TEXT("Bishop"))
+			{
+				return AllStartPoints[i];
+			}
+		}
+	}
+	else
+	{
+		_PlayerState->PieceColor = EPieceColor::Black;
+		_PlayerState->bIsAttaker = true;
+		for (int i = 0; i < AllStartPoints.Num(); ++i)
+		{
+			if (AllStartPoints[i]->PlayerStartTag == TEXT("Tagger"))
+			{
+				return AllStartPoints[i];
+			}
+		}
+	}
+	
+	return Super::ChoosePlayerStart_Implementation(Player);
 
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// 실제 게임에서는 주석 해제하기
-	ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
+	/*ANoirBlancPlayerState* _PlayerState = Player->GetPlayerState<ANoirBlancPlayerState>();
 	UNoirBlancGameInstance* _NoirBlancGameInstance = GetGameInstance<UNoirBlancGameInstance>();
 
 	// 게임모드 안에서 LocalPlayer다? 서버이다 => 하얀색
@@ -127,7 +127,7 @@ AActor* ABishopGameMode::ChoosePlayerStart_Implementation(AController* Player)
 		}
 	}
 
-	return Super::ChoosePlayerStart_Implementation(Player);
+	return Super::ChoosePlayerStart_Implementation(Player);*/
 }
 
 UClass* ABishopGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
@@ -179,11 +179,11 @@ void ABishopGameMode::NotifyJoined(APlayerController* JoinedPlayer)
 		if (JoinedPlayer->GetPawn()->IsA(ABishopPawn::StaticClass()))
 		{
 			BishopGameCamera->Player1 = JoinedPlayer->GetPawn();
-			ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(JoinedPlayer);
-			if (_ATravelPlayerController)
-			{
-				_ATravelPlayerController->ClientRPC_SetViewTarget(BishopGameCamera);
-			}
+			// ATravelPlayerController* _ATravelPlayerController = Cast<ATravelPlayerController>(JoinedPlayer);
+			// if (_ATravelPlayerController)
+			// {
+				// _ATravelPlayerController->ClientRPC_SetViewTarget(BishopGameCamera);
+			// }
 		}
 		else
 		{

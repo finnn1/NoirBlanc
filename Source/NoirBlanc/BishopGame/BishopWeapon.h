@@ -21,8 +21,14 @@ public:
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* MeshComponent;
 
+	class UMaterialInstanceDynamic* DynamicMaterialInstance;
+	
 	UPROPERTY(EditDefaultsOnly)
 	float AttackSpeed = 100.f;
+
+	UPROPERTY(EditAnywhere)
+	float TransparencySpeed = 1.f;
+	float CurrentMaterialOpacity = 1.f;
 
 protected:
 	// Called when the game starts or when spawned

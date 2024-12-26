@@ -31,6 +31,23 @@ void ABishopWeapon::BeginPlay()
 	}
 
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ABishopWeapon::OnBoxComponentOverlap);
+
+	// 머티리얼 확인
+	UMaterialInterface* _FirstMaterial = MeshComponent->GetMaterial(0);
+	if (_FirstMaterial)
+	{
+		// 동적 머티리얼 생성
+		DynamicMaterialInstance = UMaterialInstanceDynamic::Create(_FirstMaterial, this);
+
+		// 생성된 동적 머티리얼을 메시에 적용
+		if (DynamicMaterialInstance)
+		{
+			MeshComponent->SetMaterial(0, DynamicMaterialInstance);
+
+			// 초기 파라미터 설정 (예: Opacity 값을 0.5로 설정)
+			DynamicMaterialInstance->SetScalarParameterValue(FName("OpacityMultiply"), 0.5f);
+		}
+	}
 }
 
 void ABishopWeapon::Tick(float DeltaTime)
@@ -58,6 +75,12 @@ void ABishopWeapon::Tick(float DeltaTime)
 	// 전진
 	float LocationMoveValue = AttackSpeed * DeltaTime;
 	AddActorWorldOffset(FVector(-AttackSpeed, 0, 0));
+
+	if (DynamicMaterialInstance)
+	{
+		DynamicMaterialInstance->SetScalarParameterValue(FName("OpacityMultiply"), CurrentMaterialOpacity);
+		CurrentMaterialOpacity -= (TransparencySpeed * DeltaTime);
+	}
 }
 
 void ABishopWeapon::OnBoxComponentOverlap
