@@ -40,7 +40,8 @@ void AProjectileEqBased::BeginPlay()
 	OwnerCannon = Cast<ACannon>(GetOwner());
 	playerCannon = Cast<ACannon>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	playerUI = playerCannon->FortressUI;
-
+	gs = Cast<AFortressGameState>(GetWorld()->GetGameState());
+	
 	if (OwnerCannon)
 	{
 		FVector LaunchDirection =
@@ -82,9 +83,10 @@ void AProjectileEqBased::SetSpeedAddImpuse(FVector Direction)
 
 	// the impulse-momentum theorem // bVelChange=false: consider mass 
 	Mesh->AddImpulse(InitImpulse, NAME_None, false);
-}
 
-	//UE_LOG(LogTemp, Warning, TEXT("Mass: %f"), Mesh->GetMass());
+	UE_LOG(LogTemp, Warning, TEXT("Mass: %f"), Mesh->GetMass());
+}
+	// mass: cannon ball: 1.1, bomb: 0.85, missile: 0.95
 
 	/* if simulate physics is false*/
 	// impulse = F*t -> m*v, bVelChange: to consider mass or not: engine automatically set the mass
@@ -94,7 +96,8 @@ void AProjectileEqBased::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	Mesh->AddForce(WindForce);
+	Mesh->AddForce(WindForce, NAME_None, false);
+}
 
 	/* if simulate physics is true*/
 	// NewLocation.X += InitImpulse.X * DeltaTime;
@@ -104,7 +107,6 @@ void AProjectileEqBased::Tick(float DeltaTime)
 	// SetActorLocation(NewLocation, true);
 	//
 	// InitImpulse.Z -= Gravity*DeltaTime;
-}
 
 
 void AProjectileEqBased::SetWindResistance(FVector WindDirection, float Resistance)
@@ -191,7 +193,6 @@ void AProjectileEqBased::OnProjectileHit(UPrimitiveComponent* HitComponent, AAct
 	// switch UI into next player
 	if (playerUI->turnUI)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player UI turned"));
 		playerUI->turnUI->ShowTurn(playerUI->playerPieceColor);
 	}
 	// set next turn wind
