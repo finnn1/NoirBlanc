@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Cannon.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/HorizontalBox.h"
 #include "NoirBlanc/Knight/CountDownUI.h"
 #include "NoirBlanc/Knight/TurnUI.h"
 #include "NoirBlanc/Knight/WaitingUI.h"
@@ -61,6 +62,7 @@ public:
 	ACannon* playerCannon;
 	// Cannon* Player2;
 
+	// current turn Cannon
 	EPieceColor playerPieceColor;
 	
 	UPROPERTY(BlueprintReadOnly)
@@ -79,11 +81,11 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTurnUI* turnUI;
 	
-	UPROPERTY(meta = (BindWidget))
-	UProgressBar* windForcePlus;
+	UPROPERTY(VisibleAnywhere, meta=(BindWidget))
+	UHorizontalBox* ImageHorizontalBox;
 
-	UPROPERTY(meta = (BindWidget))
-	UProgressBar* windForceMinus;
+	UPROPERTY(meta=(BindWidgetOptional))
+	TArray<UImage*> ArrowImages;
 	
 	// End UI
 public:
@@ -94,16 +96,10 @@ public:
 	UFinishUI* FinishUI;
 	
 	void GameOver(int32 index);
-	
-	// Etc. 
-public:
-	void SetTurnWidgetVisible(); 
-	
-	void SetTurnWidgetHidden();
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetWindBar(float percent);
+	void SetWindBar(int32 Strength);
 };
 
 

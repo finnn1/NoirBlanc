@@ -80,8 +80,6 @@ void ACannon::BeginPlay()
 	Super::BeginPlay();
 
 	gm = Cast<AFortressGameMode>(GetWorld()->GetAuthGameMode());
-	if (gm != nullptr)
-		UE_LOG(LogTemp, Warning, TEXT("GameMode Created"));
 
 	StartLocation = GetActorLocation();
 	StartRotation = Muzzle->GetComponentRotation();
@@ -343,14 +341,12 @@ void ACannon::ClientRPC_UpdateCountdownUI_Implementation(const FText& text)
 		FortressUI->WBP_CountDownUI->UpdateCountDown(text);
 }
 
-void ACannon::MulticastRPC_SetWindForce_Implementation(FVector NewWindForce, float NewWindForceMax)
+void ACannon::MulticastRPC_SetWindForce_Implementation(int32 WindStrength, float Unit)
 {
-	WindForce = NewWindForce;
+	WindForce = FVector(1.0f, 0.0f, 0.0f)*Unit*WindStrength;
 	
 	if (IsLocallyControlled())
-	{
-		FortressUI->SetWindBar(WindForce.X / NewWindForceMax);
-	}
+		FortressUI->SetWindBar(WindStrength);
 }
 
 void ACannon::ClientRPC_SwitchWidget_Implementation(int32 index)

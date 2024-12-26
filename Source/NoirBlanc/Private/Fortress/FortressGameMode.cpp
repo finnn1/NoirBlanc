@@ -2,6 +2,8 @@
 
 
 #include "Fortress/FortressGameMode.h"
+
+#include "Algo/RandomShuffle.h"
 #include "Components/WidgetComponent.h"
 #include "Components/WidgetSwitcher.h"
 #include "Fortress/Cannon.h"
@@ -12,11 +14,13 @@
 AFortressGameMode::AFortressGameMode()
 {
 	DefaultPawnClass = nullptr;
+	
 }
 
 void AFortressGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
 // bind player controller to each pawn
@@ -35,8 +39,6 @@ void AFortressGameMode::PostLogin(APlayerController* NewPlayer)
 	
 		if (Player1Pawn != nullptr)
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("Player1: %s"), *Player1Pawn->GetName());
-	
 			APlayerController* Player1Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 			if (Player1Controller != nullptr)
 				Player1Controller->Possess(Player1Pawn);
@@ -47,8 +49,6 @@ void AFortressGameMode::PostLogin(APlayerController* NewPlayer)
 		ACannon* Player2Pawn = Cast<ACannon>(CannonActors[1]);
 		if (Player2Pawn != nullptr)
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("Player2: %s"), *Player2Pawn->GetName());
-	
 			// client creates its on client's Player Controller
 			APlayerController* Player2Controller = UGameplayStatics::GetPlayerController(GetWorld(), 1);
 			if (Player2Controller == nullptr)
@@ -106,14 +106,13 @@ void AFortressGameMode::ChangeTurn()
 
 void AFortressGameMode::SetWind()
 {
-	float windStrength = FMath::RandRange(-WindMaxStrength, WindMaxStrength);		// range -100 ~ 100
-	
-	FVector windForce = FVector(1, 0, 0) * windStrength;
+	if (WindArrayIndex==0)
+		Algo::RandomShuffle(WindStrengthArray);
 
 	for (int32 i = 0; i < AllPlayers.Num(); i++)
-	{
-		AllPlayers[i]->MulticastRPC_SetWindForce(windForce, WindMaxStrength);
-	}
+		AllPlayers[i]->MulticastRPC_SetWindForce(WindStrengthArray[WindArrayIndex], WindUnit);
+	
+	WindArrayIndex = (WindArrayIndex+1)%WindStrengthArray.Num();
 }
 
 void AFortressGameMode::StartCountdown()

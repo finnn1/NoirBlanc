@@ -14,5 +14,6 @@ class NOIRBLANC_API AFortressGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 
+public:
 	void NextRound(class ACannon* OwnerCannon, class UFortressUI* FortressUI);
 };
