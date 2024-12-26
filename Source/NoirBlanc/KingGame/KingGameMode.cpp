@@ -303,7 +303,7 @@ void AKingGameMode::UpdateTimer()
 
 void AKingGameMode::HandleCatcherLocationSelect(int32 ButtonIndex, ASpawnLocation* ClickedSpawnLocation)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, FString::Printf(TEXT("index : %d"), ButtonIndex));
+	// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow, FString::Printf(TEXT("index : %d"), ButtonIndex));
 
 	// 이미 배열에 있으면 리턴 (이미 선택한 곳이면)
 	for (int32 SelectedLocationIndex : SelectedLocationsIndex)
