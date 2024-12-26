@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FortressGameState.h"
 #include "GameFramework/Actor.h"
 #include "ProjectileEqBased.generated.h"
 
@@ -80,6 +81,8 @@ public:
 		FVector OtherNormal,
 		const FHitResult& Hit
 		);
+
+	AFortressGameState* gs;
 	
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* BombEffect;

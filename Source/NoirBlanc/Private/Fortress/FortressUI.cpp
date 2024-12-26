@@ -35,6 +35,16 @@ void UFortressUI::NativeConstruct()
 		Player1pg->SetFillColorAndOpacity(FLinearColor::White);
 		Player2pg->SetFillColorAndOpacity(FLinearColor::Black);
 	}
+
+	if (ImageHorizontalBox != nullptr)
+	{
+		for (UWidget* Child: ImageHorizontalBox->GetAllChildren())
+			if (UImage* Image = Cast<UImage>(Child)) ArrowImages.Add(Image);
+	}
+	
+	for (int32 i = 0; i < ArrowImages.Num(); i++)
+		ArrowImages[i]->SetVisibility(ESlateVisibility::Hidden);
+	
 }
 
 	// APlayerController* pc = GetWorld()->GetFirstPlayerController();
@@ -104,18 +114,76 @@ void UFortressUI::GameOver(int32 index)
 // 	}
 // }
 
-void UFortressUI::SetWindBar(float percent)
+void UFortressUI::SetWindBar(int32 Strength)
 {
-	if (percent >= 0)
+	for (int32 i = 0; i < ArrowImages.Num(); i++)
+		ArrowImages[i]->SetVisibility(ESlateVisibility::Hidden);
+	
+	if (playerCannon->bIsturn)
 	{
-		windForcePlus->SetPercent(percent);
-		windForceMinus->SetPercent(0);
+		switch (Strength)
+		{
+			case 1:
+				ArrowImages[3]->SetVisibility(ESlateVisibility::Visible);
+				break;
+			case 2:
+				ArrowImages[3]->SetVisibility(ESlateVisibility::Visible);
+				ArrowImages[4]->SetVisibility(ESlateVisibility::Visible);
+				break;	
+			case 3:
+				ArrowImages[3]->SetVisibility(ESlateVisibility::Visible);
+				ArrowImages[4]->SetVisibility(ESlateVisibility::Visible);
+				ArrowImages[5]->SetVisibility(ESlateVisibility::Visible);
+				break;
+			case -1:
+				ArrowImages[2]->SetVisibility(ESlateVisibility::Visible);
+				break;
+			case -2:
+				ArrowImages[2]->SetVisibility(ESlateVisibility::Visible);
+				ArrowImages[1]->SetVisibility(ESlateVisibility::Visible);
+				break;	
+			case -3:
+				ArrowImages[2]->SetVisibility(ESlateVisibility::Visible);
+				ArrowImages[1]->SetVisibility(ESlateVisibility::Visible);
+				ArrowImages[0]->SetVisibility(ESlateVisibility::Visible);
+				break;
+			default:
+				break;
+		}
 	}
 	else
 	{
-		windForcePlus->SetPercent(0);
-		windForceMinus->SetPercent(-percent);
+		switch (Strength)
+		{
+		case -1:
+			ArrowImages[3]->SetVisibility(ESlateVisibility::Visible);
+			break;
+		case -2:
+			ArrowImages[3]->SetVisibility(ESlateVisibility::Visible);
+			ArrowImages[4]->SetVisibility(ESlateVisibility::Visible);
+			break;	
+		case -3:
+			ArrowImages[3]->SetVisibility(ESlateVisibility::Visible);
+			ArrowImages[4]->SetVisibility(ESlateVisibility::Visible);
+			ArrowImages[5]->SetVisibility(ESlateVisibility::Visible);
+			break;
+		case 1:
+			ArrowImages[2]->SetVisibility(ESlateVisibility::Visible);
+			break;
+		case 2:
+			ArrowImages[2]->SetVisibility(ESlateVisibility::Visible);
+			ArrowImages[1]->SetVisibility(ESlateVisibility::Visible);
+			break;	
+		case 3:
+			ArrowImages[2]->SetVisibility(ESlateVisibility::Visible);
+			ArrowImages[1]->SetVisibility(ESlateVisibility::Visible);
+			ArrowImages[0]->SetVisibility(ESlateVisibility::Visible);
+			break;
+		default:
+			break;
+		}
 	}
 }
+
 
 

@@ -167,7 +167,7 @@ public:
 	FVector WindForce;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastRPC_SetWindForce(FVector NewWindForce, float NewWindForceMax);
+	void MulticastRPC_SetWindForce(int32 WindStrength, float Unit);
 
 public:
 	AFortressGameMode* gm;
