@@ -106,7 +106,7 @@ void AFortressGameMode::ChangeTurn()
 
 void AFortressGameMode::SetWind()
 {
-	float windStrength = FMath::RandRange(-WindMaxStrength, WindMaxStrength);
+	float windStrength = FMath::RandRange(-WindMaxStrength, WindMaxStrength);		// range -100 ~ 100
 	
 	FVector windForce = FVector(1, 0, 0) * windStrength;
 

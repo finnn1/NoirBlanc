@@ -80,15 +80,12 @@ void AProjectileEqBased::SetSpeedAddImpuse(FVector Direction)
 
 	FVector InitImpulse = Direction.GetSafeNormal() * Impulse;
 
-	// float mass = Mesh->GetMass();
-	
-	//Mesh->AddImpulse(InitImpulse/mass*20.0f, NAME_None, true);
-
-	// the impulse-momentum theorem 
-	Mesh->AddImpulse(InitImpulse, NAME_None, true);
-
-	UE_LOG(LogTemp, Warning, TEXT("Mass: %f"), Mesh->GetMass());
+	// the impulse-momentum theorem // bVelChange=false: consider mass 
+	Mesh->AddImpulse(InitImpulse, NAME_None, false);
 }
+
+	//UE_LOG(LogTemp, Warning, TEXT("Mass: %f"), Mesh->GetMass());
+
 	/* if simulate physics is false*/
 	// impulse = F*t -> m*v, bVelChange: to consider mass or not: engine automatically set the mass
 
