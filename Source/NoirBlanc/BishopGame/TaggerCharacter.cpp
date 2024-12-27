@@ -448,7 +448,10 @@ void ATaggerCharacter::ServerRPC_JumpEnded_Implementation(const FInputActionValu
 	if (GetMovementComponent()->IsFalling()) return;
 
 	MulticastRPC_StopSound(SoundEffect::BeforeJump);
-	MulticastRPC_SpawnSoundAtLocation(SoundAfterJump, GetActorLocation(), SoundEffect::AfterJump);
+	if (IsValid(SoundAfterJump))
+	{
+		MulticastRPC_SpawnSoundAtLocation(SoundAfterJump, GetActorLocation(), SoundEffect::AfterJump);
+	}
 
 	// 타이머 초기화
 	GetWorld()->GetTimerManager().ClearTimer(JumpChargineTimerHandle);
