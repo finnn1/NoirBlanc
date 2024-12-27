@@ -497,15 +497,15 @@ void AKingGameMode::GameOver(APawn* Winner)
 
 				if (_WinnerColor == EPieceColor::White)
 				{
-					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("블랑"));
+					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString(TEXT("블랑")));
 				}
 				else if (_WinnerColor == EPieceColor::Black)
 				{
-					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("느와르"));
+					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString(TEXT("느와르")));
 				}
 				else
 				{
-					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString(""));
+					IKingUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString(TEXT("")));
 				}
 			}
 		}

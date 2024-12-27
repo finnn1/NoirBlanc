@@ -478,15 +478,15 @@ void ABishopGameMode::GameOver(APawn* Winner)
 
 				if (_WinnerColor == EPieceColor::White)
 				{
-					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("블랑"));
+					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString(TEXT("블랑")));
 				}
 				else if (_WinnerColor == EPieceColor::Black)
 				{
-					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString("느와르"));
+					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString(TEXT("느와르")));
 				}
 				else
 				{
-					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString(""));
+					IUIUpdatable::Execute_MulticastRPC_ShowGameOverUI(_Pawn, FText::FromString(TEXT("")));
 				}
 			}
 		}
