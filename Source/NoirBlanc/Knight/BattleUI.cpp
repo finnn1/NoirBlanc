@@ -61,7 +61,7 @@ void UBattleUI::UpdateBattleUI(EPieceType GamePiece,FString QueenLevel, bool bIs
 				Txt_Piece->SetText(FText::FromString(TEXT("킹의 미니게임!")));
 				if(bIsKingGame)
 				{
-					Txt_Game->SetText(FText::FromString(TEXT("레이저 피하기")));
+					Txt_Game->SetText(FText::FromString(TEXT("체크메이트")));
 				}
 				else
 				{
