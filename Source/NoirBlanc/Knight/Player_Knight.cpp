@@ -14,7 +14,7 @@
 #include "TravelPlayerController.h"
 #include "Components/AudioComponent.h"
 #include "Net/UnrealNetwork.h"
-
+#include "GameFramework/CharacterMovementComponent.h"
 // Sets default values
 APlayer_Knight::APlayer_Knight()
 {
@@ -31,6 +31,9 @@ void APlayer_Knight::BeginPlay()
 	AudioComponent->RegisterComponent();
 	BGMAudioComponent = NewObject<UAudioComponent>(this);
 	BGMAudioComponent->RegisterComponent();
+	//GetCharacterMovement()->MaxWalkSpeed = 0;
+	
+	
 	/*
 	if(HasAuthority())
 	{
@@ -70,6 +73,8 @@ void APlayer_Knight::BeginPlay()
 			SetActorLocation(FVector(60, 0, 0));
 		}
 	}
+
+	
 }
 
 void APlayer_Knight::MulticastRPC_DestroyWaiting_Implementation()
@@ -123,6 +128,7 @@ void APlayer_Knight::PossessedBy(AController* NewController)
 				OtherPlayer = tmpPlayer;
 			}
 		}
+		
 
 		/* Start CountDown */
 		PlaySound(CountDownSound);
@@ -157,10 +163,6 @@ void APlayer_Knight::Tick(float DeltaTime)
 		{
 			BGMAudioComponent->Stop();
 		}
-
-
-
-
 		
 		if(Main != nullptr)
 		{
@@ -270,7 +272,8 @@ void APlayer_Knight::CountDown()
 			PlaySound(StartSound);
 			
 			CountDownUI->UpdateCountDown(FText::FromString(TEXT("시작!")));
-			
+
+
 			AudioComponent->SetSound(RunSound);
 			BGMAudioComponent->SetSound(BackgroundMusic);
 			FTimerHandle TimerHandle;
